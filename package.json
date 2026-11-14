@@ -1,0 +1,36 @@
+{
+  "name": "@typescratch/monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.8.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typescratch": "node packages/cli/src/bin.ts",
+    "scaffold": "node packages/cli/src/bin.ts init",
+    "build": "pnpm typescratch build --entry examples/hello-native/main.ts --target scratch --out dist/hello.sb3",
+    "build:hybrid": "pnpm typescratch build --entry examples/hybrid/main.ts --target turbowarp --out dist/hybrid.sb3",
+    "build:workspace": "pnpm typescratch build --config examples/workspace/tscr.config.json --out dist/workspace.sb3",
+    "build:default": "pnpm typescratch build --config packages/workspace/template/tscr.config.json --out dist/default.sb3",
+    "test": "node --test tests/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "oxlint packages/*/src tests examples",
+    "verify:vm": "node tests/vm-smoke.ts"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@typescratch/backend-planner": "workspace:*",
+    "@typescratch/compiler": "workspace:*",
+    "@typescratch/diagnostics": "workspace:*",
+    "@typescratch/graph": "workspace:*",
+    "@typescratch/ir": "workspace:*",
+    "@typescratch/runtime-abi": "workspace:*",
+    "@typescratch/workspace": "workspace:*",
+    "fflate": "catalog:",
+    "oxlint": "catalog:",
+    "scratch-vm": "catalog:",
+    "typescript": "catalog:"
+  }
+}

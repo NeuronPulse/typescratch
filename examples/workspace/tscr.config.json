@@ -1,0 +1,6 @@
+{
+  "name": "role-demo",
+  "target": "scratch",
+  "src": "src",
+  "assets": "assets"
+}

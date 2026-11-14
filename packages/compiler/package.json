@@ -1,0 +1,20 @@
+{
+  "name": "@typescratch/compiler",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@typescratch/backend-native": "workspace:*",
+    "@typescratch/backend-planner": "workspace:*",
+    "@typescratch/backend-turbowarp": "workspace:*",
+    "@typescratch/diagnostics": "workspace:*",
+    "@typescratch/exporter-sb3": "workspace:*",
+    "@typescratch/exporter-turbowarp": "workspace:*",
+    "@typescratch/frontend-ts": "workspace:*",
+    "@typescratch/graph": "workspace:*",
+    "@typescratch/ir": "workspace:*",
+    "@typescratch/language": "workspace:*",
+    "@typescratch/workspace": "workspace:*"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@typescratch/frontend-ts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@typescratch/diagnostics": "workspace:*",
+    "@typescratch/ir": "workspace:*",
+    "@typescratch/language": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

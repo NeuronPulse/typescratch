@@ -1,0 +1,12 @@
+{
+  "name": "@typescratch/exporter-sb3",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@typescratch/diagnostics": "workspace:*",
+    "@typescratch/graph": "workspace:*",
+    "fflate": "catalog:"
+  }
+}

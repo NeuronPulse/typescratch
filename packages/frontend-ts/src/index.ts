@@ -1,0 +1,622 @@
+import { relative, resolve } from "node:path";
+import ts from "typescript";
+import { CODES, type DiagnosticBag, type SourceSpan } from "@typescratch/diagnostics";
+import type { BinOp, Expr, IrType, Module, RoleRef, Script, Stmt, VarDecl } from "@typescratch/ir";
+import { MATH_INTRINSICS } from "@typescratch/language";
+
+export interface FrontendConfig {
+  entry: string;
+  projectRoot: string;
+  runtimeDts: string;
+  bag: DiagnosticBag;
+  role?: RoleRef;
+}
+
+export interface TypedProgram {
+  program: ts.Program;
+  checker: ts.TypeChecker;
+  source: ts.SourceFile;
+}
+
+const BIN_OP_MAP: Partial<Record<ts.SyntaxKind, BinOp>> = {
+  [ts.SyntaxKind.PlusToken]: "add",
+  [ts.SyntaxKind.MinusToken]: "sub",
+  [ts.SyntaxKind.AsteriskToken]: "mul",
+  [ts.SyntaxKind.SlashToken]: "div",
+  [ts.SyntaxKind.PercentToken]: "mod",
+  [ts.SyntaxKind.LessThanToken]: "lt",
+  [ts.SyntaxKind.GreaterThanToken]: "gt",
+  [ts.SyntaxKind.LessThanEqualsToken]: "le",
+  [ts.SyntaxKind.GreaterThanEqualsToken]: "ge",
+  [ts.SyntaxKind.EqualsEqualsEqualsToken]: "eq",
+  [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "ne",
+  [ts.SyntaxKind.EqualsEqualsToken]: "eq",
+  [ts.SyntaxKind.ExclamationEqualsToken]: "ne",
+};
+
+const COMPOUND_ASSIGNMENTS: Partial<Record<ts.SyntaxKind, BinOp>> = {
+  [ts.SyntaxKind.EqualsToken]: "add",
+  [ts.SyntaxKind.PlusEqualsToken]: "add",
+  [ts.SyntaxKind.MinusEqualsToken]: "sub",
+  [ts.SyntaxKind.AsteriskEqualsToken]: "mul",
+  [ts.SyntaxKind.SlashEqualsToken]: "div",
+  [ts.SyntaxKind.PercentEqualsToken]: "mod",
+};
+
+function diagnosticSpan(diagnostic: ts.Diagnostic, root: string): SourceSpan | undefined {
+  if (!diagnostic.file || diagnostic.start === undefined) return undefined;
+  const position = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+  return {
+    file: relative(root, diagnostic.file.fileName),
+    start: diagnostic.start,
+    end: diagnostic.start + (diagnostic.length ?? 0),
+    line: position.line + 1,
+    column: position.character + 1,
+  };
+}
+
+export function createTypedProgram(config: FrontendConfig): TypedProgram | undefined {
+  const entry = resolve(config.projectRoot, config.entry);
+  const options: ts.CompilerOptions = {
+    target: ts.ScriptTarget.ES2022,
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
+    strict: true,
+    noEmit: true,
+    skipLibCheck: true,
+    allowImportingTsExtensions: true,
+    paths: { "@typescratch/runtime": [resolve(config.runtimeDts)] },
+    types: [],
+  };
+  const program = ts.createProgram([entry], options);
+  const diagnostics = ts.getPreEmitDiagnostics(program);
+  if (diagnostics.length > 0) {
+    for (const diagnostic of diagnostics) {
+      config.bag.error(
+        CODES.TS_TYPE,
+        ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+        diagnosticSpan(diagnostic, config.projectRoot),
+      );
+    }
+    return undefined;
+  }
+  const source = program.getSourceFile(entry);
+  if (!source) {
+    config.bag.error(CODES.TS_TYPE, `entry file not found: ${config.entry}`);
+    return undefined;
+  }
+  return { program, checker: program.getTypeChecker(), source };
+}
+
+class Lowerer {
+  private readonly checker: ts.TypeChecker;
+  private readonly source: ts.SourceFile;
+  private readonly root: string;
+  private readonly runtimeDts: string;
+  private readonly bag: DiagnosticBag;
+  private readonly vars: VarDecl[] = [];
+  private readonly scripts: Script[] = [];
+  private readonly symbolVars = new Map<ts.Symbol, VarDecl>();
+  private readonly handleVars = new Map<ts.Symbol, VarDecl>();
+  private readonly compileTime = new Map<ts.Symbol, string | number | boolean>();
+  private current: Stmt[] = [];
+  private counter = 0;
+  private warnedModulo = false;
+  private warnedLooseEquality = false;
+
+  constructor(typed: TypedProgram, config: FrontendConfig) {
+    this.checker = typed.checker;
+    this.source = typed.source;
+    this.root = config.projectRoot;
+    this.runtimeDts = resolve(config.runtimeDts);
+    this.bag = config.bag;
+  }
+
+  lower(): Module {
+    for (const statement of this.source.statements) {
+      if (ts.isImportDeclaration(statement) || ts.isEmptyStatement(statement)) continue;
+      if (ts.isVariableStatement(statement)) {
+        for (const declaration of statement.declarationList.declarations) {
+          this.lowerVariableDeclaration(declaration, statement.declarationList.flags, true);
+        }
+        continue;
+      }
+      if (ts.isExpressionStatement(statement) && ts.isCallExpression(statement.expression)) {
+        if (this.runtimeNameOf(statement.expression) === "onFlag") {
+          const handler = statement.expression.arguments[0];
+          if (!handler || (!ts.isArrowFunction(handler) && !ts.isFunctionExpression(handler))) {
+            this.unsupported(statement, "onFlag() expects a zero-argument arrow function");
+            continue;
+          }
+          const body = this.withBlock(() => {
+            if (ts.isBlock(handler.body)) this.lowerStatement(handler.body);
+            else this.lowerExpr(handler.body);
+          });
+          this.scripts.push({ hat: "flag", body, span: this.span(statement) });
+          continue;
+        }
+      }
+      this.unsupported(statement, "top-level statements may only declare resources or register event hats");
+    }
+    return {
+      entry: relative(this.root, this.source.fileName),
+      scripts: this.scripts,
+      vars: this.vars,
+    };
+  }
+
+  private span(node: ts.Node): SourceSpan {
+    const start = node.getStart(this.source);
+    const position = this.source.getLineAndCharacterOfPosition(start);
+    return {
+      file: relative(this.root, this.source.fileName),
+      start,
+      end: node.getEnd(),
+      line: position.line + 1,
+      column: position.character + 1,
+    };
+  }
+
+  private unsupported(node: ts.Node, message: string): void {
+    this.bag.error(CODES.UNSUPPORTED, message, this.span(node), [
+      "TypeScratch v0.1 supports a restricted TypeScript subset; see LANGUAGE-SUBSET.",
+    ]);
+  }
+
+  private unknown(node: ts.Node, message: string): void {
+    this.bag.error(CODES.UNKNOWN_API, message, this.span(node));
+  }
+
+  private voidConst(node: ts.Node): Expr {
+    return { k: "const", value: 0, type: "void", span: this.span(node) };
+  }
+
+  private withBlock(visit: () => void): Stmt[] {
+    const saved = this.current;
+    const list: Stmt[] = [];
+    this.current = list;
+    visit();
+    this.current = saved;
+    return list;
+  }
+
+  private emit(stmt: Stmt): void {
+    this.current.push(stmt);
+  }
+
+  private newVar(name: string, type: IrType, storage: VarDecl["storage"], span: SourceSpan, initial?: string | number | boolean): VarDecl {
+    const id = `v${++this.counter}`;
+    const decl: VarDecl = { id, name, type, storage, span };
+    if (initial !== undefined) decl.initial = initial;
+    this.vars.push(decl);
+    return decl;
+  }
+
+  private irTypeOf(type: ts.Type): IrType {
+    if (type.flags & (ts.TypeFlags.StringLike | ts.TypeFlags.TemplateLiteral)) return "string";
+    if (type.flags & (ts.TypeFlags.NumberLike | ts.TypeFlags.BigIntLike)) return "number";
+    if (type.flags & ts.TypeFlags.BooleanLike) return "boolean";
+    return "void";
+  }
+
+  private typeOf(node: ts.Node): IrType {
+    return this.irTypeOf(this.checker.getTypeAtLocation(node));
+  }
+
+  private runtimeNameOf(call: ts.CallExpression): string | undefined {
+    const symbol = this.checker.getSymbolAtLocation(call.expression);
+    if (!symbol) return undefined;
+    const declarations = symbol.getDeclarations() ?? [];
+    const fromRuntime = declarations.some(
+      (declaration) => resolve(declaration.getSourceFile().fileName) === this.runtimeDts,
+    );
+    return fromRuntime ? symbol.getName() : undefined;
+  }
+
+  private mathNameOf(call: ts.CallExpression): string | undefined {
+    const expression = call.expression;
+    if (!ts.isPropertyAccessExpression(expression)) return undefined;
+    if (!ts.isIdentifier(expression.expression) || expression.expression.text !== "Math") return undefined;
+    const symbol = this.checker.getSymbolAtLocation(expression);
+    const declarations = symbol?.getDeclarations() ?? [];
+    const fromLib = declarations.some((declaration) =>
+      /[\\/]lib\.[^\\/]*\.d\.ts$/.test(declaration.getSourceFile().fileName),
+    );
+    return fromLib ? expression.name.text : undefined;
+  }
+
+  private stringMethodOf(call: ts.CallExpression): string | undefined {
+    const expression = call.expression;
+    if (!ts.isPropertyAccessExpression(expression)) return undefined;
+    const method = expression.name.text;
+    if (method !== "toUpperCase" && method !== "toLowerCase") return undefined;
+    if (this.typeOf(expression.expression) !== "string") return undefined;
+    const symbol = this.checker.getSymbolAtLocation(expression);
+    const declarations = symbol?.getDeclarations() ?? [];
+    const fromLib = declarations.some((declaration) =>
+      /[\\/]lib\.[^\\/]*\.d\.ts$/.test(declaration.getSourceFile().fileName),
+    );
+    return fromLib ? `ext.String.${method}` : undefined;
+  }
+
+  private handleOf(call: ts.CallExpression): VarDecl | undefined {
+    const expression = call.expression;
+    if (!ts.isPropertyAccessExpression(expression)) return undefined;
+    const symbol = this.checker.getSymbolAtLocation(expression.expression);
+    return symbol ? this.handleVars.get(symbol) : undefined;
+  }
+
+  private varFor(identifier: ts.Identifier): VarDecl | undefined {
+    const symbol = this.checker.getSymbolAtLocation(identifier);
+    const decl = symbol ? this.symbolVars.get(symbol) : undefined;
+    if (!decl) this.unsupported(identifier, `unresolved variable ${identifier.text}`);
+    return decl;
+  }
+
+  private literalValue(node: ts.Expression): string | number | boolean | undefined {
+    if (ts.isNumericLiteral(node)) return Number(node.text);
+    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+    if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
+    if (node.kind === ts.SyntaxKind.FalseKeyword) return false;
+    if (ts.isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.MinusToken && ts.isNumericLiteral(node.operand)) {
+      return -Number(node.operand.text);
+    }
+    return undefined;
+  }
+
+  private readInitial(argument: ts.Expression | undefined): string | number | boolean | undefined {
+    if (!argument || !ts.isObjectLiteralExpression(argument)) return undefined;
+    for (const property of argument.properties) {
+      if (ts.isPropertyAssignment(property) && ts.isIdentifier(property.name) && property.name.text === "initial") {
+        return this.literalValue(property.initializer);
+      }
+    }
+    return undefined;
+  }
+
+  private lowerVariableDeclaration(
+    declaration: ts.VariableDeclaration,
+    flags: ts.NodeFlags,
+    topLevel: boolean,
+  ): void {
+    if (!ts.isIdentifier(declaration.name)) {
+      this.unsupported(declaration, "destructuring declarations are not supported");
+      return;
+    }
+    const symbol = this.checker.getSymbolAtLocation(declaration.name);
+    const initializer = declaration.initializer;
+    const isConst = (flags & ts.NodeFlags.Const) !== 0;
+
+    if (initializer && ts.isCallExpression(initializer)) {
+      const runtimeName = this.runtimeNameOf(initializer);
+      if (runtimeName === "global" || runtimeName === "local") {
+        const nameArgument = initializer.arguments[0];
+        if (!nameArgument || !ts.isStringLiteral(nameArgument)) {
+          this.unsupported(initializer, `${runtimeName}() requires a string literal name`);
+          return;
+        }
+        const handleType = this.checker.getTypeAtLocation(initializer) as ts.TypeReference;
+        const typeArguments = this.checker.getTypeArguments(handleType);
+        const inner = typeArguments[0];
+        const type = inner ? this.irTypeOf(inner) : "number";
+        const decl = this.newVar(
+          nameArgument.text,
+          type,
+          runtimeName === "global" ? "global" : "local",
+          this.span(declaration),
+          this.readInitial(initializer.arguments[1]),
+        );
+        if (symbol) this.handleVars.set(symbol, decl);
+        return;
+      }
+    }
+
+    const literal = initializer ? this.literalValue(initializer) : undefined;
+    if (isConst && literal !== undefined) {
+      if (symbol) this.compileTime.set(symbol, literal);
+      return;
+    }
+
+    if (topLevel) {
+      this.unsupported(declaration, "top-level let/var declarations are not supported in v0.1");
+      return;
+    }
+
+    const decl = this.newVar(`_tscr_${declaration.name.text}`, this.typeOf(declaration.name), "temp", this.span(declaration));
+    if (symbol) this.symbolVars.set(symbol, decl);
+    this.emit({
+      k: "declare",
+      var: decl.id,
+      init: initializer ? this.lowerExpr(initializer) : undefined,
+      span: this.span(declaration),
+    });
+  }
+
+  private lowerIncrement(node: ts.PostfixUnaryExpression | ts.PrefixUnaryExpression): Expr {
+    const operand = node.operand;
+    if (!ts.isIdentifier(operand)) {
+      this.unsupported(node, "increment operators require a simple identifier");
+      return this.voidConst(node);
+    }
+    const decl = this.varFor(operand);
+    if (!decl) return this.voidConst(node);
+    const delta = node.operator === ts.SyntaxKind.PlusPlusToken ? 1 : -1;
+    const current: Expr = { k: "read", var: decl.id, type: "number", span: this.span(node) };
+    this.emit({
+      k: "assign",
+      var: decl.id,
+      value: {
+        k: "binary", op: "add", l: current,
+        r: { k: "const", value: delta, type: "number" },
+        type: "number", span: this.span(node),
+      },
+      span: this.span(node),
+    });
+    return this.voidConst(node);
+  }
+
+  private lowerLogical(node: ts.BinaryExpression, isAnd: boolean): Expr {
+    if (this.typeOf(node.left) !== "boolean" || this.typeOf(node.right) !== "boolean") {
+      this.unsupported(node, "short-circuit operators are restricted to boolean operands in v0.1");
+      return { k: "const", value: false, type: "boolean", span: this.span(node) };
+    }
+    const initial = isAnd ? false : true;
+    const temp = this.newVar(`_tscr_logic${this.counter + 1}`, "boolean", "temp", this.span(node), initial);
+    this.emit({
+      k: "declare", var: temp.id,
+      init: { k: "const", value: initial, type: "boolean" },
+      span: this.span(node),
+    });
+    const left = this.lowerExpr(node.left);
+    const condition: Expr = isAnd
+      ? left
+      : { k: "unary", op: "not", value: left, type: "boolean", span: this.span(node) };
+    const body = this.withBlock(() => {
+      const right = this.lowerExpr(node.right);
+      this.emit({ k: "assign", var: temp.id, value: right, span: this.span(node) });
+    });
+    this.emit({ k: "if", cond: condition, then: body, span: this.span(node) });
+    return { k: "read", var: temp.id, type: "boolean", span: this.span(node) };
+  }
+
+  private lowerExpr(node: ts.Expression): Expr {
+    if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node) || ts.isNonNullExpression(node)) {
+      return this.lowerExpr(node.expression);
+    }
+    if (ts.isPostfixUnaryExpression(node)) return this.lowerIncrement(node);
+    if (ts.isPrefixUnaryExpression(node)) {
+      if (node.operator === ts.SyntaxKind.PlusPlusToken || node.operator === ts.SyntaxKind.MinusMinusToken) {
+        return this.lowerIncrement(node);
+      }
+      if (node.operator === ts.SyntaxKind.ExclamationToken) {
+        return { k: "unary", op: "not", value: this.lowerExpr(node.operand), type: "boolean", span: this.span(node) };
+      }
+      if (node.operator === ts.SyntaxKind.MinusToken) {
+        return { k: "unary", op: "neg", value: this.lowerExpr(node.operand), type: "number", span: this.span(node) };
+      }
+      this.unsupported(node, "unsupported unary operator");
+      return this.voidConst(node);
+    }
+    if (ts.isNumericLiteral(node)) {
+      return { k: "const", value: Number(node.text), type: "number", span: this.span(node) };
+    }
+    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+      return { k: "const", value: node.text, type: "string", span: this.span(node) };
+    }
+    if (node.kind === ts.SyntaxKind.TrueKeyword || node.kind === ts.SyntaxKind.FalseKeyword) {
+      return {
+        k: "const", value: node.kind === ts.SyntaxKind.TrueKeyword,
+        type: "boolean", span: this.span(node),
+      };
+    }
+    if (ts.isIdentifier(node)) {
+      const symbol = this.checker.getSymbolAtLocation(node);
+      if (symbol && this.compileTime.has(symbol)) {
+        const value = this.compileTime.get(symbol)!;
+        const type: IrType = typeof value === "boolean" ? "boolean" : typeof value === "number" ? "number" : "string";
+        return { k: "const", value, type, span: this.span(node) };
+      }
+      const decl = symbol ? this.symbolVars.get(symbol) : undefined;
+      if (decl) return { k: "read", var: decl.id, type: decl.type, span: this.span(node) };
+      this.unsupported(node, `unresolved identifier ${node.text}`);
+      return this.voidConst(node);
+    }
+    if (ts.isTemplateExpression(node)) {
+      const parts: Expr[] = [
+        { k: "const", value: node.head.text, type: "string", span: this.span(node.head) },
+      ];
+      for (const part of node.templateSpans) {
+        parts.push(this.lowerExpr(part.expression));
+        parts.push({ k: "const", value: part.literal.text, type: "string", span: this.span(part.literal) });
+      }
+      return { k: "join", parts, type: "string", span: this.span(node) };
+    }
+    if (ts.isBinaryExpression(node)) {
+      const kind = node.operatorToken.kind;
+      if (kind === ts.SyntaxKind.AmpersandAmpersandToken || kind === ts.SyntaxKind.BarBarToken) {
+        return this.lowerLogical(node, kind === ts.SyntaxKind.AmpersandAmpersandToken);
+      }
+      const op = BIN_OP_MAP[kind];
+      if (!op) {
+        this.unsupported(node, "unsupported binary operator");
+        return this.voidConst(node);
+      }
+      const left = this.lowerExpr(node.left);
+      const right = this.lowerExpr(node.right);
+      if (kind === ts.SyntaxKind.PlusToken && (this.typeOf(node.left) === "string" || this.typeOf(node.right) === "string")) {
+        return { k: "join", parts: [left, right], type: "string", span: this.span(node) };
+      }
+      if (op === "eq" || op === "ne") {
+        if (left.type !== right.type && left.type !== "void" && right.type !== "void") {
+          this.bag.warning(
+            CODES.UNSAFE_SEMANTICS,
+            "cross-type equality is lowered to Scratch's loose equality reporter",
+            this.span(node),
+            ["Use explicit conversions to keep TypeScript semantics."],
+          );
+        }
+        if (!this.warnedLooseEquality && (kind === ts.SyntaxKind.EqualsEqualsToken || kind === ts.SyntaxKind.ExclamationEqualsToken)) {
+          this.warnedLooseEquality = true;
+          this.bag.warning(CODES.UNSAFE_SEMANTICS, "== and != are lowered to Scratch equality, not JavaScript abstract equality", this.span(node));
+        }
+      }
+      if (op === "mod" && !this.warnedModulo) {
+        this.warnedModulo = true;
+        this.bag.warning(
+          CODES.UNSAFE_SEMANTICS,
+          "JS remainder differs from Scratch mod for negative operands; v0.1 restricts % to non-negative integers",
+          this.span(node),
+        );
+      }
+      const booleanOp = op === "lt" || op === "gt" || op === "le" || op === "ge" || op === "eq" || op === "ne";
+      return {
+        k: "binary", op, l: left, r: right,
+        type: booleanOp ? "boolean" : this.typeOf(node),
+        span: this.span(node),
+      };
+    }
+    if (ts.isCallExpression(node)) {
+      const runtimeName = this.runtimeNameOf(node);
+      if (runtimeName) {
+        const handle = this.handleOf(node);
+        if (runtimeName === "get" && handle) {
+          return { k: "read", var: handle.id, type: handle.type, span: this.span(node) };
+        }
+        if ((runtimeName === "set" || runtimeName === "change") && handle && node.arguments[0]) {
+          const value: Expr = runtimeName === "set"
+            ? this.lowerExpr(node.arguments[0])
+            : {
+              k: "binary", op: "add",
+              l: { k: "read", var: handle.id, type: handle.type, span: this.span(node) },
+              r: this.lowerExpr(node.arguments[0]),
+              type: "number", span: this.span(node),
+            };
+          this.emit({ k: "assign", var: handle.id, value, span: this.span(node) });
+          return this.voidConst(node);
+        }
+        if (runtimeName === "global" || runtimeName === "local") {
+          this.unsupported(node, `${runtimeName}() must be bound to a top-level const`);
+          return this.voidConst(node);
+        }
+        if (runtimeName === "onFlag") {
+          this.unsupported(node, "onFlag() is only valid as a top-level statement");
+          return this.voidConst(node);
+        }
+        this.emit({
+          k: "expr", name: runtimeName,
+          args: node.arguments.map((argument) => this.lowerExpr(argument)),
+          span: this.span(node),
+        });
+        return this.voidConst(node);
+      }
+      const stringMethod = this.stringMethodOf(node);
+      if (stringMethod) {
+        const propertyAccess = node.expression as ts.PropertyAccessExpression;
+        return {
+          k: "intrinsic", name: stringMethod,
+          args: [this.lowerExpr(propertyAccess.expression)],
+          type: "string", span: this.span(node),
+        };
+      }
+      const mathName = this.mathNameOf(node);
+      if (mathName) {
+        const intrinsic = MATH_INTRINSICS[mathName] ?? `ext.Math.${mathName}`;
+        return {
+          k: "intrinsic", name: intrinsic,
+          args: node.arguments.map((argument) => this.lowerExpr(argument)),
+          type: "number", span: this.span(node),
+        };
+      }
+      this.unknown(node, "call target is not a TypeScratch intrinsic");
+      return this.voidConst(node);
+    }
+    this.unsupported(node, `unsupported expression ${ts.SyntaxKind[node.kind]}`);
+    return this.voidConst(node);
+  }
+
+  private lowerExpressionStatement(node: ts.ExpressionStatement): void {
+    const expression = node.expression;
+    if (ts.isBinaryExpression(expression)) {
+      const operator = COMPOUND_ASSIGNMENTS[expression.operatorToken.kind];
+      if (operator && ts.isIdentifier(expression.left)) {
+        const decl = this.varFor(expression.left);
+        if (decl) {
+          const right = this.lowerExpr(expression.right);
+          const value: Expr = expression.operatorToken.kind === ts.SyntaxKind.EqualsToken
+            ? right
+            : {
+              k: "binary", op: operator,
+              l: { k: "read", var: decl.id, type: decl.type, span: this.span(expression) },
+              r: right, type: decl.type, span: this.span(expression),
+            };
+          this.emit({ k: "assign", var: decl.id, value, span: this.span(node) });
+          return;
+        }
+      }
+    }
+    this.lowerExpr(expression);
+  }
+
+  private lowerStatement(node: ts.Statement): void {
+    if (ts.isBlock(node)) {
+      for (const statement of node.statements) this.lowerStatement(statement);
+      return;
+    }
+    if (ts.isVariableStatement(node)) {
+      for (const declaration of node.declarationList.declarations) {
+        this.lowerVariableDeclaration(declaration, node.declarationList.flags, false);
+      }
+      return;
+    }
+    if (ts.isExpressionStatement(node)) {
+      this.lowerExpressionStatement(node);
+      return;
+    }
+    if (ts.isIfStatement(node)) {
+      const cond = this.lowerExpr(node.expression);
+      const elseStatement = node.elseStatement;
+      const thenBody = this.withBlock(() => this.lowerStatement(node.thenStatement));
+      const elseBody = elseStatement
+        ? this.withBlock(() => this.lowerStatement(elseStatement))
+        : undefined;
+      const stmt: Stmt = { k: "if", cond, then: thenBody, span: this.span(node) };
+      if (elseBody) stmt.else = elseBody;
+      this.emit(stmt);
+      return;
+    }
+    if (ts.isWhileStatement(node)) {
+      const cond = this.lowerExpr(node.expression);
+      const body = this.withBlock(() => this.lowerStatement(node.statement));
+      this.emit({ k: "while", cond, body, span: this.span(node) });
+      return;
+    }
+    if (ts.isForStatement(node)) {
+      if (node.initializer) {
+        if (ts.isVariableDeclarationList(node.initializer)) {
+          for (const declaration of node.initializer.declarations) {
+            this.lowerVariableDeclaration(declaration, node.initializer.flags, false);
+          }
+        } else {
+          this.lowerExpr(node.initializer);
+        }
+      }
+      const cond: Expr = node.condition
+        ? this.lowerExpr(node.condition)
+        : { k: "const", value: true, type: "boolean", span: this.span(node) };
+      const body = this.withBlock(() => {
+        this.lowerStatement(node.statement);
+        if (node.incrementor) this.lowerExpr(node.incrementor);
+      });
+      this.emit({ k: "while", cond, body, span: this.span(node) });
+      return;
+    }
+    if (ts.isEmptyStatement(node)) return;
+    this.unsupported(node, `unsupported statement ${ts.SyntaxKind[node.kind]}`);
+  }
+}
+
+export function lowerToHIR(typed: TypedProgram, config: FrontendConfig): Module {
+  const module = new Lowerer(typed, config).lower();
+  module.role = config.role ?? { name: "Sprite1", isStage: false };
+  return module;
+}

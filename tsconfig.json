@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node"],
+    "paths": {
+      "@typescratch/runtime": ["./packages/language/runtime.d.ts"],
+      "@typescratch/*": ["./packages/*/src/index.ts"]
+    }
+  },
+  "include": ["packages/**/*.ts", "tests/**/*.ts", "examples/**/*.ts"],
+  "exclude": ["examples/type-error/**"]
+}

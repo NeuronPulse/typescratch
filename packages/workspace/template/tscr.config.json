@@ -1,0 +1,6 @@
+{
+  "name": "my-project",
+  "target": "scratch",
+  "src": "src",
+  "assets": "assets"
+}
