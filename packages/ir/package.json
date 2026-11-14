@@ -5,6 +5,7 @@
   "type": "module",
   "exports": { ".": "./src/index.ts" },
   "dependencies": {
-    "@typescratch/diagnostics": "workspace:*"
+    "@typescratch/diagnostics": "workspace:*",
+    "@typescratch/language": "workspace:*"
   }
 }

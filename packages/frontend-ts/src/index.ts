@@ -1,8 +1,23 @@
 import { relative, resolve } from "node:path";
 import ts from "typescript";
 import { CODES, type DiagnosticBag, type SourceSpan } from "@typescratch/diagnostics";
-import type { BinOp, Expr, IrType, Module, RoleRef, Script, Stmt, VarDecl } from "@typescratch/ir";
+import type {
+  BinOp, Expr, Hat, IrType, ListDecl, ListOp, Module, RoleRef, Script, Stmt, VarDecl,
+} from "@typescratch/ir";
 import { MATH_INTRINSICS } from "@typescratch/language";
+
+const HAT_NAMES: ReadonlySet<string> = new Set([
+  "onFlag", "onKey", "onSpriteClicked", "onClone", "onBackdrop", "onBroadcast",
+]);
+
+const HAT_HANDLER_INDEX: Readonly<Record<string, number>> = {
+  onFlag: 0,
+  onSpriteClicked: 0,
+  onClone: 0,
+  onKey: 1,
+  onBackdrop: 1,
+  onBroadcast: 1,
+};
 
 export interface FrontendConfig {
   entry: string;
@@ -42,6 +57,10 @@ const COMPOUND_ASSIGNMENTS: Partial<Record<ts.SyntaxKind, BinOp>> = {
   [ts.SyntaxKind.SlashEqualsToken]: "div",
   [ts.SyntaxKind.PercentEqualsToken]: "mod",
 };
+
+const LIST_COMMANDS: ReadonlySet<string> = new Set([
+  "push", "insert", "replace", "deleteAt", "clear",
+]);
 
 function diagnosticSpan(diagnostic: ts.Diagnostic, root: string): SourceSpan | undefined {
   if (!diagnostic.file || diagnostic.start === undefined) return undefined;
@@ -94,13 +113,20 @@ class Lowerer {
   private readonly root: string;
   private readonly runtimeDts: string;
   private readonly bag: DiagnosticBag;
+  private readonly roleName: string;
   private readonly vars: VarDecl[] = [];
+  private readonly lists: ListDecl[] = [];
   private readonly scripts: Script[] = [];
   private readonly symbolVars = new Map<ts.Symbol, VarDecl>();
   private readonly handleVars = new Map<ts.Symbol, VarDecl>();
+  private readonly handleLists = new Map<ts.Symbol, ListDecl>();
   private readonly compileTime = new Map<ts.Symbol, string | number | boolean>();
   private current: Stmt[] = [];
   private counter = 0;
+  private listCounter = 0;
+  private scriptIndex = -1;
+  private loopDepth = 0;
+  private forLoopDepth = 0;
   private warnedModulo = false;
   private warnedLooseEquality = false;
 
@@ -109,6 +135,7 @@ class Lowerer {
     this.source = typed.source;
     this.root = config.projectRoot;
     this.runtimeDts = resolve(config.runtimeDts);
+    this.roleName = config.role?.name ?? "Sprite1";
     this.bag = config.bag;
   }
 
@@ -121,28 +148,51 @@ class Lowerer {
         }
         continue;
       }
-      if (ts.isExpressionStatement(statement) && ts.isCallExpression(statement.expression)) {
-        if (this.runtimeNameOf(statement.expression) === "onFlag") {
-          const handler = statement.expression.arguments[0];
-          if (!handler || (!ts.isArrowFunction(handler) && !ts.isFunctionExpression(handler))) {
-            this.unsupported(statement, "onFlag() expects a zero-argument arrow function");
-            continue;
-          }
-          const body = this.withBlock(() => {
-            if (ts.isBlock(handler.body)) this.lowerStatement(handler.body);
-            else this.lowerExpr(handler.body);
-          });
-          this.scripts.push({ hat: "flag", body, span: this.span(statement) });
-          continue;
-        }
-      }
+      if (ts.isExpressionStatement(statement) && this.lowerHatStatement(statement)) continue;
       this.unsupported(statement, "top-level statements may only declare resources or register event hats");
     }
     return {
       entry: relative(this.root, this.source.fileName),
       scripts: this.scripts,
       vars: this.vars,
+      lists: this.lists,
     };
+  }
+
+  private lowerHatStatement(statement: ts.ExpressionStatement): boolean {
+    const call = statement.expression;
+    if (!ts.isCallExpression(call)) return false;
+    const name = this.runtimeNameOf(call);
+    if (!name || !HAT_NAMES.has(name)) return false;
+    const handlerIndex = HAT_HANDLER_INDEX[name] ?? 0;
+    const handler = call.arguments[handlerIndex];
+    if (!handler || (!ts.isArrowFunction(handler) && !ts.isFunctionExpression(handler))) {
+      this.unsupported(statement, `${name}() expects a handler arrow function`);
+      return true;
+    }
+    const argument = handlerIndex > 0 ? call.arguments[0] : undefined;
+    if (handlerIndex > 0 && (!argument || !ts.isStringLiteral(argument))) {
+      this.unsupported(statement, `${name}() expects a string literal argument`);
+      return true;
+    }
+    const text = argument && ts.isStringLiteral(argument) ? argument.text : "";
+    let hat: Hat;
+    switch (name) {
+      case "onFlag": hat = { kind: "flag" }; break;
+      case "onKey": hat = { kind: "key", key: text }; break;
+      case "onSpriteClicked": hat = { kind: "spriteClicked" }; break;
+      case "onClone": hat = { kind: "clone" }; break;
+      case "onBackdrop": hat = { kind: "backdrop", name: text }; break;
+      case "onBroadcast": hat = { kind: "broadcast", name: text }; break;
+      default: return false;
+    }
+    this.scriptIndex = this.scripts.length;
+    const body = this.withBlock(() => {
+      if (ts.isBlock(handler.body)) this.lowerStatement(handler.body);
+      else this.lowerExpr(handler.body);
+    });
+    this.scripts.push({ hat, body, span: this.span(statement) });
+    return true;
   }
 
   private span(node: ts.Node): SourceSpan {
@@ -185,10 +235,29 @@ class Lowerer {
   }
 
   private newVar(name: string, type: IrType, storage: VarDecl["storage"], span: SourceSpan, initial?: string | number | boolean): VarDecl {
-    const id = `v${++this.counter}`;
-    const decl: VarDecl = { id, name, type, storage, span };
+    const index = Math.max(this.scriptIndex, 0);
+    const id = `v${storage === "temp" ? `s${index}` : "g"}_${++this.counter}`;
+    const decl: VarDecl = {
+      id,
+      name: storage === "temp" ? `_tscr_s${index}_${name}` : name,
+      type,
+      storage,
+      span,
+    };
+    if (storage === "temp") decl.script = index;
     if (initial !== undefined) decl.initial = initial;
     this.vars.push(decl);
+    return decl;
+  }
+
+  private newList(name: string, type: IrType, span: SourceSpan): ListDecl {
+    const decl: ListDecl = {
+      id: `l${this.roleName}_${++this.listCounter}`,
+      name,
+      type,
+      span,
+    };
+    this.lists.push(decl);
     return decl;
   }
 
@@ -246,6 +315,13 @@ class Lowerer {
     return symbol ? this.handleVars.get(symbol) : undefined;
   }
 
+  private listOf(call: ts.CallExpression): ListDecl | undefined {
+    const expression = call.expression;
+    if (!ts.isPropertyAccessExpression(expression)) return undefined;
+    const symbol = this.checker.getSymbolAtLocation(expression.expression);
+    return symbol ? this.handleLists.get(symbol) : undefined;
+  }
+
   private varFor(identifier: ts.Identifier): VarDecl | undefined {
     const symbol = this.checker.getSymbolAtLocation(identifier);
     const decl = symbol ? this.symbolVars.get(symbol) : undefined;
@@ -262,6 +338,12 @@ class Lowerer {
       return -Number(node.operand.text);
     }
     return undefined;
+  }
+
+  private negativeLiteral(node: ts.Expression): boolean {
+    return ts.isPrefixUnaryExpression(node)
+      && node.operator === ts.SyntaxKind.MinusToken
+      && (ts.isNumericLiteral(node.operand) || this.negativeLiteral(node.operand));
   }
 
   private readInitial(argument: ts.Expression | undefined): string | number | boolean | undefined {
@@ -289,7 +371,7 @@ class Lowerer {
 
     if (initializer && ts.isCallExpression(initializer)) {
       const runtimeName = this.runtimeNameOf(initializer);
-      if (runtimeName === "global" || runtimeName === "local") {
+      if (runtimeName === "global" || runtimeName === "local" || runtimeName === "list") {
         const nameArgument = initializer.arguments[0];
         if (!nameArgument || !ts.isStringLiteral(nameArgument)) {
           this.unsupported(initializer, `${runtimeName}() requires a string literal name`);
@@ -299,6 +381,11 @@ class Lowerer {
         const typeArguments = this.checker.getTypeArguments(handleType);
         const inner = typeArguments[0];
         const type = inner ? this.irTypeOf(inner) : "number";
+        if (runtimeName === "list") {
+          const list = this.newList(nameArgument.text, type, this.span(declaration));
+          if (symbol) this.handleLists.set(symbol, list);
+          return;
+        }
         const decl = this.newVar(
           nameArgument.text,
           type,
@@ -322,7 +409,7 @@ class Lowerer {
       return;
     }
 
-    const decl = this.newVar(`_tscr_${declaration.name.text}`, this.typeOf(declaration.name), "temp", this.span(declaration));
+    const decl = this.newVar(declaration.name.text, this.typeOf(declaration.name), "temp", this.span(declaration));
     if (symbol) this.symbolVars.set(symbol, decl);
     this.emit({
       k: "declare",
@@ -360,23 +447,34 @@ class Lowerer {
       this.unsupported(node, "short-circuit operators are restricted to boolean operands in v0.1");
       return { k: "const", value: false, type: "boolean", span: this.span(node) };
     }
-    const initial = isAnd ? false : true;
-    const temp = this.newVar(`_tscr_logic${this.counter + 1}`, "boolean", "temp", this.span(node), initial);
+    const span = this.span(node);
+    const temp = this.newVar(`logic${this.counter + 1}`, "number", "temp", span, isAnd ? 0 : 1);
     this.emit({
       k: "declare", var: temp.id,
-      init: { k: "const", value: initial, type: "boolean" },
-      span: this.span(node),
+      init: { k: "const", value: isAnd ? 0 : 1, type: "number" },
+      span,
     });
     const left = this.lowerExpr(node.left);
     const condition: Expr = isAnd
       ? left
-      : { k: "unary", op: "not", value: left, type: "boolean", span: this.span(node) };
+      : { k: "unary", op: "not", value: left, type: "boolean", span };
     const body = this.withBlock(() => {
       const right = this.lowerExpr(node.right);
-      this.emit({ k: "assign", var: temp.id, value: right, span: this.span(node) });
+      this.emit({
+        k: "assign",
+        var: temp.id,
+        value: { k: "convert", to: "number", value: right, type: "number", span },
+        span,
+      });
     });
-    this.emit({ k: "if", cond: condition, then: body, span: this.span(node) });
-    return { k: "read", var: temp.id, type: "boolean", span: this.span(node) };
+    this.emit({ k: "if", cond: condition, then: body, span });
+    return {
+      k: "convert",
+      to: "boolean",
+      value: { k: "read", var: temp.id, type: "number", span },
+      type: "boolean",
+      span,
+    };
   }
 
   private lowerExpr(node: ts.Expression): Expr {
@@ -418,6 +516,18 @@ class Lowerer {
       }
       const decl = symbol ? this.symbolVars.get(symbol) : undefined;
       if (decl) return { k: "read", var: decl.id, type: decl.type, span: this.span(node) };
+      if (node.text === "NaN" || node.text === "Infinity") {
+        this.bag.error(
+          CODES.NUMERIC_PROFILE,
+          `${node.text} has no stable representation in a Scratch variable`,
+          this.span(node),
+          [
+            "Scratch casts NaN to 0 and does not preserve Infinity across variable reads.",
+            "Use a finite sentinel value instead.",
+          ],
+        );
+        return this.voidConst(node);
+      }
       this.unsupported(node, `unresolved identifier ${node.text}`);
       return this.voidConst(node);
     }
@@ -460,13 +570,22 @@ class Lowerer {
           this.bag.warning(CODES.UNSAFE_SEMANTICS, "== and != are lowered to Scratch equality, not JavaScript abstract equality", this.span(node));
         }
       }
-      if (op === "mod" && !this.warnedModulo) {
-        this.warnedModulo = true;
-        this.bag.warning(
-          CODES.UNSAFE_SEMANTICS,
-          "JS remainder differs from Scratch mod for negative operands; v0.1 restricts % to non-negative integers",
-          this.span(node),
-        );
+      if (op === "mod") {
+        if (this.negativeLiteral(node.left) || this.negativeLiteral(node.right)) {
+          this.bag.error(
+            CODES.NUMERIC_PROFILE,
+            "% with a negative literal differs between JavaScript remainder and Scratch mod",
+            this.span(node),
+            ["Rewrite the expression so both operands are non-negative."],
+          );
+        } else if (!this.warnedModulo) {
+          this.warnedModulo = true;
+          this.bag.warning(
+            CODES.UNSAFE_SEMANTICS,
+            "JS remainder differs from Scratch mod for negative operands; v0.1 restricts % to non-negative integers",
+            this.span(node),
+          );
+        }
       }
       const booleanOp = op === "lt" || op === "gt" || op === "le" || op === "ge" || op === "eq" || op === "ne";
       return {
@@ -478,6 +597,38 @@ class Lowerer {
     if (ts.isCallExpression(node)) {
       const runtimeName = this.runtimeNameOf(node);
       if (runtimeName) {
+        const list = this.listOf(node);
+        if (list && (runtimeName === "length" || runtimeName === "item")) {
+          const index = runtimeName === "item" ? node.arguments[0] : undefined;
+          if (runtimeName === "item" && !index) {
+            this.unsupported(node, "item() expects an index argument");
+            return this.voidConst(node);
+          }
+          return {
+            k: "listRead",
+            op: runtimeName,
+            list: list.id,
+            ...(index ? { index: this.lowerExpr(index) } : {}),
+            type: runtimeName === "length" ? "number" : list.type,
+            span: this.span(node),
+          };
+        }
+        if (list && LIST_COMMANDS.has(runtimeName)) {
+          const expected = runtimeName === "clear" ? 0
+            : (runtimeName === "push" || runtimeName === "deleteAt") ? 1 : 2;
+          if (node.arguments.length < expected) {
+            this.unsupported(node, `${runtimeName}() expects ${expected} argument(s)`);
+            return this.voidConst(node);
+          }
+          this.emit({
+            k: "list",
+            op: runtimeName as ListOp,
+            list: list.id,
+            args: node.arguments.map((argument) => this.lowerExpr(argument)),
+            span: this.span(node),
+          });
+          return this.voidConst(node);
+        }
         const handle = this.handleOf(node);
         if (runtimeName === "get" && handle) {
           return { k: "read", var: handle.id, type: handle.type, span: this.span(node) };
@@ -494,12 +645,12 @@ class Lowerer {
           this.emit({ k: "assign", var: handle.id, value, span: this.span(node) });
           return this.voidConst(node);
         }
-        if (runtimeName === "global" || runtimeName === "local") {
+        if (runtimeName === "global" || runtimeName === "local" || runtimeName === "list") {
           this.unsupported(node, `${runtimeName}() must be bound to a top-level const`);
           return this.voidConst(node);
         }
-        if (runtimeName === "onFlag") {
-          this.unsupported(node, "onFlag() is only valid as a top-level statement");
+        if (HAT_NAMES.has(runtimeName)) {
+          this.unsupported(node, `${runtimeName}() is only valid as a top-level statement`);
           return this.voidConst(node);
         }
         this.emit({
@@ -572,6 +723,20 @@ class Lowerer {
       this.lowerExpressionStatement(node);
       return;
     }
+    if (ts.isBreakStatement(node) || ts.isContinueStatement(node)) {
+      const keyword = ts.isBreakStatement(node) ? "break" : "continue";
+      if (this.loopDepth === 0) {
+        this.unsupported(node, `${keyword} outside a loop`);
+        return;
+      }
+      if (this.forLoopDepth > 0) {
+        this.unsupported(node, `${keyword} inside a for loop is not supported in v0.1`);
+        return;
+      }
+      if (ts.isBreakStatement(node)) this.emit({ k: "break", span: this.span(node) });
+      else this.emit({ k: "continue", span: this.span(node) });
+      return;
+    }
     if (ts.isIfStatement(node)) {
       const cond = this.lowerExpr(node.expression);
       const elseStatement = node.elseStatement;
@@ -586,7 +751,9 @@ class Lowerer {
     }
     if (ts.isWhileStatement(node)) {
       const cond = this.lowerExpr(node.expression);
+      this.loopDepth += 1;
       const body = this.withBlock(() => this.lowerStatement(node.statement));
+      this.loopDepth -= 1;
       this.emit({ k: "while", cond, body, span: this.span(node) });
       return;
     }
@@ -603,10 +770,14 @@ class Lowerer {
       const cond: Expr = node.condition
         ? this.lowerExpr(node.condition)
         : { k: "const", value: true, type: "boolean", span: this.span(node) };
+      this.loopDepth += 1;
+      this.forLoopDepth += 1;
       const body = this.withBlock(() => {
         this.lowerStatement(node.statement);
         if (node.incrementor) this.lowerExpr(node.incrementor);
       });
+      this.forLoopDepth -= 1;
+      this.loopDepth -= 1;
       this.emit({ k: "while", cond, body, span: this.span(node) });
       return;
     }

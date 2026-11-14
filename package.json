@@ -14,23 +14,35 @@
     "build:hybrid": "pnpm typescratch build --entry examples/hybrid/main.ts --target turbowarp --out dist/hybrid.sb3",
     "build:workspace": "pnpm typescratch build --config examples/workspace/tscr.config.json --out dist/workspace.sb3",
     "build:default": "pnpm typescratch build --config packages/workspace/template/tscr.config.json --out dist/default.sb3",
-    "test": "node --test tests/*.test.ts",
+    "build:packages": "tsdown",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "snapshots": "node tests/snapshots.ts",
+    "snapshots:update": "node tests/snapshots.ts --update",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "oxlint packages/*/src tests examples",
-    "verify:vm": "node tests/vm-smoke.ts"
+    "verify:vm": "node tests/vm-smoke.ts",
+    "verify": "turbo run //#typecheck //#lint //#test //#snapshots //#verify:vm //#build:packages --output-logs=errors-only"
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "@types/jsdom": "catalog:",
     "@typescratch/backend-planner": "workspace:*",
     "@typescratch/compiler": "workspace:*",
     "@typescratch/diagnostics": "workspace:*",
     "@typescratch/graph": "workspace:*",
     "@typescratch/ir": "workspace:*",
+    "@typescratch/ir-opt": "workspace:*",
     "@typescratch/runtime-abi": "workspace:*",
     "@typescratch/workspace": "workspace:*",
+    "@typescratch/testing": "workspace:*",
     "fflate": "catalog:",
+    "jsdom": "catalog:",
     "oxlint": "catalog:",
     "scratch-vm": "catalog:",
-    "typescript": "catalog:"
+    "tsdown": "catalog:",
+    "turbo": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

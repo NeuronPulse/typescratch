@@ -19,5 +19,5 @@
     }
   },
   "include": ["packages/**/*.ts", "tests/**/*.ts", "examples/**/*.ts"],
-  "exclude": ["examples/type-error/**"]
+  "exclude": ["examples/type-error/**", "examples/event-type-error/**"]
 }

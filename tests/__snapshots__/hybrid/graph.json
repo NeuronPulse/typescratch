@@ -1,0 +1,191 @@
+{
+  "targets": [
+    {
+      "isStage": true,
+      "name": "Stage",
+      "variables": {},
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {},
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "3016e033879a5bf9e79e2f0bd4d37715",
+          "name": "Backdrop1",
+          "md5ext": "3016e033879a5bf9e79e2f0bd4d37715.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 2,
+          "rotationCenterX": 0,
+          "rotationCenterY": 0
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 0,
+      "tempo": 60,
+      "videoState": "on",
+      "videoTransparency": 50,
+      "textToSpeechLanguage": null
+    },
+    {
+      "isStage": false,
+      "name": "Sprite1",
+      "variables": {},
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {
+        "65aa0dd820e71aca": {
+          "opcode": "event_whenflagclicked",
+          "next": "52c94fcf05bc1aef",
+          "parent": null,
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": true,
+          "x": 40,
+          "y": 40
+        },
+        "52c94fcf05bc1aef": {
+          "opcode": "looks_say",
+          "next": "4e1b7ad6625e607e",
+          "parent": "65aa0dd820e71aca",
+          "inputs": {
+            "MESSAGE": [
+              3,
+              "725e35c2fbd3279a",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "725e35c2fbd3279a": {
+          "opcode": "tscr4995f9dafc31_tscr_intrinsic_math_hypot",
+          "next": null,
+          "parent": "52c94fcf05bc1aef",
+          "inputs": {
+            "A": [
+              1,
+              [
+                4,
+                "3"
+              ]
+            ],
+            "B": [
+              1,
+              [
+                4,
+                "4"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "4e1b7ad6625e607e": {
+          "opcode": "looks_say",
+          "next": "86068946128417ee",
+          "parent": "52c94fcf05bc1aef",
+          "inputs": {
+            "MESSAGE": [
+              3,
+              "40795046240fd1e4",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "40795046240fd1e4": {
+          "opcode": "tscr4995f9dafc31_tscr_intrinsic_string_upper",
+          "next": null,
+          "parent": "4e1b7ad6625e607e",
+          "inputs": {
+            "A": [
+              1,
+              [
+                10,
+                "hello"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "86068946128417ee": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "4e1b7ad6625e607e",
+          "inputs": {
+            "MESSAGE": [
+              1,
+              [
+                4,
+                "2"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        }
+      },
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "efb13d50694fa45d4de475346c7b86ec",
+          "name": "Costume1",
+          "md5ext": "efb13d50694fa45d4de475346c7b86ec.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 2,
+          "rotationCenterX": 0,
+          "rotationCenterY": 0
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "size": 100,
+      "direction": 90,
+      "draggable": false,
+      "rotationStyle": "all around"
+    }
+  ],
+  "monitors": [],
+  "extensions": [
+    "tscr4995f9dafc31"
+  ],
+  "meta": {
+    "semver": "3.0.0",
+    "vm": "0.2.0",
+    "agent": "TypeScratch 0.1.0"
+  },
+  "extensionURLs": {
+    "tscr4995f9dafc31": "data:application/javascript;base64,KGZ1bmN0aW9uIChTY3JhdGNoKSB7CiAgJ3VzZSBzdHJpY3QnOwogIGNsYXNzIFR5cGVTY3JhdGNoR2VuZXJhdGVkIHsKICAgIGdldEluZm8oKSB7CiAgICAgIHJldHVybiB7CiAgICAgICAgaWQ6ICJ0c2NyNDk5NWY5ZGFmYzMxIiwKICAgICAgICBuYW1lOiAnVHlwZVNjcmF0Y2ggZ2VuZXJhdGVkJywKICAgICAgICBibG9ja3M6IFsKICAgICAgICAgIHsKICAgICAgICAgICAgb3Bjb2RlOiAidHNjcl9pbnRyaW5zaWNfbWF0aF9oeXBvdCIsCiAgICAgICAgICAgIGJsb2NrVHlwZTogU2NyYXRjaC5CbG9ja1R5cGUuUkVQT1JURVIsCiAgICAgICAgICAgIHRleHQ6ICJoeXBvdCBbQV0gW0JdIiwKICAgICAgICAgICAgYXJndW1lbnRzOiB7IEE6IHsgdHlwZTogU2NyYXRjaC5Bcmd1bWVudFR5cGUuTlVNQkVSIH0sIEI6IHsgdHlwZTogU2NyYXRjaC5Bcmd1bWVudFR5cGUuTlVNQkVSIH0gfQogICAgICAgICAgfSwKICAgICAgICAgIHsKICAgICAgICAgICAgb3Bjb2RlOiAidHNjcl9pbnRyaW5zaWNfc3RyaW5nX3VwcGVyIiwKICAgICAgICAgICAgYmxvY2tUeXBlOiBTY3JhdGNoLkJsb2NrVHlwZS5SRVBPUlRFUiwKICAgICAgICAgICAgdGV4dDogInVwcGVyY2FzZSBbQV0iLAogICAgICAgICAgICBhcmd1bWVudHM6IHsgQTogeyB0eXBlOiBTY3JhdGNoLkFyZ3VtZW50VHlwZS5TVFJJTkcgfSB9CiAgICAgICAgICB9CiAgICAgICAgXQogICAgICB9OwogICAgfQogICAgdHNjcl9pbnRyaW5zaWNfbWF0aF9oeXBvdChhcmdzKSB7CiAgICAgIHRyeSB7CiAgICAgICAgY29uc3QgQSA9IE51bWJlcihhcmdzLkEpOwogICAgICAgIGNvbnN0IEIgPSBOdW1iZXIoYXJncy5CKTsKICAgICAgICBpZiAoIVtBLCBCXS5ldmVyeShOdW1iZXIuaXNGaW5pdGUpKSByZXR1cm4gMDsKICAgICAgICByZXR1cm4gTWF0aC5oeXBvdChBLCBCKTsKICAgICAgfSBjYXRjaCB7CiAgICAgICAgcmV0dXJuIDA7CiAgICAgIH0KICAgIH0KICAgIHRzY3JfaW50cmluc2ljX3N0cmluZ191cHBlcihhcmdzKSB7CiAgICAgIHRyeSB7CiAgICAgICAgY29uc3QgQSA9IFN0cmluZyhhcmdzLkEpOwogICAgICAgIHJldHVybiBTdHJpbmcoQSkudG9VcHBlckNhc2UoKTsKICAgICAgfSBjYXRjaCB7CiAgICAgICAgcmV0dXJuICIiOwogICAgICB9CiAgICB9CiAgfQogIFNjcmF0Y2guZXh0ZW5zaW9ucy5yZWdpc3RlcihuZXcgVHlwZVNjcmF0Y2hHZW5lcmF0ZWQoKSk7Cn0pKFNjcmF0Y2gpOwo="
+  }
+}

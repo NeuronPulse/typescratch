@@ -58,8 +58,8 @@ export interface Target {
   isStage: boolean;
   name: string;
   variables: Record<string, [string, VariableValue]>;
-  lists: Record<string, never>;
-  broadcasts: Record<string, never>;
+  lists: Record<string, [string, VariableValue[]]>;
+  broadcasts: Record<string, string>;
   comments: Record<string, never>;
   blocks: Map<BlockId, ScratchBlock>;
   costumes: Costume[];
@@ -311,7 +311,22 @@ export class GraphBuilder {
     this.varNames.set(id, name);
   }
 
+  declareList(id: string, name: string, initial: VariableValue[]): void {
+    this.active.lists[id] = [name, initial];
+    this.varNames.set(id, name);
+  }
+
+  declareBroadcast(name: string): string {
+    const id = stableId("broadcast", name);
+    this.project.targets[0]!.broadcasts[id] = name;
+    return id;
+  }
+
   variableName(id: string): string {
+    return this.varNames.get(id) ?? id;
+  }
+
+  listName(id: string): string {
     return this.varNames.get(id) ?? id;
   }
 

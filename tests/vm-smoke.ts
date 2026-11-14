@@ -1,49 +1,96 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { compile } from "@typescratch/compiler";
+import { compareTraces, interpretModules, runSb3, type HatTrigger } from "@typescratch/testing";
+import { example, ROOT } from "./helpers.ts";
+import { EVENT_TRIGGERS } from "./events.ts";
 
-interface VmInstance {
-  runtime: { on(event: string, listener: (...args: unknown[]) => void): void };
-  start(): void;
-  greenFlag(): void;
-  loadProject(data: Uint8Array): Promise<void>;
+interface ConformanceCase {
+  label: string;
+  entry?: string;
+  configPath?: string;
+  unorderedSays?: boolean;
+  triggers?: HatTrigger[];
 }
 
-if (typeof (globalThis as { document?: unknown }).document === "undefined") {
-  console.log("VM smoke skipped: headless scratch-vm needs a browser DOM; verify the .sb3 in the Scratch/TurboWarp editor.");
-  process.exit(0);
+function quiet(original: (...args: unknown[]) => void): (...args: unknown[]) => void {
+  return (...args: unknown[]): void => {
+    const text = args.map((value) => String(value)).join(" ");
+    if (text.includes("No storage module present")) return;
+    if (text.includes("Central dispatch replacing existing service provider")) return;
+    original(...args);
+  };
 }
+console.warn = quiet(console.warn.bind(console));
+console.error = quiet(console.error.bind(console));
+console.log = quiet(console.log.bind(console));
+
+const cases: ConformanceCase[] = [
+  { label: "hello-native", entry: example("hello-native") },
+  { label: "calc", entry: example("calc") },
+  { label: "logical", entry: example("logical") },
+  { label: "constant", entry: example("constant") },
+  { label: "alias", entry: example("alias") },
+  { label: "two-hats", entry: example("two-hats"), unorderedSays: true },
+  { label: "list", entry: example("list") },
+  { label: "ir-opt", entry: example("ir-opt") },
+  { label: "break-continue", entry: example("break-continue") },
+  {
+    label: "events",
+    entry: example("events"),
+    unorderedSays: true,
+    triggers: EVENT_TRIGGERS,
+  },
+  {
+    label: "workspace",
+    configPath: "examples/workspace/tscr.config.json",
+    unorderedSays: true,
+  },
+  {
+    label: "default-workspace",
+    configPath: "packages/workspace/template/tscr.config.json",
+  },
+];
 
 const watchdog = setTimeout(() => {
-  console.error("VM smoke timed out after 5s");
+  console.error("VM conformance timed out after 90s");
   process.exit(1);
-}, 5000);
+}, 90_000);
 
-const name = "scratch" + "-vm";
-const module = (await import(name)) as { default: new () => VmInstance };
-const VM = module.default;
-
-const project = readFileSync(resolve(process.cwd(), "dist/hello.sb3"));
-const vm = new VM();
-const says: string[] = [];
-vm.runtime.on("SAY", (_target: unknown, _type: unknown, text: unknown) => {
-  says.push(String(text));
-});
-
-try {
-  vm.start();
-  await vm.loadProject(project);
-  vm.greenFlag();
-  await new Promise((done) => setTimeout(done, 500));
-  if (!says.includes("Hello from TypeScratch!")) {
-    console.error("VM smoke failed: expected SAY event was not observed", says);
-    process.exitCode = 1;
-  } else {
-    console.log("VM smoke ok: green flag produced the expected SAY event");
+let failures = 0;
+for (const item of cases) {
+  try {
+    const result = compile({
+      entry: item.entry,
+      configPath: item.configPath,
+      projectRoot: ROOT,
+      target: "scratch",
+    });
+    if (!result.ok || !result.sb3) {
+      console.error(`VM conformance ${item.label}: compile failed`, result.report.diagnostics);
+      failures += 1;
+      continue;
+    }
+    const expected = interpretModules(result.modules);
+    const actual = await runSb3(result.sb3, { timeoutMs: 8000, triggers: item.triggers });
+    const diffs = compareTraces(expected, actual, {
+      ignoreExtraVariables: true,
+      unorderedSays: item.unorderedSays,
+    });
+    if (diffs.length > 0) {
+      console.error(`VM conformance ${item.label}: ${diffs.length} mismatch(es)`);
+      for (const diff of diffs) console.error(`  ${diff}`);
+      failures += 1;
+      continue;
+    }
+    console.log(
+      `VM conformance ok: ${item.label} (${expected.says.length} says, ${Object.keys(expected.variables).length} variables, ${Object.keys(expected.lists).length} lists)`,
+    );
+  } catch (error) {
+    console.error(`VM conformance ${item.label}: ${error instanceof Error ? error.message : String(error)}`);
+    failures += 1;
   }
-} catch (error) {
-  console.error("VM smoke failed (headless DOM/runtime requirement):", error);
-  process.exitCode = 1;
 }
 
 clearTimeout(watchdog);
-process.exit(process.exitCode ?? 0);
+if (failures > 0) console.error(`VM conformance failed: ${failures}/${cases.length} cases`);
+else console.log(`VM conformance passed: ${cases.length}/${cases.length} cases ran in headless scratch-vm`);
+process.exit(failures > 0 ? 1 : 0);

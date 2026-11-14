@@ -1,13 +1,32 @@
 import { CODES, type DiagnosticBag, type SourceSpan } from "@typescratch/diagnostics";
 import {
   GraphBuilder,
+  type Field,
   type InputRef,
   type Primitive,
   type ProjectGraph,
   type RoleDecl,
 } from "@typescratch/graph";
-import type { BinOp, Expr, Module, Stmt, VarDecl } from "@typescratch/ir";
+import type { BinOp, Expr, Hat, ListOp, Module, Stmt, VarDecl } from "@typescratch/ir";
 import { getIntrinsic } from "@typescratch/language";
+
+const HAT_OPCODES: Record<Hat["kind"], string> = {
+  flag: "event_whenflagclicked",
+  key: "event_whenkeypressed",
+  spriteClicked: "event_whenthisspriteclicked",
+  clone: "control_start_as_clone",
+  backdrop: "event_whenbackdropswitchesto",
+  broadcast: "event_whenbroadcastreceived",
+};
+
+function hatFields(hat: Hat, broadcastId: (name: string) => string): Record<string, Field> | undefined {
+  switch (hat.kind) {
+    case "key": return { KEY_OPTION: [hat.key, null] };
+    case "backdrop": return { BACKDROP: [hat.name, null] };
+    case "broadcast": return { BROADCAST_OPTION: [hat.name, broadcastId(hat.name)] };
+    default: return undefined;
+  }
+}
 
 const BINARY_OPCODES: Partial<Record<BinOp, string>> = {
   add: "operator_add",
@@ -18,6 +37,14 @@ const BINARY_OPCODES: Partial<Record<BinOp, string>> = {
   lt: "operator_lt",
   gt: "operator_gt",
   eq: "operator_equals",
+};
+
+const LIST_OPCODES: Record<ListOp, string> = {
+  push: "data_addtolist",
+  insert: "data_insertatlist",
+  replace: "data_replaceitemoflist",
+  deleteAt: "data_deleteoflist",
+  clear: "data_deletealloflist",
 };
 
 const BOOLEAN_OPS: ReadonlySet<BinOp> = new Set(["lt", "gt", "eq"]);
@@ -40,6 +67,20 @@ function initialValue(decl: VarDecl): string | number | boolean {
   return 0;
 }
 
+function oneBased(index: Expr): Expr {
+  return {
+    k: "binary",
+    op: "add",
+    l: index,
+    r: { k: "const", value: 1, type: "number" },
+    type: "number",
+  };
+}
+
+function listField(name: string, id: string): Record<string, Field> {
+  return { LIST: [name, id] };
+}
+
 export function lowerNative(
   input: Module | Module[],
   bag: DiagnosticBag,
@@ -53,6 +94,9 @@ export function lowerNative(
     builder.setActiveTarget(module.role?.name ?? "Sprite1");
     for (const decl of module.vars) {
       builder.declareVariable(decl.id, decl.name, initialValue(decl), decl.storage);
+    }
+    for (const decl of module.lists ?? []) {
+      builder.declareList(decl.id, decl.name, decl.initial ?? []);
     }
   }
 
@@ -118,6 +162,30 @@ export function lowerNative(
         builder.input(notId, "OPERAND", { block: id });
         return { block: notId };
       }
+      case "convert": {
+        const opcode = expr.to === "number" ? "operator_add" : "operator_equals";
+        const id = builder.add(opcode, { scope, parent: owner, span });
+        const inner = emitValue(expr.value, id, scope, span);
+        if (expr.to === "number") {
+          builder.input(id, "NUM1", { primitive: [4, "0"] });
+          builder.input(id, "NUM2", inner);
+        } else {
+          builder.input(id, "OPERAND1", inner);
+          builder.input(id, "OPERAND2", { primitive: [4, "1"] });
+        }
+        return { block: id };
+      }
+      case "listRead": {
+        const opcode = expr.op === "length" ? "data_lengthoflist" : "data_itemoflist";
+        const id = builder.add(opcode, {
+          scope, parent: owner, span,
+          fields: listField(builder.listName(expr.list), expr.list),
+        });
+        if (expr.op === "item" && expr.index) {
+          builder.input(id, "INDEX", emitValue(oneBased(expr.index), id, scope, span));
+        }
+        return { block: id };
+      }
       case "intrinsic": {
         const spec = getIntrinsic(expr.name);
         const extensionOpcode = options.extensionOpcodes?.get(expr.name);
@@ -158,6 +226,22 @@ export function lowerNative(
 
   const emitStatements = (stmts: Stmt[], scope: string): string[] => {
     const ids: string[] = [];
+    const store = (value: Expr, decl: VarDecl, span?: SourceSpan): void => {
+      if (value.type === "boolean") {
+        bag.error(
+          CODES.VARIABLE_TYPE,
+          `boolean expression cannot be written to Scratch variable ${decl.name}`,
+          span,
+          ["Lower booleans to 0/1 with a convert expression before storing them."],
+        );
+        return;
+      }
+      const id = builder.add("data_setvariableto", {
+        scope, span, fields: { VARIABLE: [decl.name, decl.id] },
+      });
+      builder.input(id, "VALUE", emitValue(value, id, scope, span));
+      ids.push(id);
+    };
     for (const stmt of stmts) {
       const span = stmt.span;
       switch (stmt.k) {
@@ -168,11 +252,7 @@ export function lowerNative(
             bag.error(CODES.NATIVE_LOWERING, `cannot declare unknown variable ${stmt.var}`, span);
             continue;
           }
-          const id = builder.add("data_setvariableto", {
-            scope, span, fields: { VARIABLE: [decl.name, decl.id] },
-          });
-          builder.input(id, "VALUE", emitValue(stmt.init, id, scope, span));
-          ids.push(id);
+          store(stmt.init, decl, span);
           break;
         }
         case "assign": {
@@ -181,11 +261,7 @@ export function lowerNative(
             bag.error(CODES.NATIVE_LOWERING, `cannot assign unknown variable ${stmt.var}`, span);
             continue;
           }
-          const id = builder.add("data_setvariableto", {
-            scope, span, fields: { VARIABLE: [decl.name, decl.id] },
-          });
-          builder.input(id, "VALUE", emitValue(stmt.value, id, scope, span));
-          ids.push(id);
+          store(stmt.value, decl, span);
           break;
         }
         case "expr": {
@@ -207,6 +283,36 @@ export function lowerNative(
           ids.push(id);
           break;
         }
+        case "list": {
+          const id = builder.add(LIST_OPCODES[stmt.op], {
+            scope, span,
+            fields: listField(builder.listName(stmt.list), stmt.list),
+          });
+          const args = stmt.args;
+          const value = (name: string, expr: Expr): void => {
+            builder.input(id, name, emitValue(expr, id, scope, span));
+          };
+          if (stmt.op === "push" && args[0]) value("ITEM", args[0]);
+          if (stmt.op === "insert" && args[0] && args[1]) {
+            value("ITEM", args[1]);
+            value("INDEX", oneBased(args[0]));
+          }
+          if (stmt.op === "replace" && args[0] && args[1]) {
+            value("INDEX", oneBased(args[0]));
+            value("ITEM", args[1]);
+          }
+          if (stmt.op === "deleteAt" && args[0]) value("INDEX", oneBased(args[0]));
+          ids.push(id);
+          break;
+        }
+        case "break":
+        case "continue":
+          bag.error(
+            CODES.NATIVE_LOWERING,
+            `${stmt.k} must be rewritten by ir-opt before native emission`,
+            span,
+          );
+          break;
         case "if": {
           const id = builder.add(stmt.else ? "control_if_else" : "control_if", { scope, span });
           builder.input(id, "CONDITION", emitValue(stmt.cond, id, scope, span));
@@ -252,8 +358,9 @@ export function lowerNative(
     builder.setActiveTarget(roleName);
     module.scripts.forEach((script, index) => {
       const scope = `${roleName}:${index}`;
-      const hat = builder.add("event_whenflagclicked", {
+      const hat = builder.add(HAT_OPCODES[script.hat.kind], {
         scope, topLevel: true, x: 40, y: 40 + index * 320, span: script.span,
+        fields: hatFields(script.hat, (name) => builder.declareBroadcast(name)),
       });
       const ids = emitStatements(script.body, scope);
       builder.chain([hat, ...ids]);

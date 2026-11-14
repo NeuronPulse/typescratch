@@ -5,5 +5,13 @@ catalog:
   typescript: "6.0.3"
   fflate: "0.8.3"
   "@types/node": "26.6.6"
+  "@types/jsdom": "30.0.0"
+  jsdom: "31.0.1"
   oxlint: "1.93.0"
   scratch-vm: "5.0.300"
+  tsdown: "0.23.7"
+  turbo: "2.11.11"
+  vitest: "5.1.0"
+
+minimumReleaseAgeExclude:
+  - jsdom@31.0.1

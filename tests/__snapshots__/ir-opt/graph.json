@@ -1,0 +1,221 @@
+{
+  "targets": [
+    {
+      "isStage": true,
+      "name": "Stage",
+      "variables": {},
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {},
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "3016e033879a5bf9e79e2f0bd4d37715",
+          "name": "Backdrop1",
+          "md5ext": "3016e033879a5bf9e79e2f0bd4d37715.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 2,
+          "rotationCenterX": 0,
+          "rotationCenterY": 0
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 0,
+      "tempo": 60,
+      "videoState": "on",
+      "videoTransparency": 50,
+      "textToSpeechLanguage": null
+    },
+    {
+      "isStage": false,
+      "name": "Sprite1",
+      "variables": {
+        "vs0_1": [
+          "_tscr_s0_n",
+          0
+        ]
+      },
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {
+        "65aa0dd820e71aca": {
+          "opcode": "event_whenflagclicked",
+          "next": "d13255843dbaf198",
+          "parent": null,
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": true,
+          "x": 40,
+          "y": 40
+        },
+        "d13255843dbaf198": {
+          "opcode": "looks_say",
+          "next": "dab87687096551cf",
+          "parent": "65aa0dd820e71aca",
+          "inputs": {
+            "MESSAGE": [
+              1,
+              [
+                10,
+                "alive"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "dab87687096551cf": {
+          "opcode": "looks_say",
+          "next": "69df532eecf33056",
+          "parent": "d13255843dbaf198",
+          "inputs": {
+            "MESSAGE": [
+              1,
+              [
+                4,
+                "7"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "69df532eecf33056": {
+          "opcode": "looks_say",
+          "next": "6a11e4dc19137de6",
+          "parent": "dab87687096551cf",
+          "inputs": {
+            "MESSAGE": [
+              1,
+              [
+                10,
+                "ab"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "6a11e4dc19137de6": {
+          "opcode": "data_setvariableto",
+          "next": "d15aea5def047181",
+          "parent": "69df532eecf33056",
+          "inputs": {
+            "VALUE": [
+              1,
+              [
+                4,
+                "4"
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "_tscr_s0_n",
+              "vs0_1"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "d15aea5def047181": {
+          "opcode": "data_setvariableto",
+          "next": "eb3b80dab247db8a",
+          "parent": "6a11e4dc19137de6",
+          "inputs": {
+            "VALUE": [
+              3,
+              [
+                12,
+                "_tscr_s0_n",
+                "vs0_1"
+              ],
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "_tscr_s0_n",
+              "vs0_1"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "eb3b80dab247db8a": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "d15aea5def047181",
+          "inputs": {
+            "MESSAGE": [
+              3,
+              [
+                12,
+                "_tscr_s0_n",
+                "vs0_1"
+              ],
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        }
+      },
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "efb13d50694fa45d4de475346c7b86ec",
+          "name": "Costume1",
+          "md5ext": "efb13d50694fa45d4de475346c7b86ec.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 2,
+          "rotationCenterX": 0,
+          "rotationCenterY": 0
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "size": 100,
+      "direction": 90,
+      "draggable": false,
+      "rotationStyle": "all around"
+    }
+  ],
+  "monitors": [],
+  "extensions": [],
+  "meta": {
+    "semver": "3.0.0",
+    "vm": "0.2.0",
+    "agent": "TypeScratch 0.1.0"
+  }
+}

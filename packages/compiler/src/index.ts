@@ -7,7 +7,13 @@ import {
   type SourceSpan,
 } from "@typescratch/diagnostics";
 import { createTypedProgram, lowerToHIR, type FrontendConfig } from "@typescratch/frontend-ts";
-import { printModule, validateModule, type Module } from "@typescratch/ir";
+import { printModule, validateModule, validateYieldBoundaries, type Module } from "@typescratch/ir";
+import {
+  emptyOptimizationStats,
+  lowerControlFlow,
+  optimizeModules,
+  type OptimizationStats,
+} from "@typescratch/ir-opt";
 import type { Target } from "@typescratch/language";
 import { validateGraph, type ProjectGraph, type RoleDecl } from "@typescratch/graph";
 import { lowerNative } from "@typescratch/backend-native";
@@ -18,6 +24,22 @@ import { assembleOutputs, type OutputFile } from "@typescratch/exporter-turbowar
 import { loadWorkspace } from "@typescratch/workspace";
 
 export type { PlanEntry } from "@typescratch/backend-planner";
+export type { OptimizationStats } from "@typescratch/ir-opt";
+
+export interface NumericProfileReport {
+  model: "scratch";
+  documentedDifferences: string[];
+}
+
+export const NUMERIC_PROFILE: NumericProfileReport = {
+  model: "scratch",
+  documentedDifferences: [
+    "operator_equals compares numerically and case-insensitively, not with JavaScript ===",
+    "operator_mod returns a divisor-signed remainder, unlike the JavaScript % operator",
+    "Cast.toNumber maps NaN to 0 and accepts numeric strings",
+    "Infinity and NaN are rejected by the frontend as unstable Scratch variable values",
+  ],
+};
 
 export interface CompileOptions {
   entry?: string;
@@ -28,6 +50,7 @@ export interface CompileOptions {
   runtimeDts?: string;
   outputName?: string;
   maxBoundaryCalls?: number;
+  optimize?: boolean;
 }
 
 export interface BuildReport {
@@ -42,6 +65,8 @@ export interface BuildReport {
     customExtensions: number;
     notes: string[];
   };
+  numericProfile: NumericProfileReport;
+  optimization: OptimizationStats;
   sourceMap: { blockId: string; span: SourceSpan }[];
   blockCount: number;
   boundaryCalls: number;
@@ -82,6 +107,8 @@ function failure(
       customExtensions: 0,
       notes: [],
     },
+    numericProfile: NUMERIC_PROFILE,
+    optimization: emptyOptimizationStats(),
     sourceMap: [],
     blockCount: 0,
     boundaryCalls: 0,
@@ -136,24 +163,37 @@ export function compile(options: CompileOptions): CompileResult {
   }
 
   const entryLabel = options.entry ?? workspaceName;
-  for (const module of modules) validateModule(module, bag);
-  const plan = modules.length > 0
-    ? planBackends(modules, target, bag, {
+  for (const module of modules) {
+    validateModule(module, bag);
+    validateYieldBoundaries(module, bag);
+  }
+  const lowered = lowerControlFlow(modules);
+  const optimized = options.optimize === false
+    ? { modules: lowered.modules, stats: emptyOptimizationStats() }
+    : optimizeModules(lowered.modules);
+  const activeModules = optimized.modules;
+  const optimization: OptimizationStats = {
+    ...optimized.stats,
+    controlFlowRewrites: lowered.stats.rewrites,
+  };
+
+  const plan = activeModules.length > 0
+    ? planBackends(activeModules, target, bag, {
       maxBoundaryCalls: options.maxBoundaryCalls,
       seed: entryLabel,
     })
     : undefined;
-  if (bag.hasErrors || !plan || modules.length === 0) {
-    return failure(target, entryLabel, bag, plan?.entries ?? [], modules);
+  if (bag.hasErrors || !plan || activeModules.length === 0) {
+    return failure(target, entryLabel, bag, plan?.entries ?? [], activeModules);
   }
 
-  const { graph, builder } = lowerNative(modules, bag, {
+  const { graph, builder } = lowerNative(activeModules, bag, {
     extensionOpcodes: plan.extensionOpcodes,
     extensionInputs: plan.extensionInputs,
     roles,
   });
   validateGraph(graph, bag);
-  if (bag.hasErrors) return failure(target, entryLabel, bag, plan.entries, modules, graph);
+  if (bag.hasErrors) return failure(target, entryLabel, bag, plan.entries, activeModules, graph);
 
   const bundle = generateExtension(plan, outputName);
   if (bundle) {
@@ -163,7 +203,7 @@ export function compile(options: CompileOptions): CompileResult {
 
   const projectJson = buildProjectJson(graph, bag);
   const sb3 = exportSb3(graph, bag);
-  if (bag.hasErrors) return failure(target, entryLabel, bag, plan.entries, modules, graph);
+  if (bag.hasErrors) return failure(target, entryLabel, bag, plan.entries, activeModules, graph);
 
   const notes: string[] = [];
   if (bundle) {
@@ -185,6 +225,8 @@ export function compile(options: CompileOptions): CompileResult {
       customExtensions: plan.regions.length,
       notes,
     },
+    numericProfile: NUMERIC_PROFILE,
+    optimization,
     sourceMap: builder.sourceMap,
     blockCount: builder.blockCount,
     boundaryCalls: plan.boundaryCalls,
@@ -203,11 +245,11 @@ export function compile(options: CompileOptions): CompileResult {
   const report: BuildReport = {
     ...reportSummary,
     outputs: outputs.map((file) => file.filename),
-    hirDump: JSON.stringify(modules.map(printModule), null, 2),
+    hirDump: JSON.stringify(activeModules.map(printModule), null, 2),
     projectJson,
   };
 
-  return { ok: true, report, sb3, outputs, modules, graph, bundle, plan };
+  return { ok: true, report, sb3, outputs, modules: activeModules, graph, bundle, plan };
 }
 
 export function formatReport(report: BuildReport, explain = false): string {
@@ -219,6 +261,10 @@ export function formatReport(report: BuildReport, explain = false): string {
     `  boundary calls: ${report.boundaryCalls}`,
     `  official Scratch compatible: ${report.compatibility.officialScratch ? "yes" : "no"}`,
     `  custom extensions: ${report.compatibility.customExtensions}`,
+    `  numeric profile: ${report.numericProfile.model} (${report.numericProfile.documentedDifferences.length} documented differences)`,
+    `  optimization: ${report.optimization.folded} folded, ${report.optimization.simplified} simplified, ` +
+      `${report.optimization.branchesRemoved} branches, ${report.optimization.loopsRemoved} loops, ` +
+      `${report.optimization.controlFlowRewrites} control-flow rewrites`,
     `  diagnostics: ${report.diagnostics.length}`,
   ];
   for (const output of report.outputs) lines.push(`  wrote: ${output}`);

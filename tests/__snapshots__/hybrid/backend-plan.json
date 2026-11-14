@@ -1,0 +1,88 @@
+{
+  "entries": [
+    {
+      "operation": "ext.Math.hypot",
+      "decision": "extension",
+      "detail": "tscr_intrinsic_math_hypot (2 ABI args)",
+      "span": {
+        "file": "examples/hybrid/main.ts",
+        "start": 86,
+        "end": 102,
+        "line": 4,
+        "column": 15
+      },
+      "regionId": "region:ext.Math.hypot",
+      "cost": 2
+    },
+    {
+      "operation": "ext.String.toUpperCase",
+      "decision": "extension",
+      "detail": "tscr_intrinsic_string_upper (1 ABI args)",
+      "span": {
+        "file": "examples/hybrid/main.ts",
+        "start": 119,
+        "end": 140,
+        "line": 5,
+        "column": 15
+      },
+      "regionId": "region:ext.String.toUpperCase",
+      "cost": 2
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/hybrid/main.ts",
+        "start": 74,
+        "end": 103,
+        "line": 4,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/hybrid/main.ts",
+        "start": 107,
+        "end": 141,
+        "line": 5,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/hybrid/main.ts",
+        "start": 145,
+        "end": 163,
+        "line": 6,
+        "column": 3
+      },
+      "cost": 0
+    }
+  ],
+  "regions": [
+    {
+      "id": "region:ext.Math.hypot",
+      "intrinsic": "ext.Math.hypot",
+      "opcode": "tscr_intrinsic_math_hypot",
+      "occurrences": 1
+    },
+    {
+      "id": "region:ext.String.toUpperCase",
+      "intrinsic": "ext.String.toUpperCase",
+      "opcode": "tscr_intrinsic_string_upper",
+      "occurrences": 1
+    }
+  ],
+  "extensionId": "tscr4995f9dafc31",
+  "boundaryCalls": 2,
+  "nativeOps": 3
+}

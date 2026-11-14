@@ -1,0 +1,13 @@
+{
+  "name": "@typescratch/ir-opt",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@typescratch/ir": "workspace:*",
+    "@typescratch/language": "workspace:*"
+  }
+}

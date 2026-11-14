@@ -1,4 +1,4 @@
-import { test } from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
 import { realpathSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -102,7 +102,18 @@ test("hybrid project mixes native blocks and extension opcodes", () => {
   const blocks = Object.values(project.targets[1]!.blocks);
   const opcodes = blocks.map((block) => block.opcode);
   assert.equal(opcodes.filter((opcode) => opcode === "looks_say").length, 3);
-  assert.equal(opcodes.filter((opcode) => opcode === "operator_add").length, 1);
+  assert.equal(opcodes.filter((opcode) => opcode === "operator_add").length, 0);
+  const unoptimized = compile({
+    entry: example("hybrid"),
+    projectRoot: ROOT,
+    target: "turbowarp",
+    outputName: "hybrid.sb3",
+    optimize: false,
+  });
+  assert.equal(unoptimized.ok, true);
+  const rawOpcodes = Object.values(projectOf(unoptimized).targets[1]!.blocks)
+    .map((block) => block.opcode);
+  assert.equal(rawOpcodes.filter((opcode) => opcode === "operator_add").length, 1);
   assert.ok(opcodes.some((opcode) => opcode.includes("tscr_intrinsic_math_hypot")));
   assert.ok(opcodes.some((opcode) => opcode.includes("tscr_intrinsic_string_upper")));
   assert.ok(opcodes.every((opcode) => !opcode.startsWith(`${result.bundle!.id}_`) || opcode.startsWith(`${result.bundle!.id}_`)));

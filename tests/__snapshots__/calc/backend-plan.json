@@ -1,0 +1,47 @@
+{
+  "entries": [
+    {
+      "operation": "math.sqrt",
+      "decision": "native",
+      "detail": "operator_mathop",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 299,
+        "end": 321,
+        "line": 15,
+        "column": 13
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 205,
+        "end": 230,
+        "line": 10,
+        "column": 7
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 251,
+        "end": 275,
+        "line": 12,
+        "column": 7
+      },
+      "cost": 0
+    }
+  ],
+  "regions": [],
+  "extensionId": null,
+  "boundaryCalls": 0,
+  "nativeOps": 3
+}

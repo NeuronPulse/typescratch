@@ -1,0 +1,274 @@
+{
+  "target": "scratch",
+  "entry": "examples/calc/main.ts",
+  "ok": true,
+  "diagnostics": [
+    {
+      "code": "TSCR2003",
+      "severity": "warning",
+      "message": "JS remainder differs from Scratch mod for negative operands; v0.1 restricts % to non-negative integers",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 184,
+        "end": 189,
+        "line": 9,
+        "column": 9
+      }
+    }
+  ],
+  "plan": [
+    {
+      "operation": "math.sqrt",
+      "decision": "native",
+      "detail": "operator_mathop",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 299,
+        "end": 321,
+        "line": 15,
+        "column": 13
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 205,
+        "end": 230,
+        "line": 10,
+        "column": 7
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 251,
+        "end": 275,
+        "line": 12,
+        "column": 7
+      },
+      "cost": 0
+    }
+  ],
+  "compatibility": {
+    "officialScratch": true,
+    "turboWarp": true,
+    "customExtensions": 0,
+    "notes": []
+  },
+  "numericProfile": {
+    "model": "scratch",
+    "documentedDifferences": [
+      "operator_equals compares numerically and case-insensitively, not with JavaScript ===",
+      "operator_mod returns a divisor-signed remainder, unlike the JavaScript % operator",
+      "Cast.toNumber maps NaN to 0 and accepts numeric strings",
+      "Infinity and NaN are rejected by the frontend as unstable Scratch variable values"
+    ]
+  },
+  "optimization": {
+    "folded": 0,
+    "simplified": 0,
+    "branchesRemoved": 0,
+    "loopsRemoved": 0,
+    "controlFlowRewrites": 0
+  },
+  "sourceMap": [
+    {
+      "blockId": "608c0aae20ba0cd2",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 113,
+        "end": 327,
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "blockId": "1cff26d3591024f3",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 142,
+        "end": 147,
+        "line": 6,
+        "column": 7
+      }
+    },
+    {
+      "blockId": "a18d8f4a21872d64",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 151,
+        "end": 286,
+        "line": 7,
+        "column": 3
+      }
+    },
+    {
+      "blockId": "fcf75f6d261a6c19",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 151,
+        "end": 286,
+        "line": 7,
+        "column": 3
+      }
+    },
+    {
+      "blockId": "022061a696246d5a",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 158,
+        "end": 163,
+        "line": 7,
+        "column": 10
+      }
+    },
+    {
+      "blockId": "97986894e17387a4",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 171,
+        "end": 174,
+        "line": 8,
+        "column": 5
+      }
+    },
+    {
+      "blockId": "c8635dc3185b723b",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 171,
+        "end": 174,
+        "line": 8,
+        "column": 5
+      }
+    },
+    {
+      "blockId": "3ac17177e6d13f07",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 180,
+        "end": 282,
+        "line": 9,
+        "column": 5
+      }
+    },
+    {
+      "blockId": "00355a0138eca899",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 184,
+        "end": 195,
+        "line": 9,
+        "column": 9
+      }
+    },
+    {
+      "blockId": "803c0911a2d4487d",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 184,
+        "end": 189,
+        "line": 9,
+        "column": 9
+      }
+    },
+    {
+      "blockId": "cd4b36eedf03e9a4",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 205,
+        "end": 230,
+        "line": 10,
+        "column": 7
+      }
+    },
+    {
+      "blockId": "7b90658b30ed1c3b",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 217,
+        "end": 229,
+        "line": 10,
+        "column": 19
+      }
+    },
+    {
+      "blockId": "7c90671ecdd94938",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 217,
+        "end": 229,
+        "line": 10,
+        "column": 19
+      }
+    },
+    {
+      "blockId": "728cf06e660cd628",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 251,
+        "end": 275,
+        "line": 12,
+        "column": 7
+      }
+    },
+    {
+      "blockId": "76e62c8b7086f0ab",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 263,
+        "end": 274,
+        "line": 12,
+        "column": 19
+      }
+    },
+    {
+      "blockId": "75e62af8b4c11156",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 263,
+        "end": 274,
+        "line": 12,
+        "column": 19
+      }
+    },
+    {
+      "blockId": "729477c3f1115f53",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 289,
+        "end": 322,
+        "line": 15,
+        "column": 3
+      }
+    },
+    {
+      "blockId": "780bab4bcdb8a353",
+      "span": {
+        "file": "examples/calc/main.ts",
+        "start": 299,
+        "end": 321,
+        "line": 15,
+        "column": 13
+      }
+    }
+  ],
+  "blockCount": 18,
+  "boundaryCalls": 0,
+  "outputs": [
+    "calc.sb3",
+    "calc.project.json",
+    "calc.report.json",
+    "calc.source-map.json"
+  ],
+  "hirDump": "[\n  \"{\\n  \\\"entry\\\": \\\"examples/calc/main.ts\\\",\\n  \\\"scripts\\\": [\\n    {\\n      \\\"hat\\\": {\\n        \\\"kind\\\": \\\"flag\\\"\\n      },\\n      \\\"body\\\": [\\n        {\\n          \\\"k\\\": \\\"declare\\\",\\n          \\\"var\\\": \\\"vs0_2\\\",\\n          \\\"init\\\": {\\n            \\\"k\\\": \\\"const\\\",\\n            \\\"value\\\": 0,\\n            \\\"type\\\": \\\"number\\\",\\n            \\\"span\\\": {\\n              \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n              \\\"start\\\": 146,\\n              \\\"end\\\": 147,\\n              \\\"line\\\": 6,\\n              \\\"column\\\": 11\\n            }\\n          },\\n          \\\"span\\\": {\\n            \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n            \\\"start\\\": 142,\\n            \\\"end\\\": 147,\\n            \\\"line\\\": 6,\\n            \\\"column\\\": 7\\n          }\\n        },\\n        {\\n          \\\"k\\\": \\\"while\\\",\\n          \\\"cond\\\": {\\n            \\\"k\\\": \\\"binary\\\",\\n            \\\"op\\\": \\\"lt\\\",\\n            \\\"l\\\": {\\n              \\\"k\\\": \\\"read\\\",\\n              \\\"var\\\": \\\"vs0_2\\\",\\n              \\\"type\\\": \\\"number\\\",\\n              \\\"span\\\": {\\n                \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                \\\"start\\\": 158,\\n                \\\"end\\\": 159,\\n                \\\"line\\\": 7,\\n                \\\"column\\\": 10\\n              }\\n            },\\n            \\\"r\\\": {\\n              \\\"k\\\": \\\"const\\\",\\n              \\\"value\\\": 3,\\n              \\\"type\\\": \\\"number\\\",\\n              \\\"span\\\": {\\n                \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                \\\"start\\\": 162,\\n                \\\"end\\\": 163,\\n                \\\"line\\\": 7,\\n                \\\"column\\\": 14\\n              }\\n            },\\n            \\\"type\\\": \\\"boolean\\\",\\n            \\\"span\\\": {\\n              \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n              \\\"start\\\": 158,\\n              \\\"end\\\": 163,\\n              \\\"line\\\": 7,\\n              \\\"column\\\": 10\\n            }\\n          },\\n          \\\"body\\\": [\\n            {\\n              \\\"k\\\": \\\"assign\\\",\\n              \\\"var\\\": \\\"vs0_2\\\",\\n              \\\"value\\\": {\\n                \\\"k\\\": \\\"binary\\\",\\n                \\\"op\\\": \\\"add\\\",\\n                \\\"l\\\": {\\n                  \\\"k\\\": \\\"read\\\",\\n                  \\\"var\\\": \\\"vs0_2\\\",\\n                  \\\"type\\\": \\\"number\\\",\\n                  \\\"span\\\": {\\n                    \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                    \\\"start\\\": 171,\\n                    \\\"end\\\": 174,\\n                    \\\"line\\\": 8,\\n                    \\\"column\\\": 5\\n                  }\\n                },\\n                \\\"r\\\": {\\n                  \\\"k\\\": \\\"const\\\",\\n                  \\\"value\\\": 1,\\n                  \\\"type\\\": \\\"number\\\"\\n                },\\n                \\\"type\\\": \\\"number\\\",\\n                \\\"span\\\": {\\n                  \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                  \\\"start\\\": 171,\\n                  \\\"end\\\": 174,\\n                  \\\"line\\\": 8,\\n                  \\\"column\\\": 5\\n                }\\n              },\\n              \\\"span\\\": {\\n                \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                \\\"start\\\": 171,\\n                \\\"end\\\": 174,\\n                \\\"line\\\": 8,\\n                \\\"column\\\": 5\\n              }\\n            },\\n            {\\n              \\\"k\\\": \\\"if\\\",\\n              \\\"cond\\\": {\\n                \\\"k\\\": \\\"binary\\\",\\n                \\\"op\\\": \\\"eq\\\",\\n                \\\"l\\\": {\\n                  \\\"k\\\": \\\"binary\\\",\\n                  \\\"op\\\": \\\"mod\\\",\\n                  \\\"l\\\": {\\n                    \\\"k\\\": \\\"read\\\",\\n                    \\\"var\\\": \\\"vs0_2\\\",\\n                    \\\"type\\\": \\\"number\\\",\\n                    \\\"span\\\": {\\n                      \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                      \\\"start\\\": 184,\\n                      \\\"end\\\": 185,\\n                      \\\"line\\\": 9,\\n                      \\\"column\\\": 9\\n                    }\\n                  },\\n                  \\\"r\\\": {\\n                    \\\"k\\\": \\\"const\\\",\\n                    \\\"value\\\": 2,\\n                    \\\"type\\\": \\\"number\\\",\\n                    \\\"span\\\": {\\n                      \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                      \\\"start\\\": 188,\\n                      \\\"end\\\": 189,\\n                      \\\"line\\\": 9,\\n                      \\\"column\\\": 13\\n                    }\\n                  },\\n                  \\\"type\\\": \\\"number\\\",\\n                  \\\"span\\\": {\\n                    \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                    \\\"start\\\": 184,\\n                    \\\"end\\\": 189,\\n                    \\\"line\\\": 9,\\n                    \\\"column\\\": 9\\n                  }\\n                },\\n                \\\"r\\\": {\\n                  \\\"k\\\": \\\"const\\\",\\n                  \\\"value\\\": 0,\\n                  \\\"type\\\": \\\"number\\\",\\n                  \\\"span\\\": {\\n                    \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                    \\\"start\\\": 194,\\n                    \\\"end\\\": 195,\\n                    \\\"line\\\": 9,\\n                    \\\"column\\\": 19\\n                  }\\n                },\\n                \\\"type\\\": \\\"boolean\\\",\\n                \\\"span\\\": {\\n                  \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                  \\\"start\\\": 184,\\n                  \\\"end\\\": 195,\\n                  \\\"line\\\": 9,\\n                  \\\"column\\\": 9\\n                }\\n              },\\n              \\\"then\\\": [\\n                {\\n                  \\\"k\\\": \\\"expr\\\",\\n                  \\\"name\\\": \\\"say\\\",\\n                  \\\"args\\\": [\\n                    {\\n                      \\\"k\\\": \\\"join\\\",\\n                      \\\"parts\\\": [\\n                        {\\n                          \\\"k\\\": \\\"const\\\",\\n                          \\\"value\\\": \\\"even: \\\",\\n                          \\\"type\\\": \\\"string\\\",\\n                          \\\"span\\\": {\\n                            \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                            \\\"start\\\": 217,\\n                            \\\"end\\\": 226,\\n                            \\\"line\\\": 10,\\n                            \\\"column\\\": 19\\n                          }\\n                        },\\n                        {\\n                          \\\"k\\\": \\\"read\\\",\\n                          \\\"var\\\": \\\"vs0_2\\\",\\n                          \\\"type\\\": \\\"number\\\",\\n                          \\\"span\\\": {\\n                            \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                            \\\"start\\\": 226,\\n                            \\\"end\\\": 227,\\n                            \\\"line\\\": 10,\\n                            \\\"column\\\": 28\\n                          }\\n                        },\\n                        {\\n                          \\\"k\\\": \\\"const\\\",\\n                          \\\"value\\\": \\\"\\\",\\n                          \\\"type\\\": \\\"string\\\",\\n                          \\\"span\\\": {\\n                            \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                            \\\"start\\\": 227,\\n                            \\\"end\\\": 229,\\n                            \\\"line\\\": 10,\\n                            \\\"column\\\": 29\\n                          }\\n                        }\\n                      ],\\n                      \\\"type\\\": \\\"string\\\",\\n                      \\\"span\\\": {\\n                        \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                        \\\"start\\\": 217,\\n                        \\\"end\\\": 229,\\n                        \\\"line\\\": 10,\\n                        \\\"column\\\": 19\\n                      }\\n                    }\\n                  ],\\n                  \\\"span\\\": {\\n                    \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                    \\\"start\\\": 205,\\n                    \\\"end\\\": 230,\\n                    \\\"line\\\": 10,\\n                    \\\"column\\\": 7\\n                  }\\n                }\\n              ],\\n              \\\"span\\\": {\\n                \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                \\\"start\\\": 180,\\n                \\\"end\\\": 282,\\n                \\\"line\\\": 9,\\n                \\\"column\\\": 5\\n              },\\n              \\\"else\\\": [\\n                {\\n                  \\\"k\\\": \\\"expr\\\",\\n                  \\\"name\\\": \\\"say\\\",\\n                  \\\"args\\\": [\\n                    {\\n                      \\\"k\\\": \\\"join\\\",\\n                      \\\"parts\\\": [\\n                        {\\n                          \\\"k\\\": \\\"const\\\",\\n                          \\\"value\\\": \\\"odd: \\\",\\n                          \\\"type\\\": \\\"string\\\",\\n                          \\\"span\\\": {\\n                            \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                            \\\"start\\\": 263,\\n                            \\\"end\\\": 271,\\n                            \\\"line\\\": 12,\\n                            \\\"column\\\": 19\\n                          }\\n                        },\\n                        {\\n                          \\\"k\\\": \\\"read\\\",\\n                          \\\"var\\\": \\\"vs0_2\\\",\\n                          \\\"type\\\": \\\"number\\\",\\n                          \\\"span\\\": {\\n                            \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                            \\\"start\\\": 271,\\n                            \\\"end\\\": 272,\\n                            \\\"line\\\": 12,\\n                            \\\"column\\\": 27\\n                          }\\n                        },\\n                        {\\n                          \\\"k\\\": \\\"const\\\",\\n                          \\\"value\\\": \\\"\\\",\\n                          \\\"type\\\": \\\"string\\\",\\n                          \\\"span\\\": {\\n                            \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                            \\\"start\\\": 272,\\n                            \\\"end\\\": 274,\\n                            \\\"line\\\": 12,\\n                            \\\"column\\\": 28\\n                          }\\n                        }\\n                      ],\\n                      \\\"type\\\": \\\"string\\\",\\n                      \\\"span\\\": {\\n                        \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                        \\\"start\\\": 263,\\n                        \\\"end\\\": 274,\\n                        \\\"line\\\": 12,\\n                        \\\"column\\\": 19\\n                      }\\n                    }\\n                  ],\\n                  \\\"span\\\": {\\n                    \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                    \\\"start\\\": 251,\\n                    \\\"end\\\": 275,\\n                    \\\"line\\\": 12,\\n                    \\\"column\\\": 7\\n                  }\\n                }\\n              ]\\n            }\\n          ],\\n          \\\"span\\\": {\\n            \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n            \\\"start\\\": 151,\\n            \\\"end\\\": 286,\\n            \\\"line\\\": 7,\\n            \\\"column\\\": 3\\n          }\\n        },\\n        {\\n          \\\"k\\\": \\\"assign\\\",\\n          \\\"var\\\": \\\"vg_1\\\",\\n          \\\"value\\\": {\\n            \\\"k\\\": \\\"intrinsic\\\",\\n            \\\"name\\\": \\\"math.sqrt\\\",\\n            \\\"args\\\": [\\n              {\\n                \\\"k\\\": \\\"read\\\",\\n                \\\"var\\\": \\\"vg_1\\\",\\n                \\\"type\\\": \\\"number\\\",\\n                \\\"span\\\": {\\n                  \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n                  \\\"start\\\": 309,\\n                  \\\"end\\\": 320,\\n                  \\\"line\\\": 15,\\n                  \\\"column\\\": 23\\n                }\\n              }\\n            ],\\n            \\\"type\\\": \\\"number\\\",\\n            \\\"span\\\": {\\n              \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n              \\\"start\\\": 299,\\n              \\\"end\\\": 321,\\n              \\\"line\\\": 15,\\n              \\\"column\\\": 13\\n            }\\n          },\\n          \\\"span\\\": {\\n            \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n            \\\"start\\\": 289,\\n            \\\"end\\\": 322,\\n            \\\"line\\\": 15,\\n            \\\"column\\\": 3\\n          }\\n        }\\n      ],\\n      \\\"span\\\": {\\n        \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n        \\\"start\\\": 113,\\n        \\\"end\\\": 327,\\n        \\\"line\\\": 5,\\n        \\\"column\\\": 1\\n      }\\n    }\\n  ],\\n  \\\"vars\\\": [\\n    {\\n      \\\"id\\\": \\\"vg_1\\\",\\n      \\\"name\\\": \\\"score\\\",\\n      \\\"type\\\": \\\"number\\\",\\n      \\\"storage\\\": \\\"global\\\",\\n      \\\"span\\\": {\\n        \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n        \\\"start\\\": 55,\\n        \\\"end\\\": 110,\\n        \\\"line\\\": 3,\\n        \\\"column\\\": 7\\n      },\\n      \\\"initial\\\": 9\\n    },\\n    {\\n      \\\"id\\\": \\\"vs0_2\\\",\\n      \\\"name\\\": \\\"_tscr_s0_i\\\",\\n      \\\"type\\\": \\\"number\\\",\\n      \\\"storage\\\": \\\"temp\\\",\\n      \\\"span\\\": {\\n        \\\"file\\\": \\\"examples/calc/main.ts\\\",\\n        \\\"start\\\": 142,\\n        \\\"end\\\": 147,\\n        \\\"line\\\": 6,\\n        \\\"column\\\": 7\\n      },\\n      \\\"script\\\": 0\\n    }\\n  ],\\n  \\\"lists\\\": [],\\n  \\\"role\\\": {\\n    \\\"name\\\": \\\"Sprite1\\\",\\n    \\\"isStage\\\": false\\n  }\\n}\"\n]",
+  "projectJson": "{\n  \"targets\": [\n    {\n      \"isStage\": true,\n      \"name\": \"Stage\",\n      \"variables\": {\n        \"vg_1\": [\n          \"score\",\n          9\n        ]\n      },\n      \"lists\": {},\n      \"broadcasts\": {},\n      \"blocks\": {},\n      \"comments\": {},\n      \"currentCostume\": 0,\n      \"costumes\": [\n        {\n          \"assetId\": \"3016e033879a5bf9e79e2f0bd4d37715\",\n          \"name\": \"Backdrop1\",\n          \"md5ext\": \"3016e033879a5bf9e79e2f0bd4d37715.svg\",\n          \"dataFormat\": \"svg\",\n          \"bitmapResolution\": 2,\n          \"rotationCenterX\": 0,\n          \"rotationCenterY\": 0\n        }\n      ],\n      \"sounds\": [],\n      \"volume\": 100,\n      \"layerOrder\": 0,\n      \"tempo\": 60,\n      \"videoState\": \"on\",\n      \"videoTransparency\": 50,\n      \"textToSpeechLanguage\": null\n    },\n    {\n      \"isStage\": false,\n      \"name\": \"Sprite1\",\n      \"variables\": {\n        \"vs0_2\": [\n          \"_tscr_s0_i\",\n          0\n        ]\n      },\n      \"lists\": {},\n      \"broadcasts\": {},\n      \"blocks\": {\n        \"608c0aae20ba0cd2\": {\n          \"opcode\": \"event_whenflagclicked\",\n          \"next\": \"1cff26d3591024f3\",\n          \"parent\": null,\n          \"inputs\": {},\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": true,\n          \"x\": 40,\n          \"y\": 40\n        },\n        \"1cff26d3591024f3\": {\n          \"opcode\": \"data_setvariableto\",\n          \"next\": \"a18d8f4a21872d64\",\n          \"parent\": \"608c0aae20ba0cd2\",\n          \"inputs\": {\n            \"VALUE\": [\n              1,\n              [\n                4,\n                \"0\"\n              ]\n            ]\n          },\n          \"fields\": {\n            \"VARIABLE\": [\n              \"_tscr_s0_i\",\n              \"vs0_2\"\n            ]\n          },\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"a18d8f4a21872d64\": {\n          \"opcode\": \"control_repeat_until\",\n          \"next\": \"729477c3f1115f53\",\n          \"parent\": \"1cff26d3591024f3\",\n          \"inputs\": {\n            \"CONDITION\": [\n              3,\n              \"fcf75f6d261a6c19\",\n              [\n                4,\n                \"\"\n              ]\n            ],\n            \"SUBSTACK\": [\n              2,\n              \"97986894e17387a4\"\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"fcf75f6d261a6c19\": {\n          \"opcode\": \"operator_not\",\n          \"next\": null,\n          \"parent\": \"a18d8f4a21872d64\",\n          \"inputs\": {\n            \"OPERAND\": [\n              3,\n              \"022061a696246d5a\",\n              [\n                4,\n                \"\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"022061a696246d5a\": {\n          \"opcode\": \"operator_lt\",\n          \"next\": null,\n          \"parent\": \"fcf75f6d261a6c19\",\n          \"inputs\": {\n            \"OPERAND1\": [\n              3,\n              [\n                12,\n                \"_tscr_s0_i\",\n                \"vs0_2\"\n              ],\n              [\n                4,\n                \"\"\n              ]\n            ],\n            \"OPERAND2\": [\n              1,\n              [\n                4,\n                \"3\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"97986894e17387a4\": {\n          \"opcode\": \"data_setvariableto\",\n          \"next\": \"3ac17177e6d13f07\",\n          \"parent\": \"a18d8f4a21872d64\",\n          \"inputs\": {\n            \"VALUE\": [\n              3,\n              \"c8635dc3185b723b\",\n              [\n                4,\n                \"\"\n              ]\n            ]\n          },\n          \"fields\": {\n            \"VARIABLE\": [\n              \"_tscr_s0_i\",\n              \"vs0_2\"\n            ]\n          },\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"c8635dc3185b723b\": {\n          \"opcode\": \"operator_add\",\n          \"next\": null,\n          \"parent\": \"97986894e17387a4\",\n          \"inputs\": {\n            \"NUM1\": [\n              3,\n              [\n                12,\n                \"_tscr_s0_i\",\n                \"vs0_2\"\n              ],\n              [\n                4,\n                \"\"\n              ]\n            ],\n            \"NUM2\": [\n              1,\n              [\n                4,\n                \"1\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"3ac17177e6d13f07\": {\n          \"opcode\": \"control_if_else\",\n          \"next\": null,\n          \"parent\": \"97986894e17387a4\",\n          \"inputs\": {\n            \"CONDITION\": [\n              3,\n              \"00355a0138eca899\",\n              [\n                4,\n                \"\"\n              ]\n            ],\n            \"SUBSTACK\": [\n              2,\n              \"cd4b36eedf03e9a4\"\n            ],\n            \"SUBSTACK2\": [\n              2,\n              \"728cf06e660cd628\"\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"00355a0138eca899\": {\n          \"opcode\": \"operator_equals\",\n          \"next\": null,\n          \"parent\": \"3ac17177e6d13f07\",\n          \"inputs\": {\n            \"OPERAND1\": [\n              3,\n              \"803c0911a2d4487d\",\n              [\n                4,\n                \"\"\n              ]\n            ],\n            \"OPERAND2\": [\n              1,\n              [\n                4,\n                \"0\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"803c0911a2d4487d\": {\n          \"opcode\": \"operator_mod\",\n          \"next\": null,\n          \"parent\": \"00355a0138eca899\",\n          \"inputs\": {\n            \"NUM1\": [\n              3,\n              [\n                12,\n                \"_tscr_s0_i\",\n                \"vs0_2\"\n              ],\n              [\n                4,\n                \"\"\n              ]\n            ],\n            \"NUM2\": [\n              1,\n              [\n                4,\n                \"2\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"cd4b36eedf03e9a4\": {\n          \"opcode\": \"looks_say\",\n          \"next\": null,\n          \"parent\": \"3ac17177e6d13f07\",\n          \"inputs\": {\n            \"MESSAGE\": [\n              3,\n              \"7c90671ecdd94938\",\n              [\n                4,\n                \"\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"7b90658b30ed1c3b\": {\n          \"opcode\": \"operator_join\",\n          \"next\": null,\n          \"parent\": \"7c90671ecdd94938\",\n          \"inputs\": {\n            \"STRING1\": [\n              1,\n              [\n                10,\n                \"even: \"\n              ]\n            ],\n            \"STRING2\": [\n              3,\n              [\n                12,\n                \"_tscr_s0_i\",\n                \"vs0_2\"\n              ],\n              [\n                4,\n                \"\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"7c90671ecdd94938\": {\n          \"opcode\": \"operator_join\",\n          \"next\": null,\n          \"parent\": \"cd4b36eedf03e9a4\",\n          \"inputs\": {\n            \"STRING1\": [\n              3,\n              \"7b90658b30ed1c3b\",\n              [\n                4,\n                \"\"\n              ]\n            ],\n            \"STRING2\": [\n              1,\n              [\n                10,\n                \"\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"728cf06e660cd628\": {\n          \"opcode\": \"looks_say\",\n          \"next\": null,\n          \"parent\": \"3ac17177e6d13f07\",\n          \"inputs\": {\n            \"MESSAGE\": [\n              3,\n              \"75e62af8b4c11156\",\n              [\n                4,\n                \"\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"76e62c8b7086f0ab\": {\n          \"opcode\": \"operator_join\",\n          \"next\": null,\n          \"parent\": \"75e62af8b4c11156\",\n          \"inputs\": {\n            \"STRING1\": [\n              1,\n              [\n                10,\n                \"odd: \"\n              ]\n            ],\n            \"STRING2\": [\n              3,\n              [\n                12,\n                \"_tscr_s0_i\",\n                \"vs0_2\"\n              ],\n              [\n                4,\n                \"\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"75e62af8b4c11156\": {\n          \"opcode\": \"operator_join\",\n          \"next\": null,\n          \"parent\": \"728cf06e660cd628\",\n          \"inputs\": {\n            \"STRING1\": [\n              3,\n              \"76e62c8b7086f0ab\",\n              [\n                4,\n                \"\"\n              ]\n            ],\n            \"STRING2\": [\n              1,\n              [\n                10,\n                \"\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"729477c3f1115f53\": {\n          \"opcode\": \"data_setvariableto\",\n          \"next\": null,\n          \"parent\": \"a18d8f4a21872d64\",\n          \"inputs\": {\n            \"VALUE\": [\n              3,\n              \"780bab4bcdb8a353\",\n              [\n                4,\n                \"\"\n              ]\n            ]\n          },\n          \"fields\": {\n            \"VARIABLE\": [\n              \"score\",\n              \"vg_1\"\n            ]\n          },\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"780bab4bcdb8a353\": {\n          \"opcode\": \"operator_mathop\",\n          \"next\": null,\n          \"parent\": \"729477c3f1115f53\",\n          \"inputs\": {\n            \"NUM\": [\n              3,\n              [\n                12,\n                \"score\",\n                \"vg_1\"\n              ],\n              [\n                4,\n                \"\"\n              ]\n            ]\n          },\n          \"fields\": {\n            \"OPERATOR\": [\n              \"sqrt\",\n              null\n            ]\n          },\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        }\n      },\n      \"comments\": {},\n      \"currentCostume\": 0,\n      \"costumes\": [\n        {\n          \"assetId\": \"efb13d50694fa45d4de475346c7b86ec\",\n          \"name\": \"Costume1\",\n          \"md5ext\": \"efb13d50694fa45d4de475346c7b86ec.svg\",\n          \"dataFormat\": \"svg\",\n          \"bitmapResolution\": 2,\n          \"rotationCenterX\": 0,\n          \"rotationCenterY\": 0\n        }\n      ],\n      \"sounds\": [],\n      \"volume\": 100,\n      \"layerOrder\": 1,\n      \"visible\": true,\n      \"x\": 0,\n      \"y\": 0,\n      \"size\": 100,\n      \"direction\": 90,\n      \"draggable\": false,\n      \"rotationStyle\": \"all around\"\n    }\n  ],\n  \"monitors\": [],\n  \"extensions\": [],\n  \"meta\": {\n    \"semver\": \"3.0.0\",\n    \"vm\": \"0.2.0\",\n    \"agent\": \"TypeScratch 0.1.0\"\n  }\n}"
+}

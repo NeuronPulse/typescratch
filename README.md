@@ -25,10 +25,10 @@ Node.js 24 or newer, pnpm 12. The sprites have no requirements whatsoever.
 
 ```bash
 pnpm install
-pnpm test          # 32 tests
-pnpm build         # dist/hello.sb3
-pnpm build:default # dist/default.sb3
-pnpm build:hybrid  # dist/hybrid.sb3 (TurboWarp)
+pnpm verify         # typecheck, lint, 55 tests, goldens, VM conformance, CLI bundle
+pnpm build          # dist/hello.sb3
+pnpm build:default  # dist/default.sb3
+pnpm build:hybrid   # dist/hybrid.sb3 (TurboWarp)
 ```
 
 Open the `.sb3` in Scratch or TurboWarp. There is no runtime to install.
@@ -100,18 +100,28 @@ A build writes the `.sb3`, a readable `*.project.json`, a build report, a source
 
 ## 5. Language subset
 
-Supported: `number`, `string`, `boolean`, `let`/`const`, assignment and compound assignment, unary and binary operators, `if/else`, `while`, restricted `for`, template strings, `Scratch.onFlag/say/wait/move/hide/show`, `Scratch.global/local` with `get/set/change`, and the native Math functions. APIs are resolved by symbol, so `import { Scratch as S }` works too.
+Supported: `number`, `string`, `boolean`, `let`/`const`, assignment and compound assignment, unary and binary operators, `if/else`, `while` with `break`/`continue`, restricted `for`, template strings, `Scratch.onFlag`, typed event hats (`onKey`, `onSpriteClicked`, `onClone`, `onBackdrop`, `onBroadcast`), `Scratch.say/wait/move/hide/show`, `Scratch.global/local` with `get/set/change`, `Scratch.list` with `push/insert/replace/deleteAt/clear/item/length`, and the native Math functions. APIs are resolved by symbol, so `import { Scratch as S }` works too.
+
+Scratch has no `break` or `continue`. The IR pass rewrites a loop that uses them with `done`/`skip` flags, guards every remaining statement and folds both flags into the loop condition. It is more blocks than a `goto` would be, but a `goto` is not on the menu. `for` loops reject them: the incrementor sits at the end of the lowered body, so `continue` would skip it and quietly change the program.
+
+`onKey` takes a `KeyName` union, so `"space"` compiles and `"not-a-key"` does not. Event hats become their native blocks — including `BROADCAST_OPTION` with a deterministic broadcast ID registered on the stage — and the VM conformance run fires them with `startHats`, because pressing a green flag will not press a key for you.
+
+List indices are zero-based, like TypeScript arrays. The compiler adds one before emitting `data_*` blocks, because Scratch starts counting at one. It is a small translation, but getting it wrong would be quietly hilarious.
+
+An `ir-opt` pass runs before the backend planner: constant arithmetic and string joins fold, dead branches and loops disappear, and `x + 0` / `x * 1` are simplified. Comparisons, `%` and cross-type equality are deliberately left alone — folding those with JavaScript rules would smuggle the wrong semantics into the project. Build reports say how many folds, removals and control-flow rewrites happened; `compile({ optimize: false })` is there when you want to see the unoptimised version.
 
 Not supported: classes, promises, `async`/`await`, generators, `eval`, dynamic imports, closures, recursion, arbitrary npm packages, DOM and Node APIs.
 
-TypeScratch does not silently change semantics. Cross-type equality (Scratch considers `"10"` and `10` close friends), the difference between JS `%` and Scratch `mod`, and booleans stored as `"true"` strings are all reported rather than guessed.
+TypeScratch does not silently change semantics. Cross-type equality (Scratch considers `"10"` and `10` close friends), the difference between JS `%` and Scratch `mod`, and booleans stored as `"true"` strings are all reported rather than guessed. The build report states the numeric profile it compiled against.
+
+Four constraints are checked before a single block is emitted. `NaN`, `Infinity` and negative `%` literals are rejected. `wait`, broadcasts and sandboxed extension calls are marked as yielding, and reading a temporary across one of them is an error. Temporaries are partitioned per hat script so concurrent scripts cannot clobber each other. And no boolean is ever stored in a Scratch variable: flags are lowered to `0`/`1`. Nineteen numeric fixtures compare JavaScript and Scratch semantics side by side, because "roughly the same" is not a specification.
 
 | Code | Area |
 | --- | --- |
 | `TSCR1xxx` | TypeScript frontend |
 | `TSCR2xxx` | Language subset |
 | `TSCR3xxx` | Lowering |
-| `TSCR4xxx` | Runtime ABI |
+| `TSCR4xxx` | Runtime ABI: yield boundaries, variable types, script partitioning, numeric profile |
 | `TSCR5xxx` | Target compatibility |
 | `TSCR6xxx` | Performance |
 
@@ -135,24 +145,24 @@ TurboWarp loads it automatically; block opcodes are prefixed with the extension 
 ## 7. How it works
 
 ```text
-TypeScript → typed AST → HIR → backend planner
+TypeScript → typed AST → HIR → control-flow lowering → ir-opt → backend planner
   → native lowering    → project graph → SB3 exporter
   → extension lowering → TurboWarp JS
 ```
 
-Fourteen packages in a pnpm workspace: `language`, `diagnostics`, `ir`, `runtime-abi`, `frontend-ts`, `workspace`, `backend-planner`, `backend-native`, `backend-turbowarp`, `graph`, `exporter-sb3`, `exporter-turbowarp`, `compiler`, `cli`.
+Sixteen packages in a pnpm workspace: `language`, `diagnostics`, `ir`, `ir-opt`, `runtime-abi`, `frontend-ts`, `workspace`, `testing`, `backend-planner`, `backend-native`, `backend-turbowarp`, `graph`, `exporter-sb3`, `exporter-turbowarp`, `compiler`, `cli`.
 
 Three boundaries: TS AST is not IR, IR knows nothing about Scratch JSON, exporters only handle format. The TypeScript Compiler API is pinned to 6.0.3 and used only in `frontend-ts`. If TypeScript 7 ever ships a stable API, only one package has to care.
 
 ## 8. Development
 
 ```bash
-pnpm typecheck
-pnpm lint
-pnpm test
+pnpm verify           # the whole gate, orchestrated by turbo
+pnpm snapshots:update # refresh five golden artifacts per case
+pnpm build:packages   # tsdown/rolldown CLI bundle
 ```
 
-32 tests cover HIR lowering, block graph integrity, deterministic output, extension embedding, workspace roles and default assets. Some tests call the real `scratch-vm` deserializer to verify shadow blocks and extension IDs. `pnpm verify:vm` is optional: headless `scratch-vm` needs a DOM and skips when none is present.
+55 Vitest tests cover HIR lowering, block graph integrity, deterministic output, extension embedding, workspace roles, default assets, list operations, typed event hats, IR optimization, break/continue control flow, numeric conformance and the four ABI constraints. Some tests call the real `scratch-vm` deserializer to verify shadow blocks and extension IDs. `pnpm verify:vm` is no longer optional theatre: a jsdom shim gives headless `scratch-vm` the DOM it wants, twelve compiled projects are actually run, and their SAY/variable/list traces are compared against an independent IR interpreter. Five golden artifacts — HIR, backend plan, graph, extension JS, build report — are pinned for five cases. CI runs the same gate on Node 24 and 26.
 
 ## License
 

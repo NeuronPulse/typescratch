@@ -1,5 +1,5 @@
 {
-  "ignorePatterns": ["**/node_modules/**", "dist/**"],
+  "ignorePatterns": ["**/node_modules/**", "dist/**", "tests/__snapshots__/**"],
   "rules": {
     "unicorn/no-thenable": "off"
   }

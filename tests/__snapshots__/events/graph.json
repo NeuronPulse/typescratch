@@ -1,0 +1,238 @@
+{
+  "targets": [
+    {
+      "isStage": true,
+      "name": "Stage",
+      "variables": {},
+      "lists": {},
+      "broadcasts": {
+        "2578fa06d31dc5e4": "go"
+      },
+      "blocks": {},
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "3016e033879a5bf9e79e2f0bd4d37715",
+          "name": "Backdrop1",
+          "md5ext": "3016e033879a5bf9e79e2f0bd4d37715.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 2,
+          "rotationCenterX": 0,
+          "rotationCenterY": 0
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 0,
+      "tempo": 60,
+      "videoState": "on",
+      "videoTransparency": 50,
+      "textToSpeechLanguage": null
+    },
+    {
+      "isStage": false,
+      "name": "Sprite1",
+      "variables": {},
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {
+        "3fe9573c0f4f5444": {
+          "opcode": "event_whenkeypressed",
+          "next": "bc6bac12d79de618",
+          "parent": null,
+          "inputs": {},
+          "fields": {
+            "KEY_OPTION": [
+              "space",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": true,
+          "x": 40,
+          "y": 40
+        },
+        "bc6bac12d79de618": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "3fe9573c0f4f5444",
+          "inputs": {
+            "MESSAGE": [
+              1,
+              [
+                10,
+                "key"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "111152b36a7c7143": {
+          "opcode": "event_whenthisspriteclicked",
+          "next": "bf43add7f78702b7",
+          "parent": null,
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": true,
+          "x": 40,
+          "y": 360
+        },
+        "bf43add7f78702b7": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "111152b36a7c7143",
+          "inputs": {
+            "MESSAGE": [
+              1,
+              [
+                10,
+                "clicked"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "1c35963c351d0176": {
+          "opcode": "control_start_as_clone",
+          "next": "274a6674706e7c60",
+          "parent": null,
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": true,
+          "x": 40,
+          "y": 680
+        },
+        "274a6674706e7c60": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "1c35963c351d0176",
+          "inputs": {
+            "MESSAGE": [
+              1,
+              [
+                10,
+                "clone"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "83bb34f1f636999d": {
+          "opcode": "event_whenbackdropswitchesto",
+          "next": "1c22817e598bef6a",
+          "parent": null,
+          "inputs": {},
+          "fields": {
+            "BACKDROP": [
+              "Backdrop1",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": true,
+          "x": 40,
+          "y": 1000
+        },
+        "1c22817e598bef6a": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "83bb34f1f636999d",
+          "inputs": {
+            "MESSAGE": [
+              1,
+              [
+                10,
+                "backdrop"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "6adc637a82261042": {
+          "opcode": "event_whenbroadcastreceived",
+          "next": "bfbe16e344daac03",
+          "parent": null,
+          "inputs": {},
+          "fields": {
+            "BROADCAST_OPTION": [
+              "go",
+              "2578fa06d31dc5e4"
+            ]
+          },
+          "shadow": false,
+          "topLevel": true,
+          "x": 40,
+          "y": 1320
+        },
+        "bfbe16e344daac03": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "6adc637a82261042",
+          "inputs": {
+            "MESSAGE": [
+              1,
+              [
+                10,
+                "broadcast"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        }
+      },
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "efb13d50694fa45d4de475346c7b86ec",
+          "name": "Costume1",
+          "md5ext": "efb13d50694fa45d4de475346c7b86ec.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 2,
+          "rotationCenterX": 0,
+          "rotationCenterY": 0
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "size": 100,
+      "direction": 90,
+      "draggable": false,
+      "rotationStyle": "all around"
+    }
+  ],
+  "monitors": [],
+  "extensions": [],
+  "meta": {
+    "semver": "3.0.0",
+    "vm": "0.2.0",
+    "agent": "TypeScratch 0.1.0"
+  }
+}

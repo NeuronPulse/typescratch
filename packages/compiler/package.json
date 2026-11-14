@@ -14,6 +14,7 @@
     "@typescratch/frontend-ts": "workspace:*",
     "@typescratch/graph": "workspace:*",
     "@typescratch/ir": "workspace:*",
+    "@typescratch/ir-opt": "workspace:*",
     "@typescratch/language": "workspace:*",
     "@typescratch/workspace": "workspace:*"
   }

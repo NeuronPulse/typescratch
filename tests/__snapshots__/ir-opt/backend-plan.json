@@ -1,0 +1,60 @@
+{
+  "entries": [
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/ir-opt/main.ts",
+        "start": 150,
+        "end": 170,
+        "line": 8,
+        "column": 5
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/ir-opt/main.ts",
+        "start": 178,
+        "end": 200,
+        "line": 10,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/ir-opt/main.ts",
+        "start": 204,
+        "end": 226,
+        "line": 11,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/ir-opt/main.ts",
+        "start": 256,
+        "end": 270,
+        "line": 14,
+        "column": 3
+      },
+      "cost": 0
+    }
+  ],
+  "regions": [],
+  "extensionId": null,
+  "boundaryCalls": 0,
+  "nativeOps": 4
+}

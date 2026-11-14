@@ -1,0 +1,164 @@
+{
+  "target": "scratch",
+  "entry": "examples/ir-opt/main.ts",
+  "ok": true,
+  "diagnostics": [],
+  "plan": [
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/ir-opt/main.ts",
+        "start": 150,
+        "end": 170,
+        "line": 8,
+        "column": 5
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/ir-opt/main.ts",
+        "start": 178,
+        "end": 200,
+        "line": 10,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/ir-opt/main.ts",
+        "start": 204,
+        "end": 226,
+        "line": 11,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/ir-opt/main.ts",
+        "start": 256,
+        "end": 270,
+        "line": 14,
+        "column": 3
+      },
+      "cost": 0
+    }
+  ],
+  "compatibility": {
+    "officialScratch": true,
+    "turboWarp": true,
+    "customExtensions": 0,
+    "notes": []
+  },
+  "numericProfile": {
+    "model": "scratch",
+    "documentedDifferences": [
+      "operator_equals compares numerically and case-insensitively, not with JavaScript ===",
+      "operator_mod returns a divisor-signed remainder, unlike the JavaScript % operator",
+      "Cast.toNumber maps NaN to 0 and accepts numeric strings",
+      "Infinity and NaN are rejected by the frontend as unstable Scratch variable values"
+    ]
+  },
+  "optimization": {
+    "folded": 3,
+    "simplified": 2,
+    "branchesRemoved": 1,
+    "loopsRemoved": 1,
+    "controlFlowRewrites": 0
+  },
+  "sourceMap": [
+    {
+      "blockId": "65aa0dd820e71aca",
+      "span": {
+        "file": "examples/ir-opt/main.ts",
+        "start": 49,
+        "end": 323,
+        "line": 3,
+        "column": 1
+      }
+    },
+    {
+      "blockId": "d13255843dbaf198",
+      "span": {
+        "file": "examples/ir-opt/main.ts",
+        "start": 150,
+        "end": 170,
+        "line": 8,
+        "column": 5
+      }
+    },
+    {
+      "blockId": "dab87687096551cf",
+      "span": {
+        "file": "examples/ir-opt/main.ts",
+        "start": 178,
+        "end": 200,
+        "line": 10,
+        "column": 3
+      }
+    },
+    {
+      "blockId": "69df532eecf33056",
+      "span": {
+        "file": "examples/ir-opt/main.ts",
+        "start": 204,
+        "end": 226,
+        "line": 11,
+        "column": 3
+      }
+    },
+    {
+      "blockId": "6a11e4dc19137de6",
+      "span": {
+        "file": "examples/ir-opt/main.ts",
+        "start": 234,
+        "end": 239,
+        "line": 12,
+        "column": 7
+      }
+    },
+    {
+      "blockId": "d15aea5def047181",
+      "span": {
+        "file": "examples/ir-opt/main.ts",
+        "start": 243,
+        "end": 253,
+        "line": 13,
+        "column": 3
+      }
+    },
+    {
+      "blockId": "eb3b80dab247db8a",
+      "span": {
+        "file": "examples/ir-opt/main.ts",
+        "start": 256,
+        "end": 270,
+        "line": 14,
+        "column": 3
+      }
+    }
+  ],
+  "blockCount": 7,
+  "boundaryCalls": 0,
+  "outputs": [
+    "ir-opt.sb3",
+    "ir-opt.project.json",
+    "ir-opt.report.json",
+    "ir-opt.source-map.json"
+  ],
+  "hirDump": "[\n  \"{\\n  \\\"entry\\\": \\\"examples/ir-opt/main.ts\\\",\\n  \\\"scripts\\\": [\\n    {\\n      \\\"hat\\\": {\\n        \\\"kind\\\": \\\"flag\\\"\\n      },\\n      \\\"body\\\": [\\n        {\\n          \\\"k\\\": \\\"expr\\\",\\n          \\\"name\\\": \\\"say\\\",\\n          \\\"args\\\": [\\n            {\\n              \\\"k\\\": \\\"const\\\",\\n              \\\"value\\\": \\\"alive\\\",\\n              \\\"type\\\": \\\"string\\\",\\n              \\\"span\\\": {\\n                \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n                \\\"start\\\": 162,\\n                \\\"end\\\": 169,\\n                \\\"line\\\": 8,\\n                \\\"column\\\": 17\\n              }\\n            }\\n          ],\\n          \\\"span\\\": {\\n            \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n            \\\"start\\\": 150,\\n            \\\"end\\\": 170,\\n            \\\"line\\\": 8,\\n            \\\"column\\\": 5\\n          }\\n        },\\n        {\\n          \\\"k\\\": \\\"expr\\\",\\n          \\\"name\\\": \\\"say\\\",\\n          \\\"args\\\": [\\n            {\\n              \\\"k\\\": \\\"const\\\",\\n              \\\"op\\\": \\\"add\\\",\\n              \\\"l\\\": {\\n                \\\"k\\\": \\\"const\\\",\\n                \\\"value\\\": 1,\\n                \\\"type\\\": \\\"number\\\",\\n                \\\"span\\\": {\\n                  \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n                  \\\"start\\\": 190,\\n                  \\\"end\\\": 191,\\n                  \\\"line\\\": 10,\\n                  \\\"column\\\": 15\\n                }\\n              },\\n              \\\"r\\\": {\\n                \\\"k\\\": \\\"const\\\",\\n                \\\"op\\\": \\\"mul\\\",\\n                \\\"l\\\": {\\n                  \\\"k\\\": \\\"const\\\",\\n                  \\\"value\\\": 2,\\n                  \\\"type\\\": \\\"number\\\",\\n                  \\\"span\\\": {\\n                    \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n                    \\\"start\\\": 194,\\n                    \\\"end\\\": 195,\\n                    \\\"line\\\": 10,\\n                    \\\"column\\\": 19\\n                  }\\n                },\\n                \\\"r\\\": {\\n                  \\\"k\\\": \\\"const\\\",\\n                  \\\"value\\\": 3,\\n                  \\\"type\\\": \\\"number\\\",\\n                  \\\"span\\\": {\\n                    \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n                    \\\"start\\\": 198,\\n                    \\\"end\\\": 199,\\n                    \\\"line\\\": 10,\\n                    \\\"column\\\": 23\\n                  }\\n                },\\n                \\\"type\\\": \\\"number\\\",\\n                \\\"span\\\": {\\n                  \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n                  \\\"start\\\": 194,\\n                  \\\"end\\\": 199,\\n                  \\\"line\\\": 10,\\n                  \\\"column\\\": 19\\n                },\\n                \\\"value\\\": 6\\n              },\\n              \\\"type\\\": \\\"number\\\",\\n              \\\"span\\\": {\\n                \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n                \\\"start\\\": 190,\\n                \\\"end\\\": 199,\\n                \\\"line\\\": 10,\\n                \\\"column\\\": 15\\n              },\\n              \\\"value\\\": 7\\n            }\\n          ],\\n          \\\"span\\\": {\\n            \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n            \\\"start\\\": 178,\\n            \\\"end\\\": 200,\\n            \\\"line\\\": 10,\\n            \\\"column\\\": 3\\n          }\\n        },\\n        {\\n          \\\"k\\\": \\\"expr\\\",\\n          \\\"name\\\": \\\"say\\\",\\n          \\\"args\\\": [\\n            {\\n              \\\"k\\\": \\\"const\\\",\\n              \\\"parts\\\": [\\n                {\\n                  \\\"k\\\": \\\"const\\\",\\n                  \\\"value\\\": \\\"a\\\",\\n                  \\\"type\\\": \\\"string\\\",\\n                  \\\"span\\\": {\\n                    \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n                    \\\"start\\\": 216,\\n                    \\\"end\\\": 219,\\n                    \\\"line\\\": 11,\\n                    \\\"column\\\": 15\\n                  }\\n                },\\n                {\\n                  \\\"k\\\": \\\"const\\\",\\n                  \\\"value\\\": \\\"b\\\",\\n                  \\\"type\\\": \\\"string\\\",\\n                  \\\"span\\\": {\\n                    \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n                    \\\"start\\\": 222,\\n                    \\\"end\\\": 225,\\n                    \\\"line\\\": 11,\\n                    \\\"column\\\": 21\\n                  }\\n                }\\n              ],\\n              \\\"type\\\": \\\"string\\\",\\n              \\\"span\\\": {\\n                \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n                \\\"start\\\": 216,\\n                \\\"end\\\": 225,\\n                \\\"line\\\": 11,\\n                \\\"column\\\": 15\\n              },\\n              \\\"value\\\": \\\"ab\\\"\\n            }\\n          ],\\n          \\\"span\\\": {\\n            \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n            \\\"start\\\": 204,\\n            \\\"end\\\": 226,\\n            \\\"line\\\": 11,\\n            \\\"column\\\": 3\\n          }\\n        },\\n        {\\n          \\\"k\\\": \\\"declare\\\",\\n          \\\"var\\\": \\\"vs0_1\\\",\\n          \\\"init\\\": {\\n            \\\"k\\\": \\\"const\\\",\\n            \\\"value\\\": 4,\\n            \\\"type\\\": \\\"number\\\",\\n            \\\"span\\\": {\\n              \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n              \\\"start\\\": 238,\\n              \\\"end\\\": 239,\\n              \\\"line\\\": 12,\\n              \\\"column\\\": 11\\n            }\\n          },\\n          \\\"span\\\": {\\n            \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n            \\\"start\\\": 234,\\n            \\\"end\\\": 239,\\n            \\\"line\\\": 12,\\n            \\\"column\\\": 7\\n          }\\n        },\\n        {\\n          \\\"k\\\": \\\"assign\\\",\\n          \\\"var\\\": \\\"vs0_1\\\",\\n          \\\"value\\\": {\\n            \\\"k\\\": \\\"read\\\",\\n            \\\"var\\\": \\\"vs0_1\\\",\\n            \\\"type\\\": \\\"number\\\",\\n            \\\"span\\\": {\\n              \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n              \\\"start\\\": 247,\\n              \\\"end\\\": 248,\\n              \\\"line\\\": 13,\\n              \\\"column\\\": 7\\n            }\\n          },\\n          \\\"span\\\": {\\n            \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n            \\\"start\\\": 243,\\n            \\\"end\\\": 253,\\n            \\\"line\\\": 13,\\n            \\\"column\\\": 3\\n          }\\n        },\\n        {\\n          \\\"k\\\": \\\"expr\\\",\\n          \\\"name\\\": \\\"say\\\",\\n          \\\"args\\\": [\\n            {\\n              \\\"k\\\": \\\"read\\\",\\n              \\\"var\\\": \\\"vs0_1\\\",\\n              \\\"type\\\": \\\"number\\\",\\n              \\\"span\\\": {\\n                \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n                \\\"start\\\": 268,\\n                \\\"end\\\": 269,\\n                \\\"line\\\": 14,\\n                \\\"column\\\": 15\\n              }\\n            }\\n          ],\\n          \\\"span\\\": {\\n            \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n            \\\"start\\\": 256,\\n            \\\"end\\\": 270,\\n            \\\"line\\\": 14,\\n            \\\"column\\\": 3\\n          }\\n        }\\n      ],\\n      \\\"span\\\": {\\n        \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n        \\\"start\\\": 49,\\n        \\\"end\\\": 323,\\n        \\\"line\\\": 3,\\n        \\\"column\\\": 1\\n      }\\n    }\\n  ],\\n  \\\"vars\\\": [\\n    {\\n      \\\"id\\\": \\\"vs0_1\\\",\\n      \\\"name\\\": \\\"_tscr_s0_n\\\",\\n      \\\"type\\\": \\\"number\\\",\\n      \\\"storage\\\": \\\"temp\\\",\\n      \\\"span\\\": {\\n        \\\"file\\\": \\\"examples/ir-opt/main.ts\\\",\\n        \\\"start\\\": 234,\\n        \\\"end\\\": 239,\\n        \\\"line\\\": 12,\\n        \\\"column\\\": 7\\n      },\\n      \\\"script\\\": 0\\n    }\\n  ],\\n  \\\"lists\\\": [],\\n  \\\"role\\\": {\\n    \\\"name\\\": \\\"Sprite1\\\",\\n    \\\"isStage\\\": false\\n  }\\n}\"\n]",
+  "projectJson": "{\n  \"targets\": [\n    {\n      \"isStage\": true,\n      \"name\": \"Stage\",\n      \"variables\": {},\n      \"lists\": {},\n      \"broadcasts\": {},\n      \"blocks\": {},\n      \"comments\": {},\n      \"currentCostume\": 0,\n      \"costumes\": [\n        {\n          \"assetId\": \"3016e033879a5bf9e79e2f0bd4d37715\",\n          \"name\": \"Backdrop1\",\n          \"md5ext\": \"3016e033879a5bf9e79e2f0bd4d37715.svg\",\n          \"dataFormat\": \"svg\",\n          \"bitmapResolution\": 2,\n          \"rotationCenterX\": 0,\n          \"rotationCenterY\": 0\n        }\n      ],\n      \"sounds\": [],\n      \"volume\": 100,\n      \"layerOrder\": 0,\n      \"tempo\": 60,\n      \"videoState\": \"on\",\n      \"videoTransparency\": 50,\n      \"textToSpeechLanguage\": null\n    },\n    {\n      \"isStage\": false,\n      \"name\": \"Sprite1\",\n      \"variables\": {\n        \"vs0_1\": [\n          \"_tscr_s0_n\",\n          0\n        ]\n      },\n      \"lists\": {},\n      \"broadcasts\": {},\n      \"blocks\": {\n        \"65aa0dd820e71aca\": {\n          \"opcode\": \"event_whenflagclicked\",\n          \"next\": \"d13255843dbaf198\",\n          \"parent\": null,\n          \"inputs\": {},\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": true,\n          \"x\": 40,\n          \"y\": 40\n        },\n        \"d13255843dbaf198\": {\n          \"opcode\": \"looks_say\",\n          \"next\": \"dab87687096551cf\",\n          \"parent\": \"65aa0dd820e71aca\",\n          \"inputs\": {\n            \"MESSAGE\": [\n              1,\n              [\n                10,\n                \"alive\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"dab87687096551cf\": {\n          \"opcode\": \"looks_say\",\n          \"next\": \"69df532eecf33056\",\n          \"parent\": \"d13255843dbaf198\",\n          \"inputs\": {\n            \"MESSAGE\": [\n              1,\n              [\n                4,\n                \"7\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"69df532eecf33056\": {\n          \"opcode\": \"looks_say\",\n          \"next\": \"6a11e4dc19137de6\",\n          \"parent\": \"dab87687096551cf\",\n          \"inputs\": {\n            \"MESSAGE\": [\n              1,\n              [\n                10,\n                \"ab\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"6a11e4dc19137de6\": {\n          \"opcode\": \"data_setvariableto\",\n          \"next\": \"d15aea5def047181\",\n          \"parent\": \"69df532eecf33056\",\n          \"inputs\": {\n            \"VALUE\": [\n              1,\n              [\n                4,\n                \"4\"\n              ]\n            ]\n          },\n          \"fields\": {\n            \"VARIABLE\": [\n              \"_tscr_s0_n\",\n              \"vs0_1\"\n            ]\n          },\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"d15aea5def047181\": {\n          \"opcode\": \"data_setvariableto\",\n          \"next\": \"eb3b80dab247db8a\",\n          \"parent\": \"6a11e4dc19137de6\",\n          \"inputs\": {\n            \"VALUE\": [\n              3,\n              [\n                12,\n                \"_tscr_s0_n\",\n                \"vs0_1\"\n              ],\n              [\n                4,\n                \"\"\n              ]\n            ]\n          },\n          \"fields\": {\n            \"VARIABLE\": [\n              \"_tscr_s0_n\",\n              \"vs0_1\"\n            ]\n          },\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"eb3b80dab247db8a\": {\n          \"opcode\": \"looks_say\",\n          \"next\": null,\n          \"parent\": \"d15aea5def047181\",\n          \"inputs\": {\n            \"MESSAGE\": [\n              3,\n              [\n                12,\n                \"_tscr_s0_n\",\n                \"vs0_1\"\n              ],\n              [\n                4,\n                \"\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        }\n      },\n      \"comments\": {},\n      \"currentCostume\": 0,\n      \"costumes\": [\n        {\n          \"assetId\": \"efb13d50694fa45d4de475346c7b86ec\",\n          \"name\": \"Costume1\",\n          \"md5ext\": \"efb13d50694fa45d4de475346c7b86ec.svg\",\n          \"dataFormat\": \"svg\",\n          \"bitmapResolution\": 2,\n          \"rotationCenterX\": 0,\n          \"rotationCenterY\": 0\n        }\n      ],\n      \"sounds\": [],\n      \"volume\": 100,\n      \"layerOrder\": 1,\n      \"visible\": true,\n      \"x\": 0,\n      \"y\": 0,\n      \"size\": 100,\n      \"direction\": 90,\n      \"draggable\": false,\n      \"rotationStyle\": \"all around\"\n    }\n  ],\n  \"monitors\": [],\n  \"extensions\": [],\n  \"meta\": {\n    \"semver\": \"3.0.0\",\n    \"vm\": \"0.2.0\",\n    \"agent\": \"TypeScratch 0.1.0\"\n  }\n}"
+}

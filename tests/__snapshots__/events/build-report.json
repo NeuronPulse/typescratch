@@ -1,0 +1,207 @@
+{
+  "target": "scratch",
+  "entry": "examples/events/main.ts",
+  "ok": true,
+  "diagnostics": [],
+  "plan": [
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/events/main.ts",
+        "start": 82,
+        "end": 100,
+        "line": 4,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/events/main.ts",
+        "start": 141,
+        "end": 163,
+        "line": 8,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/events/main.ts",
+        "start": 196,
+        "end": 216,
+        "line": 12,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/events/main.ts",
+        "start": 265,
+        "end": 288,
+        "line": 16,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/events/main.ts",
+        "start": 331,
+        "end": 355,
+        "line": 20,
+        "column": 3
+      },
+      "cost": 0
+    }
+  ],
+  "compatibility": {
+    "officialScratch": true,
+    "turboWarp": true,
+    "customExtensions": 0,
+    "notes": []
+  },
+  "numericProfile": {
+    "model": "scratch",
+    "documentedDifferences": [
+      "operator_equals compares numerically and case-insensitively, not with JavaScript ===",
+      "operator_mod returns a divisor-signed remainder, unlike the JavaScript % operator",
+      "Cast.toNumber maps NaN to 0 and accepts numeric strings",
+      "Infinity and NaN are rejected by the frontend as unstable Scratch variable values"
+    ]
+  },
+  "optimization": {
+    "folded": 0,
+    "simplified": 0,
+    "branchesRemoved": 0,
+    "loopsRemoved": 0,
+    "controlFlowRewrites": 0
+  },
+  "sourceMap": [
+    {
+      "blockId": "3fe9573c0f4f5444",
+      "span": {
+        "file": "examples/events/main.ts",
+        "start": 49,
+        "end": 105,
+        "line": 3,
+        "column": 1
+      }
+    },
+    {
+      "blockId": "bc6bac12d79de618",
+      "span": {
+        "file": "examples/events/main.ts",
+        "start": 82,
+        "end": 100,
+        "line": 4,
+        "column": 3
+      }
+    },
+    {
+      "blockId": "111152b36a7c7143",
+      "span": {
+        "file": "examples/events/main.ts",
+        "start": 107,
+        "end": 168,
+        "line": 7,
+        "column": 1
+      }
+    },
+    {
+      "blockId": "bf43add7f78702b7",
+      "span": {
+        "file": "examples/events/main.ts",
+        "start": 141,
+        "end": 163,
+        "line": 8,
+        "column": 3
+      }
+    },
+    {
+      "blockId": "1c35963c351d0176",
+      "span": {
+        "file": "examples/events/main.ts",
+        "start": 170,
+        "end": 221,
+        "line": 11,
+        "column": 1
+      }
+    },
+    {
+      "blockId": "274a6674706e7c60",
+      "span": {
+        "file": "examples/events/main.ts",
+        "start": 196,
+        "end": 216,
+        "line": 12,
+        "column": 3
+      }
+    },
+    {
+      "blockId": "83bb34f1f636999d",
+      "span": {
+        "file": "examples/events/main.ts",
+        "start": 223,
+        "end": 293,
+        "line": 15,
+        "column": 1
+      }
+    },
+    {
+      "blockId": "1c22817e598bef6a",
+      "span": {
+        "file": "examples/events/main.ts",
+        "start": 265,
+        "end": 288,
+        "line": 16,
+        "column": 3
+      }
+    },
+    {
+      "blockId": "6adc637a82261042",
+      "span": {
+        "file": "examples/events/main.ts",
+        "start": 295,
+        "end": 360,
+        "line": 19,
+        "column": 1
+      }
+    },
+    {
+      "blockId": "bfbe16e344daac03",
+      "span": {
+        "file": "examples/events/main.ts",
+        "start": 331,
+        "end": 355,
+        "line": 20,
+        "column": 3
+      }
+    }
+  ],
+  "blockCount": 10,
+  "boundaryCalls": 0,
+  "outputs": [
+    "events.sb3",
+    "events.project.json",
+    "events.report.json",
+    "events.source-map.json"
+  ],
+  "hirDump": "[\n  \"{\\n  \\\"entry\\\": \\\"examples/events/main.ts\\\",\\n  \\\"scripts\\\": [\\n    {\\n      \\\"hat\\\": {\\n        \\\"kind\\\": \\\"key\\\",\\n        \\\"key\\\": \\\"space\\\"\\n      },\\n      \\\"body\\\": [\\n        {\\n          \\\"k\\\": \\\"expr\\\",\\n          \\\"name\\\": \\\"say\\\",\\n          \\\"args\\\": [\\n            {\\n              \\\"k\\\": \\\"const\\\",\\n              \\\"value\\\": \\\"key\\\",\\n              \\\"type\\\": \\\"string\\\",\\n              \\\"span\\\": {\\n                \\\"file\\\": \\\"examples/events/main.ts\\\",\\n                \\\"start\\\": 94,\\n                \\\"end\\\": 99,\\n                \\\"line\\\": 4,\\n                \\\"column\\\": 15\\n              }\\n            }\\n          ],\\n          \\\"span\\\": {\\n            \\\"file\\\": \\\"examples/events/main.ts\\\",\\n            \\\"start\\\": 82,\\n            \\\"end\\\": 100,\\n            \\\"line\\\": 4,\\n            \\\"column\\\": 3\\n          }\\n        }\\n      ],\\n      \\\"span\\\": {\\n        \\\"file\\\": \\\"examples/events/main.ts\\\",\\n        \\\"start\\\": 49,\\n        \\\"end\\\": 105,\\n        \\\"line\\\": 3,\\n        \\\"column\\\": 1\\n      }\\n    },\\n    {\\n      \\\"hat\\\": {\\n        \\\"kind\\\": \\\"spriteClicked\\\"\\n      },\\n      \\\"body\\\": [\\n        {\\n          \\\"k\\\": \\\"expr\\\",\\n          \\\"name\\\": \\\"say\\\",\\n          \\\"args\\\": [\\n            {\\n              \\\"k\\\": \\\"const\\\",\\n              \\\"value\\\": \\\"clicked\\\",\\n              \\\"type\\\": \\\"string\\\",\\n              \\\"span\\\": {\\n                \\\"file\\\": \\\"examples/events/main.ts\\\",\\n                \\\"start\\\": 153,\\n                \\\"end\\\": 162,\\n                \\\"line\\\": 8,\\n                \\\"column\\\": 15\\n              }\\n            }\\n          ],\\n          \\\"span\\\": {\\n            \\\"file\\\": \\\"examples/events/main.ts\\\",\\n            \\\"start\\\": 141,\\n            \\\"end\\\": 163,\\n            \\\"line\\\": 8,\\n            \\\"column\\\": 3\\n          }\\n        }\\n      ],\\n      \\\"span\\\": {\\n        \\\"file\\\": \\\"examples/events/main.ts\\\",\\n        \\\"start\\\": 107,\\n        \\\"end\\\": 168,\\n        \\\"line\\\": 7,\\n        \\\"column\\\": 1\\n      }\\n    },\\n    {\\n      \\\"hat\\\": {\\n        \\\"kind\\\": \\\"clone\\\"\\n      },\\n      \\\"body\\\": [\\n        {\\n          \\\"k\\\": \\\"expr\\\",\\n          \\\"name\\\": \\\"say\\\",\\n          \\\"args\\\": [\\n            {\\n              \\\"k\\\": \\\"const\\\",\\n              \\\"value\\\": \\\"clone\\\",\\n              \\\"type\\\": \\\"string\\\",\\n              \\\"span\\\": {\\n                \\\"file\\\": \\\"examples/events/main.ts\\\",\\n                \\\"start\\\": 208,\\n                \\\"end\\\": 215,\\n                \\\"line\\\": 12,\\n                \\\"column\\\": 15\\n              }\\n            }\\n          ],\\n          \\\"span\\\": {\\n            \\\"file\\\": \\\"examples/events/main.ts\\\",\\n            \\\"start\\\": 196,\\n            \\\"end\\\": 216,\\n            \\\"line\\\": 12,\\n            \\\"column\\\": 3\\n          }\\n        }\\n      ],\\n      \\\"span\\\": {\\n        \\\"file\\\": \\\"examples/events/main.ts\\\",\\n        \\\"start\\\": 170,\\n        \\\"end\\\": 221,\\n        \\\"line\\\": 11,\\n        \\\"column\\\": 1\\n      }\\n    },\\n    {\\n      \\\"hat\\\": {\\n        \\\"kind\\\": \\\"backdrop\\\",\\n        \\\"name\\\": \\\"Backdrop1\\\"\\n      },\\n      \\\"body\\\": [\\n        {\\n          \\\"k\\\": \\\"expr\\\",\\n          \\\"name\\\": \\\"say\\\",\\n          \\\"args\\\": [\\n            {\\n              \\\"k\\\": \\\"const\\\",\\n              \\\"value\\\": \\\"backdrop\\\",\\n              \\\"type\\\": \\\"string\\\",\\n              \\\"span\\\": {\\n                \\\"file\\\": \\\"examples/events/main.ts\\\",\\n                \\\"start\\\": 277,\\n                \\\"end\\\": 287,\\n                \\\"line\\\": 16,\\n                \\\"column\\\": 15\\n              }\\n            }\\n          ],\\n          \\\"span\\\": {\\n            \\\"file\\\": \\\"examples/events/main.ts\\\",\\n            \\\"start\\\": 265,\\n            \\\"end\\\": 288,\\n            \\\"line\\\": 16,\\n            \\\"column\\\": 3\\n          }\\n        }\\n      ],\\n      \\\"span\\\": {\\n        \\\"file\\\": \\\"examples/events/main.ts\\\",\\n        \\\"start\\\": 223,\\n        \\\"end\\\": 293,\\n        \\\"line\\\": 15,\\n        \\\"column\\\": 1\\n      }\\n    },\\n    {\\n      \\\"hat\\\": {\\n        \\\"kind\\\": \\\"broadcast\\\",\\n        \\\"name\\\": \\\"go\\\"\\n      },\\n      \\\"body\\\": [\\n        {\\n          \\\"k\\\": \\\"expr\\\",\\n          \\\"name\\\": \\\"say\\\",\\n          \\\"args\\\": [\\n            {\\n              \\\"k\\\": \\\"const\\\",\\n              \\\"value\\\": \\\"broadcast\\\",\\n              \\\"type\\\": \\\"string\\\",\\n              \\\"span\\\": {\\n                \\\"file\\\": \\\"examples/events/main.ts\\\",\\n                \\\"start\\\": 343,\\n                \\\"end\\\": 354,\\n                \\\"line\\\": 20,\\n                \\\"column\\\": 15\\n              }\\n            }\\n          ],\\n          \\\"span\\\": {\\n            \\\"file\\\": \\\"examples/events/main.ts\\\",\\n            \\\"start\\\": 331,\\n            \\\"end\\\": 355,\\n            \\\"line\\\": 20,\\n            \\\"column\\\": 3\\n          }\\n        }\\n      ],\\n      \\\"span\\\": {\\n        \\\"file\\\": \\\"examples/events/main.ts\\\",\\n        \\\"start\\\": 295,\\n        \\\"end\\\": 360,\\n        \\\"line\\\": 19,\\n        \\\"column\\\": 1\\n      }\\n    }\\n  ],\\n  \\\"vars\\\": [],\\n  \\\"lists\\\": [],\\n  \\\"role\\\": {\\n    \\\"name\\\": \\\"Sprite1\\\",\\n    \\\"isStage\\\": false\\n  }\\n}\"\n]",
+  "projectJson": "{\n  \"targets\": [\n    {\n      \"isStage\": true,\n      \"name\": \"Stage\",\n      \"variables\": {},\n      \"lists\": {},\n      \"broadcasts\": {\n        \"2578fa06d31dc5e4\": \"go\"\n      },\n      \"blocks\": {},\n      \"comments\": {},\n      \"currentCostume\": 0,\n      \"costumes\": [\n        {\n          \"assetId\": \"3016e033879a5bf9e79e2f0bd4d37715\",\n          \"name\": \"Backdrop1\",\n          \"md5ext\": \"3016e033879a5bf9e79e2f0bd4d37715.svg\",\n          \"dataFormat\": \"svg\",\n          \"bitmapResolution\": 2,\n          \"rotationCenterX\": 0,\n          \"rotationCenterY\": 0\n        }\n      ],\n      \"sounds\": [],\n      \"volume\": 100,\n      \"layerOrder\": 0,\n      \"tempo\": 60,\n      \"videoState\": \"on\",\n      \"videoTransparency\": 50,\n      \"textToSpeechLanguage\": null\n    },\n    {\n      \"isStage\": false,\n      \"name\": \"Sprite1\",\n      \"variables\": {},\n      \"lists\": {},\n      \"broadcasts\": {},\n      \"blocks\": {\n        \"3fe9573c0f4f5444\": {\n          \"opcode\": \"event_whenkeypressed\",\n          \"next\": \"bc6bac12d79de618\",\n          \"parent\": null,\n          \"inputs\": {},\n          \"fields\": {\n            \"KEY_OPTION\": [\n              \"space\",\n              null\n            ]\n          },\n          \"shadow\": false,\n          \"topLevel\": true,\n          \"x\": 40,\n          \"y\": 40\n        },\n        \"bc6bac12d79de618\": {\n          \"opcode\": \"looks_say\",\n          \"next\": null,\n          \"parent\": \"3fe9573c0f4f5444\",\n          \"inputs\": {\n            \"MESSAGE\": [\n              1,\n              [\n                10,\n                \"key\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"111152b36a7c7143\": {\n          \"opcode\": \"event_whenthisspriteclicked\",\n          \"next\": \"bf43add7f78702b7\",\n          \"parent\": null,\n          \"inputs\": {},\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": true,\n          \"x\": 40,\n          \"y\": 360\n        },\n        \"bf43add7f78702b7\": {\n          \"opcode\": \"looks_say\",\n          \"next\": null,\n          \"parent\": \"111152b36a7c7143\",\n          \"inputs\": {\n            \"MESSAGE\": [\n              1,\n              [\n                10,\n                \"clicked\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"1c35963c351d0176\": {\n          \"opcode\": \"control_start_as_clone\",\n          \"next\": \"274a6674706e7c60\",\n          \"parent\": null,\n          \"inputs\": {},\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": true,\n          \"x\": 40,\n          \"y\": 680\n        },\n        \"274a6674706e7c60\": {\n          \"opcode\": \"looks_say\",\n          \"next\": null,\n          \"parent\": \"1c35963c351d0176\",\n          \"inputs\": {\n            \"MESSAGE\": [\n              1,\n              [\n                10,\n                \"clone\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"83bb34f1f636999d\": {\n          \"opcode\": \"event_whenbackdropswitchesto\",\n          \"next\": \"1c22817e598bef6a\",\n          \"parent\": null,\n          \"inputs\": {},\n          \"fields\": {\n            \"BACKDROP\": [\n              \"Backdrop1\",\n              null\n            ]\n          },\n          \"shadow\": false,\n          \"topLevel\": true,\n          \"x\": 40,\n          \"y\": 1000\n        },\n        \"1c22817e598bef6a\": {\n          \"opcode\": \"looks_say\",\n          \"next\": null,\n          \"parent\": \"83bb34f1f636999d\",\n          \"inputs\": {\n            \"MESSAGE\": [\n              1,\n              [\n                10,\n                \"backdrop\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"6adc637a82261042\": {\n          \"opcode\": \"event_whenbroadcastreceived\",\n          \"next\": \"bfbe16e344daac03\",\n          \"parent\": null,\n          \"inputs\": {},\n          \"fields\": {\n            \"BROADCAST_OPTION\": [\n              \"go\",\n              \"2578fa06d31dc5e4\"\n            ]\n          },\n          \"shadow\": false,\n          \"topLevel\": true,\n          \"x\": 40,\n          \"y\": 1320\n        },\n        \"bfbe16e344daac03\": {\n          \"opcode\": \"looks_say\",\n          \"next\": null,\n          \"parent\": \"6adc637a82261042\",\n          \"inputs\": {\n            \"MESSAGE\": [\n              1,\n              [\n                10,\n                \"broadcast\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        }\n      },\n      \"comments\": {},\n      \"currentCostume\": 0,\n      \"costumes\": [\n        {\n          \"assetId\": \"efb13d50694fa45d4de475346c7b86ec\",\n          \"name\": \"Costume1\",\n          \"md5ext\": \"efb13d50694fa45d4de475346c7b86ec.svg\",\n          \"dataFormat\": \"svg\",\n          \"bitmapResolution\": 2,\n          \"rotationCenterX\": 0,\n          \"rotationCenterY\": 0\n        }\n      ],\n      \"sounds\": [],\n      \"volume\": 100,\n      \"layerOrder\": 1,\n      \"visible\": true,\n      \"x\": 0,\n      \"y\": 0,\n      \"size\": 100,\n      \"direction\": 90,\n      \"draggable\": false,\n      \"rotationStyle\": \"all around\"\n    }\n  ],\n  \"monitors\": [],\n  \"extensions\": [],\n  \"meta\": {\n    \"semver\": \"3.0.0\",\n    \"vm\": \"0.2.0\",\n    \"agent\": \"TypeScratch 0.1.0\"\n  }\n}"
+}
