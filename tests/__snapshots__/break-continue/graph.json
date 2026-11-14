@@ -1,0 +1,1151 @@
+{
+  "targets": [
+    {
+      "isStage": true,
+      "name": "Stage",
+      "variables": {},
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {},
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "3016e033879a5bf9e79e2f0bd4d37715",
+          "name": "Backdrop1",
+          "md5ext": "3016e033879a5bf9e79e2f0bd4d37715.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 2,
+          "rotationCenterX": 0,
+          "rotationCenterY": 0
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 0,
+      "tempo": 60,
+      "videoState": "on",
+      "videoTransparency": 50,
+      "textToSpeechLanguage": null
+    },
+    {
+      "isStage": false,
+      "name": "Sprite1",
+      "variables": {
+        "vs0_1": [
+          "_tscr_s0_i",
+          0
+        ],
+        "vcf_0_0_1": [
+          "_tscr_s0_cf1_done",
+          0
+        ],
+        "vcf_0_0_2": [
+          "_tscr_s0_cf2_skip",
+          0
+        ]
+      },
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {
+        "65aa0dd820e71aca": {
+          "opcode": "event_whenflagclicked",
+          "next": "db135f032c32645b",
+          "parent": null,
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": true,
+          "x": 40,
+          "y": 40
+        },
+        "db135f032c32645b": {
+          "opcode": "data_setvariableto",
+          "next": "30627c17116c9d27",
+          "parent": "65aa0dd820e71aca",
+          "inputs": {
+            "VALUE": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "_tscr_s0_i",
+              "vs0_1"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "30627c17116c9d27": {
+          "opcode": "data_setvariableto",
+          "next": "2f627a841dd81ca6",
+          "parent": "db135f032c32645b",
+          "inputs": {
+            "VALUE": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "_tscr_s0_cf1_done",
+              "vcf_0_0_1"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "2f627a841dd81ca6": {
+          "opcode": "data_setvariableto",
+          "next": "f4b28b9af25bc9c2",
+          "parent": "30627c17116c9d27",
+          "inputs": {
+            "VALUE": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "_tscr_s0_cf2_skip",
+              "vcf_0_0_2"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "f4b28b9af25bc9c2": {
+          "opcode": "control_repeat_until",
+          "next": "f5b04c01eb5900a1",
+          "parent": "2f627a841dd81ca6",
+          "inputs": {
+            "CONDITION": [
+              3,
+              "f2f7b7fdee683a4d",
+              [
+                4,
+                ""
+              ]
+            ],
+            "SUBSTACK": [
+              2,
+              "d9c4b012d76c32cc"
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "f2f7b7fdee683a4d": {
+          "opcode": "operator_not",
+          "next": null,
+          "parent": "f4b28b9af25bc9c2",
+          "inputs": {
+            "OPERAND": [
+              3,
+              "ce5afe0c7e401a96",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "ce5afe0c7e401a96": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "f2f7b7fdee683a4d",
+          "inputs": {
+            "OPERAND1": [
+              3,
+              "73c531fd55a95df9",
+              [
+                4,
+                ""
+              ]
+            ],
+            "OPERAND2": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "73c531fd55a95df9": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "ce5afe0c7e401a96",
+          "inputs": {
+            "NUM1": [
+              3,
+              "64c51a604966e990",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              3,
+              [
+                12,
+                "_tscr_s0_cf1_done",
+                "vcf_0_0_1"
+              ],
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "64c51a604966e990": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "73c531fd55a95df9",
+          "inputs": {
+            "NUM1": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ],
+            "NUM2": [
+              3,
+              "e6f7a5196b7111d1",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "e6f7a5196b7111d1": {
+          "opcode": "operator_not",
+          "next": null,
+          "parent": "64c51a604966e990",
+          "inputs": {
+            "OPERAND": [
+              3,
+              "0e3419022eaa2896",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "0e3419022eaa2896": {
+          "opcode": "operator_lt",
+          "next": null,
+          "parent": "e6f7a5196b7111d1",
+          "inputs": {
+            "OPERAND1": [
+              3,
+              [
+                12,
+                "_tscr_s0_i",
+                "vs0_1"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "OPERAND2": [
+              1,
+              [
+                4,
+                "6"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "d9c4b012d76c32cc": {
+          "opcode": "data_setvariableto",
+          "next": "b3b06d1296f6a6d0",
+          "parent": "f4b28b9af25bc9c2",
+          "inputs": {
+            "VALUE": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "_tscr_s0_cf2_skip",
+              "vcf_0_0_2"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "b3b06d1296f6a6d0": {
+          "opcode": "control_if",
+          "next": "b0b06859cf766101",
+          "parent": "d9c4b012d76c32cc",
+          "inputs": {
+            "CONDITION": [
+              3,
+              "ce909912f02d929e",
+              [
+                4,
+                ""
+              ]
+            ],
+            "SUBSTACK": [
+              2,
+              "a79bc69223d727e6"
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "ce909912f02d929e": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "b3b06d1296f6a6d0",
+          "inputs": {
+            "OPERAND1": [
+              3,
+              "31b7f0fb1e0c4ad3",
+              [
+                4,
+                ""
+              ]
+            ],
+            "OPERAND2": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "31b7f0fb1e0c4ad3": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "ce909912f02d929e",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_cf1_done",
+                "vcf_0_0_1"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              3,
+              [
+                12,
+                "_tscr_s0_cf2_skip",
+                "vcf_0_0_2"
+              ],
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "a79bc69223d727e6": {
+          "opcode": "data_setvariableto",
+          "next": null,
+          "parent": "b3b06d1296f6a6d0",
+          "inputs": {
+            "VALUE": [
+              3,
+              "d81e2ba5714417ad",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "_tscr_s0_i",
+              "vs0_1"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "d81e2ba5714417ad": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "a79bc69223d727e6",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_i",
+                "vs0_1"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "b0b06859cf766101": {
+          "opcode": "control_if",
+          "next": "41b808619f758455",
+          "parent": "b3b06d1296f6a6d0",
+          "inputs": {
+            "CONDITION": [
+              3,
+              "d590a417921f0387",
+              [
+                4,
+                ""
+              ]
+            ],
+            "SUBSTACK": [
+              2,
+              "07d149291cf0b311"
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "d590a417921f0387": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "b0b06859cf766101",
+          "inputs": {
+            "OPERAND1": [
+              3,
+              "2cb7e91c73f6ecca",
+              [
+                4,
+                ""
+              ]
+            ],
+            "OPERAND2": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "2cb7e91c73f6ecca": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "d590a417921f0387",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_cf1_done",
+                "vcf_0_0_1"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              3,
+              [
+                12,
+                "_tscr_s0_cf2_skip",
+                "vcf_0_0_2"
+              ],
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "07d149291cf0b311": {
+          "opcode": "control_if",
+          "next": null,
+          "parent": "b0b06859cf766101",
+          "inputs": {
+            "CONDITION": [
+              3,
+              "58cc90eaaa9a023c",
+              [
+                4,
+                ""
+              ]
+            ],
+            "SUBSTACK": [
+              2,
+              "e72e0d257848fbd9"
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "58cc90eaaa9a023c": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "07d149291cf0b311",
+          "inputs": {
+            "OPERAND1": [
+              3,
+              [
+                12,
+                "_tscr_s0_i",
+                "vs0_1"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "OPERAND2": [
+              1,
+              [
+                4,
+                "2"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "e72e0d257848fbd9": {
+          "opcode": "control_if",
+          "next": null,
+          "parent": "07d149291cf0b311",
+          "inputs": {
+            "CONDITION": [
+              3,
+              "c51f1705033104e1",
+              [
+                4,
+                ""
+              ]
+            ],
+            "SUBSTACK": [
+              2,
+              "9a1e202392ca2ebb"
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "c51f1705033104e1": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "e72e0d257848fbd9",
+          "inputs": {
+            "OPERAND1": [
+              3,
+              "fbcd6528b8fb66a6",
+              [
+                4,
+                ""
+              ]
+            ],
+            "OPERAND2": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "fbcd6528b8fb66a6": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "c51f1705033104e1",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_cf1_done",
+                "vcf_0_0_1"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              3,
+              [
+                12,
+                "_tscr_s0_cf2_skip",
+                "vcf_0_0_2"
+              ],
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "9a1e202392ca2ebb": {
+          "opcode": "data_setvariableto",
+          "next": null,
+          "parent": "e72e0d257848fbd9",
+          "inputs": {
+            "VALUE": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "_tscr_s0_cf2_skip",
+              "vcf_0_0_2"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "41b808619f758455": {
+          "opcode": "control_if",
+          "next": "c2b501dd996014ad",
+          "parent": "b0b06859cf766101",
+          "inputs": {
+            "CONDITION": [
+              3,
+              "5a8926b1ee2f7e4d",
+              [
+                4,
+                ""
+              ]
+            ],
+            "SUBSTACK": [
+              2,
+              "4fc9d737dacfb77f"
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "5a8926b1ee2f7e4d": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "41b808619f758455",
+          "inputs": {
+            "OPERAND1": [
+              3,
+              "abb06244e21d5afa",
+              [
+                4,
+                ""
+              ]
+            ],
+            "OPERAND2": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "abb06244e21d5afa": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "5a8926b1ee2f7e4d",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_cf1_done",
+                "vcf_0_0_1"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              3,
+              [
+                12,
+                "_tscr_s0_cf2_skip",
+                "vcf_0_0_2"
+              ],
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "4fc9d737dacfb77f": {
+          "opcode": "control_if",
+          "next": null,
+          "parent": "41b808619f758455",
+          "inputs": {
+            "CONDITION": [
+              3,
+              "74e7e7413f522fc1",
+              [
+                4,
+                ""
+              ]
+            ],
+            "SUBSTACK": [
+              2,
+              "e02bc3895f08d031"
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "74e7e7413f522fc1": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "4fc9d737dacfb77f",
+          "inputs": {
+            "OPERAND1": [
+              3,
+              [
+                12,
+                "_tscr_s0_i",
+                "vs0_1"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "OPERAND2": [
+              1,
+              [
+                4,
+                "5"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "e02bc3895f08d031": {
+          "opcode": "control_if",
+          "next": null,
+          "parent": "4fc9d737dacfb77f",
+          "inputs": {
+            "CONDITION": [
+              3,
+              "462220afea7e3b2f",
+              [
+                4,
+                ""
+              ]
+            ],
+            "SUBSTACK": [
+              2,
+              "9f206699196660a9"
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "462220afea7e3b2f": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "e02bc3895f08d031",
+          "inputs": {
+            "OPERAND1": [
+              3,
+              "02cfaec4181bf806",
+              [
+                4,
+                ""
+              ]
+            ],
+            "OPERAND2": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "02cfaec4181bf806": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "462220afea7e3b2f",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_cf1_done",
+                "vcf_0_0_1"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              3,
+              [
+                12,
+                "_tscr_s0_cf2_skip",
+                "vcf_0_0_2"
+              ],
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "9f206699196660a9": {
+          "opcode": "data_setvariableto",
+          "next": null,
+          "parent": "e02bc3895f08d031",
+          "inputs": {
+            "VALUE": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "_tscr_s0_cf1_done",
+              "vcf_0_0_1"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "c2b501dd996014ad": {
+          "opcode": "control_if",
+          "next": null,
+          "parent": "41b808619f758455",
+          "inputs": {
+            "CONDITION": [
+              3,
+              "5b8b66db658cb21b",
+              [
+                4,
+                ""
+              ]
+            ],
+            "SUBSTACK": [
+              2,
+              "c866f910c7bdd246"
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "5b8b66db658cb21b": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "c2b501dd996014ad",
+          "inputs": {
+            "OPERAND1": [
+              3,
+              "a2b292b067ac8f0a",
+              [
+                4,
+                ""
+              ]
+            ],
+            "OPERAND2": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "a2b292b067ac8f0a": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "5b8b66db658cb21b",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_cf1_done",
+                "vcf_0_0_1"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              3,
+              [
+                12,
+                "_tscr_s0_cf2_skip",
+                "vcf_0_0_2"
+              ],
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "c866f910c7bdd246": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "c2b501dd996014ad",
+          "inputs": {
+            "MESSAGE": [
+              3,
+              [
+                12,
+                "_tscr_s0_i",
+                "vs0_1"
+              ],
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "f5b04c01eb5900a1": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "f4b28b9af25bc9c2",
+          "inputs": {
+            "MESSAGE": [
+              1,
+              [
+                10,
+                "done"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        }
+      },
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "efb13d50694fa45d4de475346c7b86ec",
+          "name": "Costume1",
+          "md5ext": "efb13d50694fa45d4de475346c7b86ec.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 2,
+          "rotationCenterX": 0,
+          "rotationCenterY": 0
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "size": 100,
+      "direction": 90,
+      "draggable": false,
+      "rotationStyle": "all around"
+    }
+  ],
+  "monitors": [],
+  "extensions": [],
+  "meta": {
+    "semver": "3.0.0",
+    "vm": "0.2.0",
+    "agent": "TypeScratch 0.1.0"
+  }
+}

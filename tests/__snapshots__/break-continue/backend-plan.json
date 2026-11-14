@@ -1,0 +1,34 @@
+{
+  "entries": [
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/break-continue/main.ts",
+        "start": 195,
+        "end": 209,
+        "line": 13,
+        "column": 5
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/break-continue/main.ts",
+        "start": 217,
+        "end": 236,
+        "line": 15,
+        "column": 3
+      },
+      "cost": 0
+    }
+  ],
+  "regions": [],
+  "extensionId": null,
+  "boundaryCalls": 0,
+  "nativeOps": 2
+}
