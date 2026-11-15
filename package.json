@@ -13,6 +13,7 @@
     "build": "pnpm typescratch build --entry examples/hello-native/main.ts --target scratch --out dist/hello.sb3",
     "build:hybrid": "pnpm typescratch build --entry examples/hybrid/main.ts --target turbowarp --out dist/hybrid.sb3",
     "build:showcase": "pnpm typescratch build --entry examples/showcase/main.ts --target scratch --out dist/showcase.sb3",
+    "trace:showcase": "node tests/trace-showcase.ts",
     "build:workspace": "pnpm typescratch build --config examples/workspace/tscr.config.json --out dist/workspace.sb3",
     "build:default": "pnpm typescratch build --config packages/workspace/template/tscr.config.json --out dist/default.sb3",
     "build:packages": "tsdown",

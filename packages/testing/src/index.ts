@@ -4,6 +4,7 @@ import type { ExecutionTrace, TraceValue } from "./interpreter.ts";
 export * from "./interpreter.ts";
 export * from "./numeric-profile.ts";
 export * from "./vm.ts";
+export * from "./trace.ts";
 
 export interface CompareOptions {
   ignoreExtraVariables?: boolean;
