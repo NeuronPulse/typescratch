@@ -17,6 +17,8 @@ export const GOLDEN_CASES: GoldenCase[] = [
   { name: "break-continue", entry: example("break-continue"), target: "scratch" },
   { name: "function-return", entry: example("function-return"), target: "scratch" },
   { name: "memory-object", entry: example("memory-object"), target: "scratch" },
+  { name: "edge-hat", entry: example("edge-hat"), target: "scratch" },
+  { name: "function-recursion", entry: example("function-recursion"), target: "scratch" },
 ];
 
 export const GOLDEN_ARTIFACTS = [

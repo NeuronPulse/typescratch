@@ -1,0 +1,129 @@
+{
+  "targets": [
+    {
+      "isStage": true,
+      "name": "Stage",
+      "variables": {},
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {},
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "3016e033879a5bf9e79e2f0bd4d37715",
+          "name": "Backdrop1",
+          "md5ext": "3016e033879a5bf9e79e2f0bd4d37715.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 2,
+          "rotationCenterX": 0,
+          "rotationCenterY": 0
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 0,
+      "tempo": 60,
+      "videoState": "on",
+      "videoTransparency": 50,
+      "textToSpeechLanguage": null
+    },
+    {
+      "isStage": false,
+      "name": "Sprite1",
+      "variables": {},
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {
+        "47a2400ad0e9303c": {
+          "opcode": "event_whengreaterthan",
+          "next": "9e99cdc426e8717e",
+          "parent": null,
+          "inputs": {
+            "WHENGREATERTHANMENU": [
+              1,
+              "363bf0d74c545b3f"
+            ],
+            "VALUE": [
+              1,
+              [
+                4,
+                "-1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": true,
+          "x": 40,
+          "y": 40
+        },
+        "363bf0d74c545b3f": {
+          "opcode": "event_whengreaterthanmenu",
+          "next": null,
+          "parent": "47a2400ad0e9303c",
+          "inputs": {},
+          "fields": {
+            "WHENGREATERTHANMENU": [
+              "timer",
+              null
+            ]
+          },
+          "shadow": true,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "9e99cdc426e8717e": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "47a2400ad0e9303c",
+          "inputs": {
+            "MESSAGE": [
+              1,
+              [
+                10,
+                "edge fired"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        }
+      },
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "efb13d50694fa45d4de475346c7b86ec",
+          "name": "Costume1",
+          "md5ext": "efb13d50694fa45d4de475346c7b86ec.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 2,
+          "rotationCenterX": 0,
+          "rotationCenterY": 0
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "size": 100,
+      "direction": 90,
+      "draggable": false,
+      "rotationStyle": "all around"
+    }
+  ],
+  "monitors": [],
+  "extensions": [],
+  "meta": {
+    "semver": "3.0.0",
+    "vm": "0.2.0",
+    "agent": "TypeScratch 0.1.0"
+  }
+}

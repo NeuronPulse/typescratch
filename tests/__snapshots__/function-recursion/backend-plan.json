@@ -1,0 +1,51 @@
+{
+  "entries": [
+    {
+      "operation": "call:fn_factorial_1",
+      "decision": "native",
+      "detail": "Frame ABI via procedures_*; configured profile: native",
+      "span": {
+        "file": "examples/function-recursion/main.ts",
+        "start": 184,
+        "end": 196,
+        "line": 9,
+        "column": 15
+      },
+      "cost": 3,
+      "strategy": "native",
+      "abiProfile": "native"
+    },
+    {
+      "operation": "call:fn_factorial_1",
+      "decision": "native",
+      "detail": "Frame ABI via procedures_*; configured profile: native",
+      "span": {
+        "file": "examples/function-recursion/main.ts",
+        "start": 126,
+        "end": 142,
+        "line": 5,
+        "column": 14
+      },
+      "cost": 3,
+      "strategy": "native",
+      "abiProfile": "native"
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/function-recursion/main.ts",
+        "start": 172,
+        "end": 197,
+        "line": 9,
+        "column": 3
+      },
+      "cost": 0
+    }
+  ],
+  "regions": [],
+  "extensionId": null,
+  "boundaryCalls": 0,
+  "nativeOps": 1
+}

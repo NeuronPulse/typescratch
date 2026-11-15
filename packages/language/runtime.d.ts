@@ -41,6 +41,7 @@ export declare const Scratch: {
   onClone(handler: () => void): void;
   onBackdrop(backdrop: string, handler: () => void): void;
   onBroadcast(name: string, handler: () => void): void;
+  onGreaterThan(sensor: "timer" | "loudness", value: number, handler: () => void): void;
   say(message: string | number | boolean): void;
   wait(seconds: number): void;
   move(steps: number): void;

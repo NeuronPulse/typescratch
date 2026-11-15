@@ -215,6 +215,9 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
 
   const execFunction = (fn: FunctionDecl, args: TraceValue[]): TraceValue => {
     const saved = fn.params.map((param) => values.get(param.id));
+    const savedReturning = values.get(fn.returning);
+    const savedReturnValue = values.get(fn.returnValue);
+    const savedCallId = values.get(fn.callId);
     fn.params.forEach((param, index) => values.set(param.id, args[index] ?? defaultValue(param)));
     values.set(fn.returning, 0);
     values.set(fn.returnValue, 0);
@@ -222,6 +225,9 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
     exec(fn.body);
     const result = values.get(fn.returnValue) ?? 0;
     fn.params.forEach((param, index) => values.set(param.id, saved[index] ?? defaultValue(param)));
+    values.set(fn.returning, savedReturning ?? 0);
+    values.set(fn.returnValue, savedReturnValue ?? 0);
+    values.set(fn.callId, savedCallId ?? 0);
     return result;
   };
 

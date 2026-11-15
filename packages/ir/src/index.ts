@@ -89,7 +89,8 @@ export type Hat =
   | { kind: "spriteClicked" }
   | { kind: "clone" }
   | { kind: "backdrop"; name: string }
-  | { kind: "broadcast"; name: string };
+  | { kind: "broadcast"; name: string }
+  | { kind: "greaterThan"; sensor: string; value: number };
 
 export interface Script {
   hat: Hat;

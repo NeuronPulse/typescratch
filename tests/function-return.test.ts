@@ -88,11 +88,10 @@ test("the build report records the configured ABI profile for each call", () => 
   assert.equal(extensionCalls[0]!.strategy, "native");
 });
 
-test("recursion is rejected with TSCR3002", () => {
+test("recursion keeps each invocation's return state in its own frame", async () => {
   const result = build("function-recursion");
-  assert.equal(result.ok, false);
-  assert.ok(
-    result.report.diagnostics.some((item) => item.code === "TSCR3002"),
-    JSON.stringify(result.report.diagnostics),
-  );
+  assert.equal(result.ok, true, JSON.stringify(result.report.diagnostics));
+  assert.deepEqual(interpretModules(result.modules).says, ["120"]);
+  assert.ok(result.sb3);
+  assert.deepEqual(await runVm(result.sb3), ["120"]);
 });

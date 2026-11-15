@@ -8,7 +8,7 @@ import type {
 import { MATH_INTRINSICS } from "@typescratch/language";
 
 const HAT_NAMES: ReadonlySet<string> = new Set([
-  "onFlag", "onKey", "onSpriteClicked", "onClone", "onBackdrop", "onBroadcast",
+  "onFlag", "onKey", "onSpriteClicked", "onClone", "onBackdrop", "onBroadcast", "onGreaterThan",
 ]);
 
 const HAT_HANDLER_INDEX: Readonly<Record<string, number>> = {
@@ -18,6 +18,7 @@ const HAT_HANDLER_INDEX: Readonly<Record<string, number>> = {
   onKey: 1,
   onBackdrop: 1,
   onBroadcast: 1,
+  onGreaterThan: 2,
 };
 
 export interface FrontendConfig {
@@ -171,7 +172,6 @@ class Lowerer {
     }
     for (const [node, fn] of this.functionNodes) this.lowerFunction(node, fn);
     for (const [node, fn] of this.methodNodes) this.lowerMethod(node, fn);
-    this.checkRecursion();
     const module: Module = {
       entry: relative(this.root, this.source.fileName),
       scripts: this.scripts,
@@ -374,29 +374,6 @@ class Lowerer {
     this.scriptIndex = -1;
   }
 
-  private checkRecursion(): void {
-    let reported = false;
-    const visiting = new Set<string>();
-    const visited = new Set<string>();
-    const walk = (id: string, path: string[]): void => {
-      if (reported) return;
-      if (visiting.has(id)) {
-        reported = true;
-        const cycle = [...path.slice(path.indexOf(id)), id].join(" -> ");
-        this.bag.error(CODES.RECURSION, `recursion is not supported in v0.1: ${cycle}`, undefined, [
-          "This is a semantic restriction, not an ABI limitation; it can be lifted without redesigning frames.",
-        ]);
-        return;
-      }
-      if (visited.has(id)) return;
-      visiting.add(id);
-      for (const target of this.callEdges.get(id) ?? []) walk(target, [...path, id]);
-      visiting.delete(id);
-      visited.add(id);
-    };
-    for (const fn of this.functions) walk(fn.id, []);
-  }
-
   private lowerHatStatement(statement: ts.ExpressionStatement): boolean {
     const call = statement.expression;
     if (!ts.isCallExpression(call)) return false;
@@ -415,14 +392,29 @@ class Lowerer {
     }
     const text = argument && ts.isStringLiteral(argument) ? argument.text : "";
     let hat: Hat;
-    switch (name) {
-      case "onFlag": hat = { kind: "flag" }; break;
-      case "onKey": hat = { kind: "key", key: text }; break;
-      case "onSpriteClicked": hat = { kind: "spriteClicked" }; break;
-      case "onClone": hat = { kind: "clone" }; break;
-      case "onBackdrop": hat = { kind: "backdrop", name: text }; break;
-      case "onBroadcast": hat = { kind: "broadcast", name: text }; break;
-      default: return false;
+    if (name === "onGreaterThan") {
+      const sensor = call.arguments[0];
+      const threshold = call.arguments[1] ? this.literalValue(call.arguments[1]) : undefined;
+      if (!sensor || !ts.isStringLiteral(sensor)
+        || (sensor.text !== "timer" && sensor.text !== "loudness")) {
+        this.unsupported(statement, "onGreaterThan() expects 'timer' or 'loudness' as its sensor");
+        return true;
+      }
+      if (typeof threshold !== "number") {
+        this.unsupported(statement, "onGreaterThan() expects a numeric literal threshold");
+        return true;
+      }
+      hat = { kind: "greaterThan", sensor: sensor.text, value: threshold };
+    } else {
+      switch (name) {
+        case "onFlag": hat = { kind: "flag" }; break;
+        case "onKey": hat = { kind: "key", key: text }; break;
+        case "onSpriteClicked": hat = { kind: "spriteClicked" }; break;
+        case "onClone": hat = { kind: "clone" }; break;
+        case "onBackdrop": hat = { kind: "backdrop", name: text }; break;
+        case "onBroadcast": hat = { kind: "broadcast", name: text }; break;
+        default: return false;
+      }
     }
     this.scriptIndex = this.scripts.length;
     const body = this.withBlock(() => {

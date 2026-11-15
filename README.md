@@ -102,7 +102,7 @@ A build writes the `.sb3`, a readable `*.project.json`, a build report, a source
 
 ## 5. Language subset
 
-Supported: `number`, `string`, `boolean`, `let`/`const`, assignment and compound assignment, unary and binary operators, `if/else`, `while` with `break`/`continue`, restricted `for`, template strings, top-level `function` declarations with `return`, `Scratch.onFlag`, typed event hats (`onKey`, `onSpriteClicked`, `onClone`, `onBackdrop`, `onBroadcast`), `Scratch.say/wait/move/hide/show`, `Scratch.global/local` with `get/set/change`, `Scratch.list` with `push/insert/replace/deleteAt/clear/item/length`, `Scratch.array` with `get/set/length`, classes with number/string fields and methods (`new`, field access, method calls), and the native Math functions. APIs are resolved by symbol, so `import { Scratch as S }` works too.
+Supported: `number`, `string`, `boolean`, `let`/`const`, assignment and compound assignment, unary and binary operators, `if/else`, `while` with `break`/`continue`, restricted `for`, template strings, top-level `function` declarations with `return`, `Scratch.onFlag`, typed event hats (`onKey`, `onSpriteClicked`, `onClone`, `onBackdrop`, `onBroadcast`), `Scratch.say/wait/move/hide/show`, `Scratch.global/local` with `get/set/change`, `Scratch.list` with `push/insert/replace/deleteAt/clear/item/length`, `Scratch.array` with `get/set/length`, classes with number/string fields and methods (`new`, field access, method calls), recursive functions, edge-activated hats (`onGreaterThan`), and the native Math functions. APIs are resolved by symbol, so `import { Scratch as S }` works too.
 
 Scratch has no `break` or `continue`. The IR pass rewrites a loop that uses them with `done`/`skip` flags, guards every remaining statement and folds both flags into the loop condition. It is more blocks than a `goto` would be, but a `goto` is not on the menu. `for` loops reject them: the incrementor sits at the end of the lowered body, so `continue` would skip it and quietly change the program.
 
@@ -114,7 +114,11 @@ An `ir-opt` pass runs before the backend planner: constant arithmetic and string
 
 Objects are references, not per-class globals. A `class` with number/string fields and methods compiles to Stage-owned parallel lists (`heap.classId`, `heap.field.x`, ...) where one index describes one object; `new` appends a slot and returns its ObjectRef, and `Scratch.array<number>(3)` is an ObjectRef with a `length` field and a disjoint slice of `heap.array.items`. Array sizes are compile-time constants, so the whole allocation stays one unbranched, yield-free sequence. `p.step(2)` emits a single `invoke_virtual` operation: the Native profile compares `heap.classId[p]` against each implementing class and calls the matching custom block. Two classes with a `step` method get distinct `proccode`s — Scratch registers procedures by proccode, and quietly reusing one would dispatch every object to the last definition.
 
-Not supported: promises, `async`/`await`, generators, `eval`, dynamic imports, closures, recursion, arbitrary npm packages, DOM and Node APIs.
+Recursion works because frame state lives in slots indexed by an invocation token, not in persistent variables. Each call also saves its token in `abi.frame.callToken` under the caller's frame id, so an inner call cannot overwrite the key the outer call needs to read its own return value. `TSCR3002` is gone; the IR interpreter mirrors the same save/restore stack.
+
+`onGreaterThan("timer", n, handler)` emits `event_whengreaterthan` with a `event_whengreaterthanmenu` shadow block. It is edge-activated: the VM evaluates the predicate on every frame and starts the script on the false-to-true transition, so the conformance run drives `runtime._step()` instead of calling `startHats` by hand.
+
+Not supported: promises, `async`/`await`, generators, `eval`, dynamic imports, closures, arbitrary npm packages, DOM and Node APIs.
 
 TypeScratch does not silently change semantics. Cross-type equality (Scratch considers `"10"` and `10` close friends), the difference between JS `%` and Scratch `mod`, and booleans stored as `"true"` strings are all reported rather than guessed. The build report states the numeric profile it compiled against.
 
@@ -128,7 +132,7 @@ Four constraints are checked before a single block is emitted. `NaN`, `Infinity`
 | --- | --- |
 | `TSCR1xxx` | TypeScript frontend |
 | `TSCR2xxx` | Language subset |
-| `TSCR3xxx` | Lowering (including `TSCR3002` recursion) |
+| `TSCR3xxx` | Lowering |
 | `TSCR4xxx` | Runtime ABI: yield boundaries, variable types, script partitioning, numeric profile |
 | `TSCR5xxx` | Target compatibility |
 | `TSCR6xxx` | Performance |
@@ -170,7 +174,7 @@ pnpm snapshots:update # refresh five golden artifacts per case
 pnpm build:packages   # tsdown/rolldown CLI bundle
 ```
 
-105 Vitest tests cover HIR lowering, block graph integrity, deterministic output, extension embedding, workspace roles, default assets, list operations, typed event hats, IR optimization, break/continue control flow, numeric conformance, the four ABI constraints, Value ABI tagged pairs and strict equality, the ECMAScript/Scratch conversion split, `abi-profile` capability rules, real-VM numeric representation, thread-interleaving token atomicity, per-script control-flow isolation, custom-procedure `mutation` round trips, concurrent procedure-argument isolation, the Native frame allocator's free-list/200k bound, real-VM frame return-slot isolation, function returns with nested, early, re-entrant, boolean-parameter and tagged-return cases, the heap allocator's parallel-list layout and 200k bound, per-class field defaults, ObjectRef identity, dispatch-target collection, distinct method `proccode`s, and real-VM object/field/array traces. Some tests call the real `scratch-vm` deserializer to verify shadow blocks and extension IDs. `pnpm verify:vm` is no longer optional theatre: a jsdom shim gives headless `scratch-vm` the DOM it wants, eighteen compiled projects are actually run, and their SAY/variable/list traces are compared against an independent IR interpreter. Five golden artifacts — HIR, backend plan, graph, extension JS, build report — are pinned for seven cases. CI runs the same gate on Node 24 and 26.
+107 Vitest tests cover HIR lowering, block graph integrity, deterministic output, extension embedding, workspace roles, default assets, list operations, typed event hats, IR optimization, break/continue control flow, numeric conformance, the four ABI constraints, Value ABI tagged pairs and strict equality, the ECMAScript/Scratch conversion split, `abi-profile` capability rules, real-VM numeric representation, thread-interleaving token atomicity, per-script control-flow isolation, custom-procedure `mutation` round trips, concurrent procedure-argument isolation, the Native frame allocator's free-list/200k bound, real-VM frame return-slot isolation, function returns with nested, early, re-entrant, boolean-parameter, tagged-return and recursive cases, the heap allocator's parallel-list layout and 200k bound, per-class field defaults, ObjectRef identity, dispatch-target collection, distinct method `proccode`s, real-VM object/field/array traces, and edge-hat menu shadows that fire from `runtime._step()`. Some tests call the real `scratch-vm` deserializer to verify shadow blocks and extension IDs. `pnpm verify:vm` is no longer optional theatre: a jsdom shim gives headless `scratch-vm` the DOM it wants, twenty compiled projects are actually run, and their SAY/variable/list traces are compared against an independent IR interpreter. Five golden artifacts — HIR, backend plan, graph, extension JS, build report — are pinned for nine cases. CI runs the same gate on Node 24 and 26.
 
 ## License
 

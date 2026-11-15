@@ -18,6 +18,8 @@ const SLOT_INITIAL: Record<string, string> = {
   "abi.frame.returnAddress": "",
   "abi.frame.returnTag": "",
   "abi.frame.returnValue": "0",
+  "abi.frame.returning": "0",
+  "abi.frame.callToken": "0",
   "abi.frame.status": "running",
 };
 
@@ -156,9 +158,49 @@ export function emitFrameReturnRead(
   layout: FrameLayout,
   token: FrameRef,
 ): BlockId {
+  return emitFrameReturnReadAt(builder, scope, layout, variableRef(token));
+}
+
+/** Reads the return slot using a token recovered from the caller's frame, not a shared variable. */
+export function emitFrameReturnReadAt(
+  builder: GraphBuilder,
+  scope: string,
+  layout: FrameLayout,
+  token: InputRef,
+): BlockId {
   const list = layout.lists["abi.frame.returnValue"]!;
   const item = builder.add("data_itemoflist", { scope, fields: listField(list) });
-  builder.input(item, "INDEX", { block: indexOf(builder, scope, variableRef(token)) });
+  builder.input(item, "INDEX", { block: indexOf(builder, scope, token) });
+  return item;
+}
+
+export function emitFrameSlotWrite(
+  builder: GraphBuilder,
+  scope: string,
+  layout: FrameLayout,
+  listName: string,
+  owner: InputRef,
+  value: InputRef,
+): BlockId {
+  const ref = layout.lists[listName];
+  if (!ref) throw new Error(`unknown frame list ${listName}`);
+  const write = builder.add("data_replaceitemoflist", { scope, fields: listField(ref) });
+  builder.input(write, "INDEX", { block: indexOf(builder, scope, owner) });
+  builder.input(write, "ITEM", value);
+  return write;
+}
+
+export function emitFrameSlotRead(
+  builder: GraphBuilder,
+  scope: string,
+  layout: FrameLayout,
+  listName: string,
+  owner: InputRef,
+): BlockId {
+  const ref = layout.lists[listName];
+  if (!ref) throw new Error(`unknown frame list ${listName}`);
+  const item = builder.add("data_itemoflist", { scope, fields: listField(ref) });
+  builder.input(item, "INDEX", { block: indexOf(builder, scope, owner) });
   return item;
 }
 

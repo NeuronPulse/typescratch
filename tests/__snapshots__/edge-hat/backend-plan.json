@@ -1,0 +1,21 @@
+{
+  "entries": [
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/edge-hat/main.ts",
+        "start": 94,
+        "end": 119,
+        "line": 4,
+        "column": 3
+      },
+      "cost": 0
+    }
+  ],
+  "regions": [],
+  "extensionId": null,
+  "boundaryCalls": 0,
+  "nativeOps": 1
+}

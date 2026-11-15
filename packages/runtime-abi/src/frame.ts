@@ -12,6 +12,8 @@ export const FRAME_LIST_NAMES = [
   "abi.frame.returnAddress",
   "abi.frame.returnTag",
   "abi.frame.returnValue",
+  "abi.frame.returning",
+  "abi.frame.callToken",
   "abi.frame.status",
 ] as const;
 

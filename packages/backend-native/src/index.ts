@@ -12,8 +12,10 @@ import { getIntrinsic } from "@typescratch/language";
 import {
   declareFrameLayout,
   emitFrameAllocate,
-  emitFrameReturnRead,
+  emitFrameReturnReadAt,
   emitFrameSlotAppend,
+  emitFrameSlotRead,
+  emitFrameSlotWrite,
   type FrameLayout,
 } from "./frame-blocks.ts";
 import {
@@ -36,6 +38,7 @@ const HAT_OPCODES: Record<Hat["kind"], string> = {
   clone: "control_start_as_clone",
   backdrop: "event_whenbackdropswitchesto",
   broadcast: "event_whenbroadcastreceived",
+  greaterThan: "event_whengreaterthan",
 };
 
 function hatFields(hat: Hat, broadcastId: (name: string) => string): Record<string, Field> | undefined {
@@ -121,6 +124,8 @@ export function lowerNative(
   const functions = new Map<FunctionId, FunctionDecl>();
   const procedureInfo = new Map<FunctionId, ProcedureInfo>();
   const paramNames = new Map<VarId, { name: string; boolean: boolean }>();
+  /** Function state lives in frame slots, not in persistent Scratch variables: recursion needs this. */
+  const frameStateVars = new Map<VarId, { list: string; callId: VarId }>();
 
   for (const module of modules) {
     for (const fn of module.functions ?? []) {
@@ -140,6 +145,8 @@ export function lowerNative(
         paramNames.set(param.id, { name: param.name, boolean: param.type === "boolean" });
       }
       paramNames.set(fn.callId, { name: callIdName, boolean: false });
+      frameStateVars.set(fn.returning, { list: "abi.frame.returning", callId: fn.callId });
+      frameStateVars.set(fn.returnValue, { list: "abi.frame.returnValue", callId: fn.callId });
     }
   }
 
@@ -220,6 +227,21 @@ export function lowerNative(
         return { primitive };
       }
       case "read": {
+        const state = frameStateVars.get(expr.var);
+        const listRef = state ? layout?.lists[state.list] : undefined;
+        if (state && listRef) {
+          const item = builder.add("data_itemoflist", {
+            scope, parent: owner, span,
+            fields: { LIST: [listRef.name, listRef.id] },
+          });
+          const index = builder.add("operator_add", { scope, parent: item, span });
+          builder.input(index, "NUM1", emitValue(
+            { k: "read", var: state.callId, type: "number", span }, index, scope, span,
+          ));
+          builder.input(index, "NUM2", { primitive: [4, "1"] });
+          builder.input(item, "INDEX", { block: index });
+          return { block: item };
+        }
         const param = paramNames.get(expr.var);
         if (param) {
           const id = builder.add(
@@ -377,7 +399,31 @@ export function lowerNative(
     }
   };
 
-  const emitStatements = (stmts: Stmt[], scope: string): string[] => {
+  const frameKey = (scope: string, span: SourceSpan | undefined, callerCallId: VarId): string => {
+    const add = builder.add("operator_add", { scope, span });
+    builder.input(add, "NUM1", emitValue(
+      { k: "read", var: callerCallId, type: "number", span }, add, scope, span,
+    ));
+    builder.input(add, "NUM2", { primitive: [4, "1"] });
+    return add;
+  };
+
+  const callToken = (
+    scope: string,
+    span: SourceSpan | undefined,
+    callerCallId: VarId | undefined,
+    fallback: VarDecl,
+  ): InputRef => {
+    if (!callerCallId || !layout) return { obscuredPrimitive: [12, fallback.name, fallback.id] };
+    return {
+      block: emitFrameSlotRead(
+        builder, scope, layout, "abi.frame.callToken",
+        { block: frameKey(scope, span, callerCallId) },
+      ),
+    };
+  };
+
+  const emitStatements = (stmts: Stmt[], scope: string, callerCallId?: VarId): string[] => {
     const ids: string[] = [];
     const store = (value: Expr, decl: VarDecl, span?: SourceSpan): void => {
       if (value.type === "boolean") {
@@ -410,6 +456,22 @@ export function lowerNative(
         }
         case "assign": {
           const decl = variables.get(stmt.var);
+          const state = frameStateVars.get(stmt.var);
+          const listRef = state ? layout?.lists[state.list] : undefined;
+          if (state && listRef) {
+            const write = builder.add("data_replaceitemoflist", {
+              scope, span, fields: { LIST: [listRef.name, listRef.id] },
+            });
+            const index = builder.add("operator_add", { scope, parent: write, span });
+            builder.input(index, "NUM1", emitValue(
+              { k: "read", var: state.callId, type: "number", span }, index, scope, span,
+            ));
+            builder.input(index, "NUM2", { primitive: [4, "1"] });
+            builder.input(write, "INDEX", { block: index });
+            builder.input(write, "ITEM", emitValue(stmt.value, write, scope, span));
+            ids.push(write);
+            break;
+          }
           if (!decl) {
             bag.error(CODES.NATIVE_LOWERING, `cannot assign unknown variable ${stmt.var}`, span);
             continue;
@@ -469,6 +531,13 @@ export function lowerNative(
           const token = { id: callDecl.id, name: callDecl.name };
           ids.push(...emitFrameAllocate(builder, scope, layout, token));
           ids.push(...emitFrameSlotAppend(builder, scope, layout, token));
+          if (callerCallId) {
+            ids.push(emitFrameSlotWrite(
+              builder, scope, layout, "abi.frame.callToken",
+              { block: frameKey(scope, span, callerCallId) },
+              { obscuredPrimitive: [12, callDecl.name, callDecl.id] },
+            ));
+          }
           const call = builder.add("procedures_call", {
             scope, span,
             mutation: {
@@ -487,7 +556,9 @@ export function lowerNative(
             obscuredPrimitive: [12, callDecl.name, callDecl.id],
           });
           ids.push(call);
-          const readBlock = emitFrameReturnRead(builder, scope, layout, token);
+          const readBlock = emitFrameReturnReadAt(
+            builder, scope, layout, callToken(scope, span, callerCallId, callDecl),
+          );
           const set = builder.add("data_setvariableto", {
             scope, span, fields: { VARIABLE: [resultDecl.name, resultDecl.id] },
           });
@@ -499,7 +570,7 @@ export function lowerNative(
             scope, fields: listField(tagList.name, tagList.id),
           });
           const tagIndex = builder.add("operator_add", { scope, parent: tagItem, span });
-          builder.input(tagIndex, "NUM1", { obscuredPrimitive: [12, callDecl.name, callDecl.id] });
+          builder.input(tagIndex, "NUM1", callToken(scope, span, callerCallId, callDecl));
           builder.input(tagIndex, "NUM2", { primitive: [4, "1"] });
           builder.input(tagItem, "INDEX", { block: tagIndex });
           const tagDecl = variables.get(stmt.resultTag);
@@ -666,6 +737,13 @@ export function lowerNative(
           const token = { id: callDecl.id, name: callDecl.name };
           ids.push(...emitFrameAllocate(builder, scope, layout, token));
           ids.push(...emitFrameSlotAppend(builder, scope, layout, token));
+          if (callerCallId) {
+            ids.push(emitFrameSlotWrite(
+              builder, scope, layout, "abi.frame.callToken",
+              { block: frameKey(scope, span, callerCallId) },
+              { obscuredPrimitive: [12, callDecl.name, callDecl.id] },
+            ));
+          }
           for (const target of stmt.targets) {
             const info = procedureInfo.get(target.function);
             if (!info) {
@@ -702,7 +780,9 @@ export function lowerNative(
             builder.substack(branch, "SUBSTACK", call);
             ids.push(branch);
           }
-          const readBlock = emitFrameReturnRead(builder, scope, layout, token);
+          const readBlock = emitFrameReturnReadAt(
+            builder, scope, layout, callToken(scope, span, callerCallId, callDecl),
+          );
           const set = builder.add("data_setvariableto", {
             scope, span, fields: { VARIABLE: [resultDecl.name, resultDecl.id] },
           });
@@ -713,7 +793,7 @@ export function lowerNative(
             fields: { LIST: [layout.lists["abi.frame.returnTag"]!.name, layout.lists["abi.frame.returnTag"]!.id] },
           });
           const tagIndex = builder.add("operator_add", { scope, parent: tagItem, span });
-          builder.input(tagIndex, "NUM1", { obscuredPrimitive: [12, callDecl.name, callDecl.id] });
+          builder.input(tagIndex, "NUM1", callToken(scope, span, callerCallId, callDecl));
           builder.input(tagIndex, "NUM2", { primitive: [4, "1"] });
           builder.input(tagItem, "INDEX", { block: tagIndex });
           const tagDecl = variables.get(stmt.resultTag);
@@ -740,13 +820,13 @@ export function lowerNative(
         case "if": {
           const id = builder.add(stmt.else ? "control_if_else" : "control_if", { scope, span });
           builder.input(id, "CONDITION", emitValue(stmt.cond, id, scope, span));
-          const thenIds = emitStatements(stmt.then, `${scope}/then`);
+          const thenIds = emitStatements(stmt.then, `${scope}/then`, callerCallId);
           if (thenIds.length > 0) {
             builder.chain(thenIds);
             builder.substack(id, "SUBSTACK", thenIds[0]);
           }
           if (stmt.else) {
-            const elseIds = emitStatements(stmt.else, `${scope}/else`);
+            const elseIds = emitStatements(stmt.else, `${scope}/else`, callerCallId);
             if (elseIds.length > 0) {
               builder.chain(elseIds);
               builder.substack(id, "SUBSTACK2", elseIds[0]);
@@ -760,7 +840,7 @@ export function lowerNative(
           const notId = builder.add("operator_not", { scope, parent: id, span });
           builder.input(notId, "OPERAND", emitValue(stmt.cond, notId, scope, span));
           builder.input(id, "CONDITION", { block: notId });
-          const bodyIds = emitStatements(stmt.body, `${scope}/body`);
+          const bodyIds = emitStatements(stmt.body, `${scope}/body`, callerCallId);
           if (bodyIds.length > 0) {
             builder.chain(bodyIds);
             builder.substack(id, "SUBSTACK", bodyIds[0]);
@@ -769,7 +849,7 @@ export function lowerNative(
           break;
         }
         case "sequence": {
-          ids.push(...emitStatements(stmt.body, scope));
+          ids.push(...emitStatements(stmt.body, scope, callerCallId));
           break;
         }
       }
@@ -786,6 +866,13 @@ export function lowerNative(
         scope, topLevel: true, x: 40, y: 40 + index * 320, span: script.span,
         fields: hatFields(script.hat, (name) => builder.declareBroadcast(name)),
       });
+      if (script.hat.kind === "greaterThan") {
+        const menu = builder.addShadow("event_whengreaterthanmenu", hat, {
+          WHENGREATERTHANMENU: [script.hat.sensor, null],
+        }, scope);
+        builder.input(hat, "WHENGREATERTHANMENU", { shadowBlock: menu });
+        builder.input(hat, "VALUE", { primitive: [4, String(script.hat.value)] });
+      }
       const ids = emitStatements(script.body, scope);
       builder.chain([hat, ...ids]);
     });
@@ -808,7 +895,7 @@ export function lowerNative(
         },
       });
       builder.input(definition, "custom_block", { shadowBlock: prototype });
-      const bodyIds = emitStatements(fn.body, scope);
+      const bodyIds = emitStatements(fn.body, scope, fn.callId);
       builder.chain([definition, ...bodyIds]);
     }
   }

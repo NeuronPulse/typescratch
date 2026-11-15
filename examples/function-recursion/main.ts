@@ -1,9 +1,10 @@
 import { Scratch } from "@typescratch/runtime";
 
-function loop(n: number): number {
-  return loop(n + 1);
+function factorial(n: number): number {
+  if (n <= 1) return 1;
+  return n * factorial(n - 1);
 }
 
 Scratch.onFlag(() => {
-  Scratch.say(loop(1));
+  Scratch.say(factorial(5));
 });

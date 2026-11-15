@@ -1,0 +1,80 @@
+{
+  "target": "scratch",
+  "entry": "examples/edge-hat/main.ts",
+  "ok": true,
+  "abiProfile": {
+    "requested": "auto",
+    "resolved": "native",
+    "lowering": "native"
+  },
+  "diagnostics": [],
+  "plan": [
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/edge-hat/main.ts",
+        "start": 94,
+        "end": 119,
+        "line": 4,
+        "column": 3
+      },
+      "cost": 0
+    }
+  ],
+  "compatibility": {
+    "officialScratch": true,
+    "turboWarp": true,
+    "customExtensions": 0,
+    "notes": []
+  },
+  "numericProfile": {
+    "model": "scratch",
+    "documentedDifferences": [
+      "operator_equals compares numerically and case-insensitively, not with JavaScript ===",
+      "operator_mod returns a divisor-signed remainder, unlike the JavaScript % operator",
+      "Cast.toNumber maps NaN to 0 and accepts numeric strings",
+      "Infinity and NaN are rejected by the frontend as unstable Scratch variable values"
+    ]
+  },
+  "optimization": {
+    "folded": 0,
+    "simplified": 0,
+    "branchesRemoved": 0,
+    "loopsRemoved": 0,
+    "controlFlowRewrites": 0
+  },
+  "sourceMap": [
+    {
+      "blockId": "47a2400ad0e9303c",
+      "span": {
+        "file": "examples/edge-hat/main.ts",
+        "start": 49,
+        "end": 124,
+        "line": 3,
+        "column": 1
+      }
+    },
+    {
+      "blockId": "9e99cdc426e8717e",
+      "span": {
+        "file": "examples/edge-hat/main.ts",
+        "start": 94,
+        "end": 119,
+        "line": 4,
+        "column": 3
+      }
+    }
+  ],
+  "blockCount": 3,
+  "boundaryCalls": 0,
+  "outputs": [
+    "edge-hat.sb3",
+    "edge-hat.project.json",
+    "edge-hat.report.json",
+    "edge-hat.source-map.json"
+  ],
+  "hirDump": "[\n  \"{\\n  \\\"entry\\\": \\\"examples/edge-hat/main.ts\\\",\\n  \\\"scripts\\\": [\\n    {\\n      \\\"hat\\\": {\\n        \\\"kind\\\": \\\"greaterThan\\\",\\n        \\\"sensor\\\": \\\"timer\\\",\\n        \\\"value\\\": -1\\n      },\\n      \\\"body\\\": [\\n        {\\n          \\\"k\\\": \\\"expr\\\",\\n          \\\"name\\\": \\\"say\\\",\\n          \\\"args\\\": [\\n            {\\n              \\\"k\\\": \\\"const\\\",\\n              \\\"value\\\": \\\"edge fired\\\",\\n              \\\"type\\\": \\\"string\\\",\\n              \\\"span\\\": {\\n                \\\"file\\\": \\\"examples/edge-hat/main.ts\\\",\\n                \\\"start\\\": 106,\\n                \\\"end\\\": 118,\\n                \\\"line\\\": 4,\\n                \\\"column\\\": 15\\n              }\\n            }\\n          ],\\n          \\\"span\\\": {\\n            \\\"file\\\": \\\"examples/edge-hat/main.ts\\\",\\n            \\\"start\\\": 94,\\n            \\\"end\\\": 119,\\n            \\\"line\\\": 4,\\n            \\\"column\\\": 3\\n          }\\n        }\\n      ],\\n      \\\"span\\\": {\\n        \\\"file\\\": \\\"examples/edge-hat/main.ts\\\",\\n        \\\"start\\\": 49,\\n        \\\"end\\\": 124,\\n        \\\"line\\\": 3,\\n        \\\"column\\\": 1\\n      }\\n    }\\n  ],\\n  \\\"vars\\\": [],\\n  \\\"lists\\\": [],\\n  \\\"role\\\": {\\n    \\\"name\\\": \\\"Sprite1\\\",\\n    \\\"isStage\\\": false\\n  }\\n}\"\n]",
+  "projectJson": "{\n  \"targets\": [\n    {\n      \"isStage\": true,\n      \"name\": \"Stage\",\n      \"variables\": {},\n      \"lists\": {},\n      \"broadcasts\": {},\n      \"blocks\": {},\n      \"comments\": {},\n      \"currentCostume\": 0,\n      \"costumes\": [\n        {\n          \"assetId\": \"3016e033879a5bf9e79e2f0bd4d37715\",\n          \"name\": \"Backdrop1\",\n          \"md5ext\": \"3016e033879a5bf9e79e2f0bd4d37715.svg\",\n          \"dataFormat\": \"svg\",\n          \"bitmapResolution\": 2,\n          \"rotationCenterX\": 0,\n          \"rotationCenterY\": 0\n        }\n      ],\n      \"sounds\": [],\n      \"volume\": 100,\n      \"layerOrder\": 0,\n      \"tempo\": 60,\n      \"videoState\": \"on\",\n      \"videoTransparency\": 50,\n      \"textToSpeechLanguage\": null\n    },\n    {\n      \"isStage\": false,\n      \"name\": \"Sprite1\",\n      \"variables\": {},\n      \"lists\": {},\n      \"broadcasts\": {},\n      \"blocks\": {\n        \"47a2400ad0e9303c\": {\n          \"opcode\": \"event_whengreaterthan\",\n          \"next\": \"9e99cdc426e8717e\",\n          \"parent\": null,\n          \"inputs\": {\n            \"WHENGREATERTHANMENU\": [\n              1,\n              \"363bf0d74c545b3f\"\n            ],\n            \"VALUE\": [\n              1,\n              [\n                4,\n                \"-1\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": true,\n          \"x\": 40,\n          \"y\": 40\n        },\n        \"363bf0d74c545b3f\": {\n          \"opcode\": \"event_whengreaterthanmenu\",\n          \"next\": null,\n          \"parent\": \"47a2400ad0e9303c\",\n          \"inputs\": {},\n          \"fields\": {\n            \"WHENGREATERTHANMENU\": [\n              \"timer\",\n              null\n            ]\n          },\n          \"shadow\": true,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        },\n        \"9e99cdc426e8717e\": {\n          \"opcode\": \"looks_say\",\n          \"next\": null,\n          \"parent\": \"47a2400ad0e9303c\",\n          \"inputs\": {\n            \"MESSAGE\": [\n              1,\n              [\n                10,\n                \"edge fired\"\n              ]\n            ]\n          },\n          \"fields\": {},\n          \"shadow\": false,\n          \"topLevel\": false,\n          \"x\": 0,\n          \"y\": 0\n        }\n      },\n      \"comments\": {},\n      \"currentCostume\": 0,\n      \"costumes\": [\n        {\n          \"assetId\": \"efb13d50694fa45d4de475346c7b86ec\",\n          \"name\": \"Costume1\",\n          \"md5ext\": \"efb13d50694fa45d4de475346c7b86ec.svg\",\n          \"dataFormat\": \"svg\",\n          \"bitmapResolution\": 2,\n          \"rotationCenterX\": 0,\n          \"rotationCenterY\": 0\n        }\n      ],\n      \"sounds\": [],\n      \"volume\": 100,\n      \"layerOrder\": 1,\n      \"visible\": true,\n      \"x\": 0,\n      \"y\": 0,\n      \"size\": 100,\n      \"direction\": 90,\n      \"draggable\": false,\n      \"rotationStyle\": \"all around\"\n    }\n  ],\n  \"monitors\": [],\n  \"extensions\": [],\n  \"meta\": {\n    \"semver\": \"3.0.0\",\n    \"vm\": \"0.2.0\",\n    \"agent\": \"TypeScratch 0.1.0\"\n  }\n}"
+}

@@ -38,6 +38,14 @@
           "abi.frame.returnTag",
           []
         ],
+        "l_abi_frame_returning": [
+          "abi.frame.returning",
+          []
+        ],
+        "l_abi_frame_callToken": [
+          "abi.frame.callToken",
+          []
+        ],
         "l_abi_frame_status": [
           "abi.frame.status",
           []
@@ -1666,7 +1674,7 @@
         },
         "963aeb904aea6386": {
           "opcode": "control_if_else",
-          "next": "42336d7f7128e72f",
+          "next": "ce3b05a83c93bd00",
           "parent": "1837e69f0aea72f7",
           "inputs": {
             "CONDITION": [
@@ -2129,7 +2137,7 @@
         },
         "5616fea66285062e": {
           "opcode": "data_replaceitemoflist",
-          "next": null,
+          "next": "5b170685034447d1",
           "parent": "5914c4c880bbf1f0",
           "inputs": {
             "INDEX": [
@@ -2144,14 +2152,14 @@
               1,
               [
                 10,
-                "running"
+                "0"
               ]
             ]
           },
           "fields": {
             "LIST": [
-              "abi.frame.status",
-              "l_abi_frame_status"
+              "abi.frame.returning",
+              "l_abi_frame_returning"
             ]
           },
           "shadow": false,
@@ -2192,8 +2200,182 @@
         },
         "b19214e4ce37ec78": {
           "opcode": "data_addtolist",
-          "next": null,
+          "next": "ae92102bc94f5073",
           "parent": "b492199d8d59a4c5",
+          "inputs": {
+            "ITEM": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.returning",
+              "l_abi_frame_returning"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "5b170685034447d1": {
+          "opcode": "data_replaceitemoflist",
+          "next": "581701cc10f761c0",
+          "parent": "5616fea66285062e",
+          "inputs": {
+            "INDEX": [
+              3,
+              "4348aab1444ef341",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.callToken",
+              "l_abi_frame_callToken"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "4348aab1444ef341": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "5b170685034447d1",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_call2_id",
+                "vcall_0_0_2_id"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "ae92102bc94f5073": {
+          "opcode": "data_addtolist",
+          "next": "ab920b7235b290a6",
+          "parent": "b19214e4ce37ec78",
+          "inputs": {
+            "ITEM": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.callToken",
+              "l_abi_frame_callToken"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "581701cc10f761c0": {
+          "opcode": "data_replaceitemoflist",
+          "next": null,
+          "parent": "5b170685034447d1",
+          "inputs": {
+            "INDEX": [
+              3,
+              "3e48a2d2288b3f5a",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              1,
+              [
+                10,
+                "running"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.status",
+              "l_abi_frame_status"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "3e48a2d2288b3f5a": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "581701cc10f761c0",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_call2_id",
+                "vcall_0_0_2_id"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "ab920b7235b290a6": {
+          "opcode": "data_addtolist",
+          "next": null,
+          "parent": "ae92102bc94f5073",
           "inputs": {
             "ITEM": [
               1,
@@ -2214,14 +2396,14 @@
           "x": 0,
           "y": 0
         },
-        "b602125fd10dbc2f": {
+        "c7f0e594c120f65e": {
           "opcode": "operator_equals",
           "next": null,
-          "parent": "42336d7f7128e72f",
+          "parent": "ce3b05a83c93bd00",
           "inputs": {
             "OPERAND1": [
               3,
-              "ffe7b65acba11e40",
+              "6be0119907200dfd",
               [
                 4,
                 ""
@@ -2241,14 +2423,14 @@
           "x": 0,
           "y": 0
         },
-        "ffe7b65acba11e40": {
+        "6be0119907200dfd": {
           "opcode": "data_itemoflist",
           "next": null,
-          "parent": "b602125fd10dbc2f",
+          "parent": "c7f0e594c120f65e",
           "inputs": {
             "INDEX": [
               3,
-              "4048a5f851c0be68",
+              "463be377b1ac427f",
               [
                 4,
                 ""
@@ -2266,10 +2448,10 @@
           "x": 0,
           "y": 0
         },
-        "4048a5f851c0be68": {
+        "463be377b1ac427f": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "ffe7b65acba11e40",
+          "parent": "6be0119907200dfd",
           "inputs": {
             "NUM1": [
               3,
@@ -2297,14 +2479,14 @@
           "x": 0,
           "y": 0
         },
-        "42336d7f7128e72f": {
+        "ce3b05a83c93bd00": {
           "opcode": "control_if",
-          "next": "0b2c2c6fdfadef47",
+          "next": "092c29497af8c7ad",
           "parent": "963aeb904aea6386",
           "inputs": {
             "CONDITION": [
               3,
-              "b602125fd10dbc2f",
+              "c7f0e594c120f65e",
               [
                 4,
                 ""
@@ -2312,7 +2494,7 @@
             ],
             "SUBSTACK": [
               2,
-              "cad17192a63610a8"
+              "d0c4af111d1fadc1"
             ]
           },
           "fields": {},
@@ -2321,10 +2503,10 @@
           "x": 0,
           "y": 0
         },
-        "cad17192a63610a8": {
+        "d0c4af111d1fadc1": {
           "opcode": "procedures_call",
           "next": null,
-          "parent": "42336d7f7128e72f",
+          "parent": "ce3b05a83c93bd00",
           "inputs": {
             "input0": [
               3,
@@ -2370,14 +2552,14 @@
             "children": []
           }
         },
-        "f3e7a376dd0f77dc": {
+        "6fe017e5c887cc81": {
           "opcode": "data_itemoflist",
           "next": null,
-          "parent": "0b2c2c6fdfadef47",
+          "parent": "092c29497af8c7ad",
           "inputs": {
             "INDEX": [
               3,
-              "483be69d508d7e71",
+              "423bdd2b579ab323",
               [
                 4,
                 ""
@@ -2395,10 +2577,10 @@
           "x": 0,
           "y": 0
         },
-        "483be69d508d7e71": {
+        "423bdd2b579ab323": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "f3e7a376dd0f77dc",
+          "parent": "6fe017e5c887cc81",
           "inputs": {
             "NUM1": [
               3,
@@ -2426,14 +2608,14 @@
           "x": 0,
           "y": 0
         },
-        "0b2c2c6fdfadef47": {
+        "092c29497af8c7ad": {
           "opcode": "data_setvariableto",
-          "next": "062c249076026604",
-          "parent": "42336d7f7128e72f",
+          "next": "102e72e55ee59ae5",
+          "parent": "ce3b05a83c93bd00",
           "inputs": {
             "VALUE": [
               3,
-              "f3e7a376dd0f77dc",
+              "6fe017e5c887cc81",
               [
                 4,
                 ""
@@ -2451,14 +2633,14 @@
           "x": 0,
           "y": 0
         },
-        "68e00ce034abee9e": {
+        "72e01c9e40a5c818": {
           "opcode": "data_itemoflist",
           "next": null,
-          "parent": "062c249076026604",
+          "parent": "102e72e55ee59ae5",
           "inputs": {
             "INDEX": [
               3,
-              "7c32fc07cecad32f",
+              "7632f2955816b539",
               [
                 4,
                 ""
@@ -2476,10 +2658,10 @@
           "x": 0,
           "y": 0
         },
-        "7c32fc07cecad32f": {
+        "7632f2955816b539": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "68e00ce034abee9e",
+          "parent": "72e01c9e40a5c818",
           "inputs": {
             "NUM1": [
               3,
@@ -2507,14 +2689,14 @@
           "x": 0,
           "y": 0
         },
-        "062c249076026604": {
+        "102e72e55ee59ae5": {
           "opcode": "data_setvariableto",
-          "next": "ced5ac65349a13e5",
-          "parent": "0b2c2c6fdfadef47",
+          "next": "ced7eafc96ce127e",
+          "parent": "092c29497af8c7ad",
           "inputs": {
             "VALUE": [
               3,
-              "68e00ce034abee9e",
+              "72e01c9e40a5c818",
               [
                 4,
                 ""
@@ -2532,10 +2714,10 @@
           "x": 0,
           "y": 0
         },
-        "ced5ac65349a13e5": {
+        "ced7eafc96ce127e": {
           "opcode": "looks_say",
-          "next": "a541bef2f22ac4bc",
-          "parent": "062c249076026604",
+          "next": "1744b0ffc804ae2f",
+          "parent": "102e72e55ee59ae5",
           "inputs": {
             "MESSAGE": [
               3,
@@ -2556,10 +2738,10 @@
           "x": 0,
           "y": 0
         },
-        "2f66b3e19fce0ce1": {
+        "a963a25812132672": {
           "opcode": "data_lengthoflist",
           "next": null,
-          "parent": "8ed82900689d945a",
+          "parent": "92d5f0b58931f825",
           "inputs": {},
           "fields": {
             "LIST": [
@@ -2572,14 +2754,14 @@
           "x": 0,
           "y": 0
         },
-        "8ed82900689d945a": {
+        "92d5f0b58931f825": {
           "opcode": "operator_gt",
           "next": null,
-          "parent": "a541bef2f22ac4bc",
+          "parent": "1744b0ffc804ae2f",
           "inputs": {
             "OPERAND1": [
               3,
-              "2f66b3e19fce0ce1",
+              "a963a25812132672",
               [
                 4,
                 ""
@@ -2599,14 +2781,14 @@
           "x": 0,
           "y": 0
         },
-        "a541bef2f22ac4bc": {
+        "1744b0ffc804ae2f": {
           "opcode": "control_if_else",
-          "next": "1944b425d4e847d9",
-          "parent": "ced5ac65349a13e5",
+          "next": "7e4466db468bde5b",
+          "parent": "ced7eafc96ce127e",
           "inputs": {
             "CONDITION": [
               3,
-              "8ed82900689d945a",
+              "92d5f0b58931f825",
               [
                 4,
                 ""
@@ -2614,11 +2796,11 @@
             ],
             "SUBSTACK": [
               2,
-              "47f8188639c20a86"
+              "49f81bac4a158ca4"
             ],
             "SUBSTACK2": [
               2,
-              "45f81560b5d5a518"
+              "4ff8251e9b967c1e"
             ]
           },
           "fields": {},
@@ -2627,10 +2809,10 @@
           "x": 0,
           "y": 0
         },
-        "73e01e317ae79bc5": {
+        "6be2503039c700ba": {
           "opcode": "data_itemoflist",
           "next": null,
-          "parent": "47f8188639c20a86",
+          "parent": "49f81bac4a158ca4",
           "inputs": {
             "INDEX": [
               1,
@@ -2651,14 +2833,14 @@
           "x": 0,
           "y": 0
         },
-        "47f8188639c20a86": {
+        "49f81bac4a158ca4": {
           "opcode": "data_setvariableto",
-          "next": "31c60078d3654942",
-          "parent": "a541bef2f22ac4bc",
+          "next": "37c609eaf9fe8cb4",
+          "parent": "1744b0ffc804ae2f",
           "inputs": {
             "VALUE": [
               3,
-              "73e01e317ae79bc5",
+              "6be2503039c700ba",
               [
                 4,
                 ""
@@ -2676,10 +2858,10 @@
           "x": 0,
           "y": 0
         },
-        "31c60078d3654942": {
+        "37c609eaf9fe8cb4": {
           "opcode": "data_deleteoflist",
           "next": null,
-          "parent": "47f8188639c20a86",
+          "parent": "49f81bac4a158ca4",
           "inputs": {
             "INDEX": [
               1,
@@ -2700,10 +2882,10 @@
           "x": 0,
           "y": 0
         },
-        "45f81560b5d5a518": {
+        "4ff8251e9b967c1e": {
           "opcode": "data_setvariableto",
-          "next": "e31608772776dcb7",
-          "parent": "a541bef2f22ac4bc",
+          "next": "dd15ff0537547a61",
+          "parent": "1744b0ffc804ae2f",
           "inputs": {
             "VALUE": [
               3,
@@ -2729,10 +2911,10 @@
           "x": 0,
           "y": 0
         },
-        "e31608772776dcb7": {
+        "dd15ff0537547a61": {
           "opcode": "data_changevariableby",
           "next": null,
-          "parent": "45f81560b5d5a518",
+          "parent": "4ff8251e9b967c1e",
           "inputs": {
             "VALUE": [
               1,
@@ -2753,10 +2935,10 @@
           "x": 0,
           "y": 0
         },
-        "af63abca3c4e47c0": {
+        "24f75152a9f7d962": {
           "opcode": "data_lengthoflist",
           "next": null,
-          "parent": "04d72296c5547db4",
+          "parent": "6b20bb54a3212ee8",
           "inputs": {},
           "fields": {
             "LIST": [
@@ -2769,10 +2951,10 @@
           "x": 0,
           "y": 0
         },
-        "04d72296c5547db4": {
+        "6b20bb54a3212ee8": {
           "opcode": "operator_lt",
           "next": null,
-          "parent": "1944b425d4e847d9",
+          "parent": "7e4466db468bde5b",
           "inputs": {
             "OPERAND1": [
               3,
@@ -2788,7 +2970,7 @@
             ],
             "OPERAND2": [
               3,
-              "af63abca3c4e47c0",
+              "24f75152a9f7d962",
               [
                 4,
                 ""
@@ -2801,14 +2983,14 @@
           "x": 0,
           "y": 0
         },
-        "1944b425d4e847d9": {
+        "7e4466db468bde5b": {
           "opcode": "control_if_else",
-          "next": "a131a20486208386",
-          "parent": "a541bef2f22ac4bc",
+          "next": "a536257e58ed8d64",
+          "parent": "1744b0ffc804ae2f",
           "inputs": {
             "CONDITION": [
               3,
-              "04d72296c5547db4",
+              "6b20bb54a3212ee8",
               [
                 4,
                 ""
@@ -2816,188 +2998,14 @@
             ],
             "SUBSTACK": [
               2,
-              "6839ad3ed9386b62"
+              "b8ed2174e649fada"
             ],
             "SUBSTACK2": [
               2,
-              "9fa103185c9df9c0"
+              "14cfd61aeeeb0384"
             ]
           },
           "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "6839ad3ed9386b62": {
-          "opcode": "data_replaceitemoflist",
-          "next": "bbed262dffb54f99",
-          "parent": "1944b425d4e847d9",
-          "inputs": {
-            "INDEX": [
-              3,
-              "3a3991fc6ac000a8",
-              [
-                4,
-                ""
-              ]
-            ],
-            "ITEM": [
-              1,
-              [
-                10,
-                "0"
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "abi.frame.function",
-              "l_abi_frame_function"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "3a3991fc6ac000a8": {
-          "opcode": "operator_add",
-          "next": null,
-          "parent": "6839ad3ed9386b62",
-          "inputs": {
-            "NUM1": [
-              3,
-              [
-                12,
-                "_tscr_s0_call3_id",
-                "vcall_0_0_3_id"
-              ],
-              [
-                4,
-                ""
-              ]
-            ],
-            "NUM2": [
-              1,
-              [
-                4,
-                "1"
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "9fa103185c9df9c0": {
-          "opcode": "data_addtolist",
-          "next": "0fcfce3b85ecb583",
-          "parent": "1944b425d4e847d9",
-          "inputs": {
-            "ITEM": [
-              1,
-              [
-                10,
-                "0"
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "abi.frame.function",
-              "l_abi_frame_function"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "bbed262dffb54f99": {
-          "opcode": "data_replaceitemoflist",
-          "next": "b8ed2174e649fada",
-          "parent": "6839ad3ed9386b62",
-          "inputs": {
-            "INDEX": [
-              3,
-              "5d88f25769693ca7",
-              [
-                4,
-                ""
-              ]
-            ],
-            "ITEM": [
-              1,
-              [
-                10,
-                "-1"
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "abi.frame.parent",
-              "l_abi_frame_parent"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "5d88f25769693ca7": {
-          "opcode": "operator_add",
-          "next": null,
-          "parent": "bbed262dffb54f99",
-          "inputs": {
-            "NUM1": [
-              3,
-              [
-                12,
-                "_tscr_s0_call3_id",
-                "vcall_0_0_3_id"
-              ],
-              [
-                4,
-                ""
-              ]
-            ],
-            "NUM2": [
-              1,
-              [
-                4,
-                "1"
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "0fcfce3b85ecb583": {
-          "opcode": "data_addtolist",
-          "next": "14cfd61aeeeb0384",
-          "parent": "9fa103185c9df9c0",
-          "inputs": {
-            "ITEM": [
-              1,
-              [
-                10,
-                "-1"
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "abi.frame.parent",
-              "l_abi_frame_parent"
-            ]
-          },
           "shadow": false,
           "topLevel": false,
           "x": 0,
@@ -3006,7 +3014,7 @@
         "b8ed2174e649fada": {
           "opcode": "data_replaceitemoflist",
           "next": "b5ed1cbbe601af33",
-          "parent": "bbed262dffb54f99",
+          "parent": "7e4466db468bde5b",
           "inputs": {
             "INDEX": [
               3,
@@ -3020,14 +3028,14 @@
               1,
               [
                 10,
-                ""
+                "0"
               ]
             ]
           },
           "fields": {
             "LIST": [
-              "abi.frame.returnAddress",
-              "l_abi_frame_returnAddress"
+              "abi.frame.function",
+              "l_abi_frame_function"
             ]
           },
           "shadow": false,
@@ -3069,20 +3077,20 @@
         "14cfd61aeeeb0384": {
           "opcode": "data_addtolist",
           "next": "09cfc4c9bbcb5cd1",
-          "parent": "0fcfce3b85ecb583",
+          "parent": "7e4466db468bde5b",
           "inputs": {
             "ITEM": [
               1,
               [
                 10,
-                ""
+                "0"
               ]
             ]
           },
           "fields": {
             "LIST": [
-              "abi.frame.returnAddress",
-              "l_abi_frame_returnAddress"
+              "abi.frame.function",
+              "l_abi_frame_function"
             ]
           },
           "shadow": false,
@@ -3107,14 +3115,14 @@
               1,
               [
                 10,
-                ""
+                "-1"
               ]
             ]
           },
           "fields": {
             "LIST": [
-              "abi.frame.returnTag",
-              "l_abi_frame_returnTag"
+              "abi.frame.parent",
+              "l_abi_frame_parent"
             ]
           },
           "shadow": false,
@@ -3162,14 +3170,14 @@
               1,
               [
                 10,
-                ""
+                "-1"
               ]
             ]
           },
           "fields": {
             "LIST": [
-              "abi.frame.returnTag",
-              "l_abi_frame_returnTag"
+              "abi.frame.parent",
+              "l_abi_frame_parent"
             ]
           },
           "shadow": false,
@@ -3194,14 +3202,14 @@
               1,
               [
                 10,
-                "0"
+                ""
               ]
             ]
           },
           "fields": {
             "LIST": [
-              "abi.frame.returnValue",
-              "l_abi_frame_returnValue"
+              "abi.frame.returnAddress",
+              "l_abi_frame_returnAddress"
             ]
           },
           "shadow": false,
@@ -3249,14 +3257,14 @@
               1,
               [
                 10,
-                "0"
+                ""
               ]
             ]
           },
           "fields": {
             "LIST": [
-              "abi.frame.returnValue",
-              "l_abi_frame_returnValue"
+              "abi.frame.returnAddress",
+              "l_abi_frame_returnAddress"
             ]
           },
           "shadow": false,
@@ -3266,7 +3274,7 @@
         },
         "37ea17ca631e05ac": {
           "opcode": "data_replaceitemoflist",
-          "next": null,
+          "next": "32ea0febddf20aeb",
           "parent": "b2ed1802678bb20c",
           "inputs": {
             "INDEX": [
@@ -3281,14 +3289,14 @@
               1,
               [
                 10,
-                "running"
+                ""
               ]
             ]
           },
           "fields": {
             "LIST": [
-              "abi.frame.status",
-              "l_abi_frame_status"
+              "abi.frame.returnTag",
+              "l_abi_frame_returnTag"
             ]
           },
           "shadow": false,
@@ -3329,8 +3337,356 @@
         },
         "8fccc624615a170a": {
           "opcode": "data_addtolist",
-          "next": null,
+          "next": "92cccadd67d2e6e1",
           "parent": "8cccc16b975f308b",
+          "inputs": {
+            "ITEM": [
+              1,
+              [
+                10,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.returnTag",
+              "l_abi_frame_returnTag"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "32ea0febddf20aeb": {
+          "opcode": "data_replaceitemoflist",
+          "next": "2dea080c6278bb96",
+          "parent": "37ea17ca631e05ac",
+          "inputs": {
+            "INDEX": [
+              3,
+              "5c8b2f5b291d9ccb",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.returnValue",
+              "l_abi_frame_returnValue"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "5c8b2f5b291d9ccb": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "32ea0febddf20aeb",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_call3_id",
+                "vcall_0_0_3_id"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "92cccadd67d2e6e1": {
+          "opcode": "data_addtolist",
+          "next": "fdd42f135064f8bb",
+          "parent": "8fccc624615a170a",
+          "inputs": {
+            "ITEM": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.returnValue",
+              "l_abi_frame_returnValue"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "2dea080c6278bb96": {
+          "opcode": "data_replaceitemoflist",
+          "next": "a6f1824c9147899e",
+          "parent": "32ea0febddf20aeb",
+          "inputs": {
+            "INDEX": [
+              3,
+              "598b2aa2123301d8",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.returning",
+              "l_abi_frame_returning"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "598b2aa2123301d8": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "2dea080c6278bb96",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_call3_id",
+                "vcall_0_0_3_id"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "fdd42f135064f8bb": {
+          "opcode": "data_addtolist",
+          "next": "fed430a68c150d54",
+          "parent": "92cccadd67d2e6e1",
+          "inputs": {
+            "ITEM": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.returning",
+              "l_abi_frame_returning"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "a6f1824c9147899e": {
+          "opcode": "data_replaceitemoflist",
+          "next": "a3f17d93945f6f5b",
+          "parent": "2dea080c6278bb96",
+          "inputs": {
+            "INDEX": [
+              3,
+              "c68e14d021e6762e",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.callToken",
+              "l_abi_frame_callToken"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "c68e14d021e6762e": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "a6f1824c9147899e",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_call3_id",
+                "vcall_0_0_3_id"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "fed430a68c150d54": {
+          "opcode": "data_addtolist",
+          "next": "03d438854e25dd6d",
+          "parent": "fdd42f135064f8bb",
+          "inputs": {
+            "ITEM": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.callToken",
+              "l_abi_frame_callToken"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "a3f17d93945f6f5b": {
+          "opcode": "data_replaceitemoflist",
+          "next": null,
+          "parent": "a6f1824c9147899e",
+          "inputs": {
+            "INDEX": [
+              3,
+              "cd8e1fd583198811",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              1,
+              [
+                10,
+                "running"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.status",
+              "l_abi_frame_status"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "cd8e1fd583198811": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "a3f17d93945f6f5b",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_call3_id",
+                "vcall_0_0_3_id"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "03d438854e25dd6d": {
+          "opcode": "data_addtolist",
+          "next": null,
+          "parent": "fed430a68c150d54",
           "inputs": {
             "ITEM": [
               1,
@@ -3351,14 +3707,14 @@
           "x": 0,
           "y": 0
         },
-        "f8d0f95424dd88f4": {
+        "6ac95e05e0fe61b1": {
           "opcode": "operator_equals",
           "next": null,
-          "parent": "a131a20486208386",
+          "parent": "a536257e58ed8d64",
           "inputs": {
             "OPERAND1": [
               3,
-              "c234561655c1668a",
+              "4e3bee3f074d4dff",
               [
                 4,
                 ""
@@ -3378,14 +3734,14 @@
           "x": 0,
           "y": 0
         },
-        "c234561655c1668a": {
+        "4e3bee3f074d4dff": {
           "opcode": "data_itemoflist",
           "next": null,
-          "parent": "f8d0f95424dd88f4",
+          "parent": "6ac95e05e0fe61b1",
           "inputs": {
             "INDEX": [
               3,
-              "5b8b2dc8a3f3644e",
+              "d18e2621d458bbdd",
               [
                 4,
                 ""
@@ -3403,10 +3759,10 @@
           "x": 0,
           "y": 0
         },
-        "5b8b2dc8a3f3644e": {
+        "d18e2621d458bbdd": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "c234561655c1668a",
+          "parent": "4e3bee3f074d4dff",
           "inputs": {
             "NUM1": [
               3,
@@ -3434,14 +3790,14 @@
           "x": 0,
           "y": 0
         },
-        "a131a20486208386": {
+        "a536257e58ed8d64": {
           "opcode": "control_if",
-          "next": "6b40b68e19344acc",
-          "parent": "1944b425d4e847d9",
+          "next": "734301bd061c3aa9",
+          "parent": "7e4466db468bde5b",
           "inputs": {
             "CONDITION": [
               3,
-              "f8d0f95424dd88f4",
+              "6ac95e05e0fe61b1",
               [
                 4,
                 ""
@@ -3449,7 +3805,7 @@
             ],
             "SUBSTACK": [
               2,
-              "b1b38df32a645a23"
+              "c5b82a9d0b2d41d1"
             ]
           },
           "fields": {},
@@ -3458,10 +3814,10 @@
           "x": 0,
           "y": 0
         },
-        "b1b38df32a645a23": {
+        "c5b82a9d0b2d41d1": {
           "opcode": "procedures_call",
           "next": null,
-          "parent": "a131a20486208386",
+          "parent": "a536257e58ed8d64",
           "inputs": {
             "input0": [
               3,
@@ -3507,14 +3863,14 @@
             "children": []
           }
         },
-        "563bfad7cd607db7": {
+        "4e39afa8f5df0b3c": {
           "opcode": "data_itemoflist",
           "next": null,
-          "parent": "6b40b68e19344acc",
+          "parent": "734301bd061c3aa9",
           "inputs": {
             "INDEX": [
               3,
-              "c98e19898aa4e755",
+              "cf9061922ac37c9c",
               [
                 4,
                 ""
@@ -3532,10 +3888,10 @@
           "x": 0,
           "y": 0
         },
-        "c98e19898aa4e755": {
+        "cf9061922ac37c9c": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "563bfad7cd607db7",
+          "parent": "4e39afa8f5df0b3c",
           "inputs": {
             "NUM1": [
               3,
@@ -3563,14 +3919,14 @@
           "x": 0,
           "y": 0
         },
-        "6b40b68e19344acc": {
+        "734301bd061c3aa9": {
           "opcode": "data_setvariableto",
-          "next": "6e40bb47c5d1372f",
-          "parent": "a131a20486208386",
+          "next": "7042fd04884b4f4e",
+          "parent": "a536257e58ed8d64",
           "inputs": {
             "VALUE": [
               3,
-              "563bfad7cd607db7",
+              "4e39afa8f5df0b3c",
               [
                 4,
                 ""
@@ -3588,14 +3944,14 @@
           "x": 0,
           "y": 0
         },
-        "573bfc6a9ddbb1b2": {
+        "5539baad6cf72a01": {
           "opcode": "data_itemoflist",
           "next": null,
-          "parent": "6e40bb47c5d1372f",
+          "parent": "7042fd04884b4f4e",
           "inputs": {
             "INDEX": [
               3,
-              "74cf48266dc05344",
+              "04d2696d10313b31",
               [
                 4,
                 ""
@@ -3613,10 +3969,10 @@
           "x": 0,
           "y": 0
         },
-        "74cf48266dc05344": {
+        "04d2696d10313b31": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "573bfc6a9ddbb1b2",
+          "parent": "5539baad6cf72a01",
           "inputs": {
             "NUM1": [
               3,
@@ -3644,14 +4000,14 @@
           "x": 0,
           "y": 0
         },
-        "6e40bb47c5d1372f": {
+        "7042fd04884b4f4e": {
           "opcode": "data_setvariableto",
-          "next": "415acc413dba03f1",
-          "parent": "6b40b68e19344acc",
+          "next": "35587ac6df681dae",
+          "parent": "734301bd061c3aa9",
           "inputs": {
             "VALUE": [
               3,
-              "573bfc6a9ddbb1b2",
+              "5539baad6cf72a01",
               [
                 4,
                 ""
@@ -3669,10 +4025,10 @@
           "x": 0,
           "y": 0
         },
-        "415acc413dba03f1": {
+        "35587ac6df681dae": {
           "opcode": "looks_say",
-          "next": "3a97003a257680ce",
-          "parent": "6e40bb47c5d1372f",
+          "next": "3894be7d23f5ff11",
+          "parent": "7042fd04884b4f4e",
           "inputs": {
             "MESSAGE": [
               3,
@@ -3693,14 +4049,14 @@
           "x": 0,
           "y": 0
         },
-        "3a97003a257680ce": {
+        "3894be7d23f5ff11": {
           "opcode": "looks_say",
-          "next": "8446aee44bae2b18",
-          "parent": "415acc413dba03f1",
+          "next": "f44e1af976217305",
+          "parent": "35587ac6df681dae",
           "inputs": {
             "MESSAGE": [
               3,
-              "4e3bee3f074d4dff",
+              "522cea01142bc5e9",
               [
                 4,
                 ""
@@ -3713,14 +4069,14 @@
           "x": 0,
           "y": 0
         },
-        "4e3bee3f074d4dff": {
+        "522cea01142bc5e9": {
           "opcode": "data_itemoflist",
           "next": null,
-          "parent": "3a97003a257680ce",
+          "parent": "3894be7d23f5ff11",
           "inputs": {
             "INDEX": [
               3,
-              "d18e2621d458bbdd",
+              "c57f08b380f23f7b",
               [
                 4,
                 ""
@@ -3738,10 +4094,10 @@
           "x": 0,
           "y": 0
         },
-        "d18e2621d458bbdd": {
+        "c57f08b380f23f7b": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "4e3bee3f074d4dff",
+          "parent": "522cea01142bc5e9",
           "inputs": {
             "NUM1": [
               3,
@@ -3769,10 +4125,10 @@
           "x": 0,
           "y": 0
         },
-        "1ef50949714fd3d5": {
+        "9b010570ae86fa18": {
           "opcode": "data_lengthoflist",
           "next": null,
-          "parent": "5432d2142bcaba98",
+          "parent": "4e217f816e1d5fcd",
           "inputs": {},
           "fields": {
             "LIST": [
@@ -3785,14 +4141,14 @@
           "x": 0,
           "y": 0
         },
-        "5432d2142bcaba98": {
+        "4e217f816e1d5fcd": {
           "opcode": "operator_gt",
           "next": null,
-          "parent": "8446aee44bae2b18",
+          "parent": "f44e1af976217305",
           "inputs": {
             "OPERAND1": [
               3,
-              "1ef50949714fd3d5",
+              "9b010570ae86fa18",
               [
                 4,
                 ""
@@ -3812,14 +4168,14 @@
           "x": 0,
           "y": 0
         },
-        "8446aee44bae2b18": {
+        "f44e1af976217305": {
           "opcode": "control_if_else",
-          "next": "f84e2145cacfcb59",
-          "parent": "3a97003a257680ce",
+          "next": "f44bdc62388720ea",
+          "parent": "3894be7d23f5ff11",
           "inputs": {
             "CONDITION": [
               3,
-              "5432d2142bcaba98",
+              "4e217f816e1d5fcd",
               [
                 4,
                 ""
@@ -3827,11 +4183,11 @@
             ],
             "SUBSTACK": [
               2,
-              "f6728d3d406a82ed"
+              "727e8964f95ca9e6"
             ],
             "SUBSTACK2": [
               2,
-              "f4728a1788c6a9bf"
+              "687e79a6e0bbf95c"
             ]
           },
           "fields": {},
@@ -3840,10 +4196,10 @@
           "x": 0,
           "y": 0
         },
-        "4f39b13b7c856fc3": {
+        "552ceeba0a84eb2e": {
           "opcode": "data_itemoflist",
           "next": null,
-          "parent": "f6728d3d406a82ed",
+          "parent": "727e8964f95ca9e6",
           "inputs": {
             "INDEX": [
               1,
@@ -3864,14 +4220,14 @@
           "x": 0,
           "y": 0
         },
-        "f6728d3d406a82ed": {
+        "727e8964f95ca9e6": {
           "opcode": "data_setvariableto",
-          "next": "824e93e94c24a925",
-          "parent": "8446aee44bae2b18",
+          "next": "10562f38a80a98ac",
+          "parent": "f44e1af976217305",
           "inputs": {
             "VALUE": [
               3,
-              "4f39b13b7c856fc3",
+              "552ceeba0a84eb2e",
               [
                 4,
                 ""
@@ -3889,10 +4245,10 @@
           "x": 0,
           "y": 0
         },
-        "824e93e94c24a925": {
+        "10562f38a80a98ac": {
           "opcode": "data_deleteoflist",
           "next": null,
-          "parent": "f6728d3d406a82ed",
+          "parent": "727e8964f95ca9e6",
           "inputs": {
             "INDEX": [
               1,
@@ -3913,10 +4269,10 @@
           "x": 0,
           "y": 0
         },
-        "f4728a1788c6a9bf": {
+        "687e79a6e0bbf95c": {
           "opcode": "data_setvariableto",
-          "next": "e4c946a864dca778",
-          "parent": "8446aee44bae2b18",
+          "next": "62c1be3d6d4f6a7d",
+          "parent": "f44e1af976217305",
           "inputs": {
             "VALUE": [
               3,
@@ -3942,10 +4298,10 @@
           "x": 0,
           "y": 0
         },
-        "e4c946a864dca778": {
+        "62c1be3d6d4f6a7d": {
           "opcode": "data_changevariableby",
           "next": null,
-          "parent": "f4728a1788c6a9bf",
+          "parent": "687e79a6e0bbf95c",
           "inputs": {
             "VALUE": [
               1,
@@ -3966,10 +4322,10 @@
           "x": 0,
           "y": 0
         },
-        "26f515e1ddea578d": {
+        "a303509f13c01cb7": {
           "opcode": "data_lengthoflist",
           "next": null,
-          "parent": "e319297729db2d6f",
+          "parent": "ef14bf2d88c45a61",
           "inputs": {},
           "fields": {
             "LIST": [
@@ -3982,10 +4338,10 @@
           "x": 0,
           "y": 0
         },
-        "e319297729db2d6f": {
+        "ef14bf2d88c45a61": {
           "opcode": "operator_lt",
           "next": null,
-          "parent": "f84e2145cacfcb59",
+          "parent": "f44bdc62388720ea",
           "inputs": {
             "OPERAND1": [
               3,
@@ -4001,7 +4357,7 @@
             ],
             "OPERAND2": [
               3,
-              "26f515e1ddea578d",
+              "a303509f13c01cb7",
               [
                 4,
                 ""
@@ -4014,14 +4370,14 @@
           "x": 0,
           "y": 0
         },
-        "f84e2145cacfcb59": {
+        "f44bdc62388720ea": {
           "opcode": "control_if_else",
-          "next": "30e7ce2e753b723c",
-          "parent": "8446aee44bae2b18",
+          "next": "26e57fd92378ac91",
+          "parent": "f44e1af976217305",
           "inputs": {
             "CONDITION": [
               3,
-              "e319297729db2d6f",
+              "ef14bf2d88c45a61",
               [
                 4,
                 ""
@@ -4029,362 +4385,14 @@
             ],
             "SUBSTACK": [
               2,
-              "22e33af66bad5088"
+              "a0e02fb955b984a1"
             ],
             "SUBSTACK2": [
               2,
-              "86d983ec04ee18d6"
+              "80d73be32189f483"
             ]
           },
           "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "22e33af66bad5088": {
-          "opcode": "data_replaceitemoflist",
-          "next": "27e342d505fc3441",
-          "parent": "f84e2145cacfcb59",
-          "inputs": {
-            "INDEX": [
-              3,
-              "c67f0a4676bf054c",
-              [
-                4,
-                ""
-              ]
-            ],
-            "ITEM": [
-              1,
-              [
-                10,
-                "Array"
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "heap.classId",
-              "l_heap_classId"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "c67f0a4676bf054c": {
-          "opcode": "operator_add",
-          "next": null,
-          "parent": "22e33af66bad5088",
-          "inputs": {
-            "NUM1": [
-              3,
-              [
-                12,
-                "_tscr_s0_call4_ret",
-                "vcall_0_0_4_ret"
-              ],
-              [
-                4,
-                ""
-              ]
-            ],
-            "NUM2": [
-              1,
-              [
-                4,
-                "1"
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "86d983ec04ee18d6": {
-          "opcode": "data_addtolist",
-          "next": "83d97f33caabf71b",
-          "parent": "f84e2145cacfcb59",
-          "inputs": {
-            "ITEM": [
-              1,
-              [
-                10,
-                "Array"
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "heap.classId",
-              "l_heap_classId"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "27e342d505fc3441": {
-          "opcode": "data_replaceitemoflist",
-          "next": "24e33e1cfe35bbaa",
-          "parent": "22e33af66bad5088",
-          "inputs": {
-            "INDEX": [
-              3,
-              "c97f0efff6f6f42f",
-              [
-                4,
-                ""
-              ]
-            ],
-            "ITEM": [
-              1,
-              [
-                10,
-                "live"
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "heap.status",
-              "l_heap_status"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "c97f0efff6f6f42f": {
-          "opcode": "operator_add",
-          "next": null,
-          "parent": "27e342d505fc3441",
-          "inputs": {
-            "NUM1": [
-              3,
-              [
-                12,
-                "_tscr_s0_call4_ret",
-                "vcall_0_0_4_ret"
-              ],
-              [
-                4,
-                ""
-              ]
-            ],
-            "NUM2": [
-              1,
-              [
-                4,
-                "1"
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "83d97f33caabf71b": {
-          "opcode": "data_addtolist",
-          "next": "90d993aa42b8f2e4",
-          "parent": "86d983ec04ee18d6",
-          "inputs": {
-            "ITEM": [
-              1,
-              [
-                10,
-                "live"
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "heap.status",
-              "l_heap_status"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "24e33e1cfe35bbaa": {
-          "opcode": "data_replaceitemoflist",
-          "next": "9de02b0045136fb2",
-          "parent": "27e342d505fc3441",
-          "inputs": {
-            "INDEX": [
-              3,
-              "cc7f13b8ebdb10a2",
-              [
-                4,
-                ""
-              ]
-            ],
-            "ITEM": [
-              1,
-              [
-                10,
-                "0"
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "heap.array.start",
-              "l_heap_array_start"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "cc7f13b8ebdb10a2": {
-          "opcode": "operator_add",
-          "next": null,
-          "parent": "24e33e1cfe35bbaa",
-          "inputs": {
-            "NUM1": [
-              3,
-              [
-                12,
-                "_tscr_s0_call4_ret",
-                "vcall_0_0_4_ret"
-              ],
-              [
-                4,
-                ""
-              ]
-            ],
-            "NUM2": [
-              1,
-              [
-                4,
-                "1"
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "90d993aa42b8f2e4": {
-          "opcode": "data_addtolist",
-          "next": "85d743c2534dc484",
-          "parent": "83d97f33caabf71b",
-          "inputs": {
-            "ITEM": [
-              1,
-              [
-                10,
-                "0"
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "heap.array.start",
-              "l_heap_array_start"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "9de02b0045136fb2": {
-          "opcode": "data_replaceitemoflist",
-          "next": "a0e02fb955b984a1",
-          "parent": "24e33e1cfe35bbaa",
-          "inputs": {
-            "INDEX": [
-              3,
-              "c9814d96508bb824",
-              [
-                4,
-                ""
-              ]
-            ],
-            "ITEM": [
-              1,
-              [
-                10,
-                "0"
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "heap.array.length",
-              "l_heap_array_length"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "c9814d96508bb824": {
-          "opcode": "operator_add",
-          "next": null,
-          "parent": "9de02b0045136fb2",
-          "inputs": {
-            "NUM1": [
-              3,
-              [
-                12,
-                "_tscr_s0_call4_ret",
-                "vcall_0_0_4_ret"
-              ],
-              [
-                4,
-                ""
-              ]
-            ],
-            "NUM2": [
-              1,
-              [
-                4,
-                "1"
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "85d743c2534dc484": {
-          "opcode": "data_addtolist",
-          "next": "80d73be32189f483",
-          "parent": "90d993aa42b8f2e4",
-          "inputs": {
-            "ITEM": [
-              1,
-              [
-                10,
-                "0"
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "heap.array.length",
-              "l_heap_array_length"
-            ]
-          },
           "shadow": false,
           "topLevel": false,
           "x": 0,
@@ -4393,7 +4401,7 @@
         "a0e02fb955b984a1": {
           "opcode": "data_replaceitemoflist",
           "next": "a3e0347298769e14",
-          "parent": "9de02b0045136fb2",
+          "parent": "f44bdc62388720ea",
           "inputs": {
             "INDEX": [
               3,
@@ -4407,14 +4415,14 @@
               1,
               [
                 10,
-                ""
+                "Array"
               ]
             ]
           },
           "fields": {
             "LIST": [
-              "heap.field.label",
-              "l_heap_field_label"
+              "heap.classId",
+              "l_heap_classId"
             ]
           },
           "shadow": false,
@@ -4456,20 +4464,20 @@
         "80d73be32189f483": {
           "opcode": "data_addtolist",
           "next": "8bd74d3469626aea",
-          "parent": "85d743c2534dc484",
+          "parent": "f44bdc62388720ea",
           "inputs": {
             "ITEM": [
               1,
               [
                 10,
-                ""
+                "Array"
               ]
             ]
           },
           "fields": {
             "LIST": [
-              "heap.field.label",
-              "l_heap_field_label"
+              "heap.classId",
+              "l_heap_classId"
             ]
           },
           "shadow": false,
@@ -4494,14 +4502,14 @@
               1,
               [
                 10,
-                "0"
+                "live"
               ]
             ]
           },
           "fields": {
             "LIST": [
-              "heap.field.score",
-              "l_heap_field_score"
+              "heap.status",
+              "l_heap_status"
             ]
           },
           "shadow": false,
@@ -4549,14 +4557,14 @@
               1,
               [
                 10,
-                "0"
+                "live"
               ]
             ]
           },
           "fields": {
             "LIST": [
-              "heap.field.score",
-              "l_heap_field_score"
+              "heap.status",
+              "l_heap_status"
             ]
           },
           "shadow": false,
@@ -4566,7 +4574,7 @@
         },
         "a6e0392b38a6464b": {
           "opcode": "data_replaceitemoflist",
-          "next": null,
+          "next": "31e7cfc1d64e7495",
           "parent": "a3e0347298769e14",
           "inputs": {
             "INDEX": [
@@ -4587,8 +4595,8 @@
           },
           "fields": {
             "LIST": [
-              "heap.field.x",
-              "l_heap_field_x"
+              "heap.array.start",
+              "l_heap_array_start"
             ]
           },
           "shadow": false,
@@ -4629,7 +4637,7 @@
         },
         "94de1724199a0182": {
           "opcode": "data_addtolist",
-          "next": null,
+          "next": "91de126bf5872f33",
           "parent": "8bd74d3469626aea",
           "inputs": {
             "ITEM": [
@@ -4637,55 +4645,6 @@
               [
                 10,
                 "0"
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "heap.field.x",
-              "l_heap_field_x"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "32fbe48a4647ae1e": {
-          "opcode": "data_lengthoflist",
-          "next": null,
-          "parent": "30e7ce2e753b723c",
-          "inputs": {},
-          "fields": {
-            "LIST": [
-              "heap.array.items",
-              "l_heap_array_items"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "30e7ce2e753b723c": {
-          "opcode": "data_replaceitemoflist",
-          "next": "32e7d1543d1e3cc6",
-          "parent": "f84e2145cacfcb59",
-          "inputs": {
-            "INDEX": [
-              3,
-              "cc8390e6cfb36b28",
-              [
-                4,
-                ""
-              ]
-            ],
-            "ITEM": [
-              3,
-              "32fbe48a4647ae1e",
-              [
-                4,
-                ""
               ]
             ]
           },
@@ -4700,10 +4659,42 @@
           "x": 0,
           "y": 0
         },
-        "cc8390e6cfb36b28": {
+        "31e7cfc1d64e7495": {
+          "opcode": "data_replaceitemoflist",
+          "next": "32e7d1543d1e3cc6",
+          "parent": "a6e0392b38a6464b",
+          "inputs": {
+            "INDEX": [
+              3,
+              "cf83959f47524abf",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.array.length",
+              "l_heap_array_length"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "cf83959f47524abf": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "30e7ce2e753b723c",
+          "parent": "31e7cfc1d64e7495",
           "inputs": {
             "NUM1": [
               3,
@@ -4731,10 +4722,34 @@
           "x": 0,
           "y": 0
         },
+        "91de126bf5872f33": {
+          "opcode": "data_addtolist",
+          "next": "92de13fec6c15424",
+          "parent": "94de1724199a0182",
+          "inputs": {
+            "ITEM": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.array.length",
+              "l_heap_array_length"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
         "32e7d1543d1e3cc6": {
           "opcode": "data_replaceitemoflist",
-          "next": "92de13fec6c15424",
-          "parent": "30e7ce2e753b723c",
+          "next": "27e7c00328770fbb",
+          "parent": "31e7cfc1d64e7495",
           "inputs": {
             "INDEX": [
               3,
@@ -4747,15 +4762,15 @@
             "ITEM": [
               1,
               [
-                4,
-                "3"
+                10,
+                ""
               ]
             ]
           },
           "fields": {
             "LIST": [
-              "heap.array.length",
-              "l_heap_array_length"
+              "heap.field.label",
+              "l_heap_field_label"
             ]
           },
           "shadow": false,
@@ -4796,21 +4811,21 @@
         },
         "92de13fec6c15424": {
           "opcode": "data_addtolist",
-          "next": "8dde0c1f9acd2a67",
-          "parent": "32e7d1543d1e3cc6",
+          "next": "8fdbd0aef4d5141c",
+          "parent": "91de126bf5872f33",
           "inputs": {
             "ITEM": [
               1,
               [
-                4,
-                "0"
+                10,
+                ""
               ]
             ]
           },
           "fields": {
             "LIST": [
-              "heap.array.items",
-              "l_heap_array_items"
+              "heap.field.label",
+              "l_heap_field_label"
             ]
           },
           "shadow": false,
@@ -4818,19 +4833,185 @@
           "x": 0,
           "y": 0
         },
-        "8dde0c1f9acd2a67": {
+        "27e7c00328770fbb": {
+          "opcode": "data_replaceitemoflist",
+          "next": "2ae58625379d37cd",
+          "parent": "32e7d1543d1e3cc6",
+          "inputs": {
+            "INDEX": [
+              3,
+              "d983a55dc38a9371",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.field.score",
+              "l_heap_field_score"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "d983a55dc38a9371": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "27e7c00328770fbb",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_call4_ret",
+                "vcall_0_0_4_ret"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "8fdbd0aef4d5141c": {
           "opcode": "data_addtolist",
-          "next": "8cde0a8cdf5adefa",
+          "next": "8edbcf1b3eee9e93",
           "parent": "92de13fec6c15424",
           "inputs": {
             "ITEM": [
               1,
               [
-                4,
+                10,
                 "0"
               ]
             ]
           },
+          "fields": {
+            "LIST": [
+              "heap.field.score",
+              "l_heap_field_score"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "2ae58625379d37cd": {
+          "opcode": "data_replaceitemoflist",
+          "next": null,
+          "parent": "27e7c00328770fbb",
+          "inputs": {
+            "INDEX": [
+              3,
+              "5886abe137442111",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.field.x",
+              "l_heap_field_x"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "5886abe137442111": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "2ae58625379d37cd",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_call4_ret",
+                "vcall_0_0_4_ret"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "8edbcf1b3eee9e93": {
+          "opcode": "data_addtolist",
+          "next": null,
+          "parent": "8fdbd0aef4d5141c",
+          "inputs": {
+            "ITEM": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.field.x",
+              "l_heap_field_x"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "b2feeca132b1c12d": {
+          "opcode": "data_lengthoflist",
+          "next": null,
+          "parent": "26e57fd92378ac91",
+          "inputs": {},
           "fields": {
             "LIST": [
               "heap.array.items",
@@ -4842,10 +5023,137 @@
           "x": 0,
           "y": 0
         },
-        "8cde0a8cdf5adefa": {
+        "26e57fd92378ac91": {
+          "opcode": "data_replaceitemoflist",
+          "next": "24e57cb32624538b",
+          "parent": "f44bdc62388720ea",
+          "inputs": {
+            "INDEX": [
+              3,
+              "5c86b22d98559d25",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              3,
+              "b2feeca132b1c12d",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.array.start",
+              "l_heap_array_start"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "5c86b22d98559d25": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "26e57fd92378ac91",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_call4_ret",
+                "vcall_0_0_4_ret"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "24e57cb32624538b": {
+          "opcode": "data_replaceitemoflist",
+          "next": "88dbc5a9e1921735",
+          "parent": "26e57fd92378ac91",
+          "inputs": {
+            "INDEX": [
+              3,
+              "4e869c23dd0cd353",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              1,
+              [
+                4,
+                "3"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.array.length",
+              "l_heap_array_length"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "4e869c23dd0cd353": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "24e57cb32624538b",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_call4_ret",
+                "vcall_0_0_4_ret"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "88dbc5a9e1921735": {
           "opcode": "data_addtolist",
-          "next": "81374f7ce4f5ee62",
-          "parent": "8dde0c1f9acd2a67",
+          "next": "81bb66f963306b31",
+          "parent": "24e57cb32624538b",
           "inputs": {
             "ITEM": [
               1,
@@ -4866,10 +5174,58 @@
           "x": 0,
           "y": 0
         },
-        "81374f7ce4f5ee62": {
+        "81bb66f963306b31": {
+          "opcode": "data_addtolist",
+          "next": "80bb6566fae614d0",
+          "parent": "88dbc5a9e1921735",
+          "inputs": {
+            "ITEM": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.array.items",
+              "l_heap_array_items"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "80bb6566fae614d0": {
+          "opcode": "data_addtolist",
+          "next": "0d20d2917ac290c1",
+          "parent": "81bb66f963306b31",
+          "inputs": {
+            "ITEM": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.array.items",
+              "l_heap_array_items"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "0d20d2917ac290c1": {
           "opcode": "data_setvariableto",
-          "next": "fd8799cfe92cdd57",
-          "parent": "8cde0a8cdf5adefa",
+          "next": "877119be2a9aba00",
+          "parent": "80bb6566fae614d0",
           "inputs": {
             "VALUE": [
               3,
@@ -4895,14 +5251,14 @@
           "x": 0,
           "y": 0
         },
-        "fd8799cfe92cdd57": {
+        "877119be2a9aba00": {
           "opcode": "data_replaceitemoflist",
-          "next": "1ea44b5878b3c88a",
-          "parent": "81374f7ce4f5ee62",
+          "next": "9e9848e5b5a883f1",
+          "parent": "0d20d2917ac290c1",
           "inputs": {
             "INDEX": [
               3,
-              "acaaf292f5d0dfe4",
+              "bacb5c470e290387",
               [
                 4,
                 ""
@@ -4927,14 +5283,14 @@
           "x": 0,
           "y": 0
         },
-        "562f2ee471b2a830": {
+        "d6232c7121e111a9": {
           "opcode": "data_itemoflist",
           "next": null,
-          "parent": "adaaf425634dde45",
+          "parent": "b9cb5ab4490d1786",
           "inputs": {
             "INDEX": [
               3,
-              "a6aae920ac4310aa",
+              "bccb5f6d4d4c0809",
               [
                 4,
                 ""
@@ -4952,10 +5308,10 @@
           "x": 0,
           "y": 0
         },
-        "a6aae920ac4310aa": {
+        "bccb5f6d4d4c0809": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "562f2ee471b2a830",
+          "parent": "d6232c7121e111a9",
           "inputs": {
             "NUM1": [
               3,
@@ -4983,14 +5339,14 @@
           "x": 0,
           "y": 0
         },
-        "adaaf425634dde45": {
+        "b9cb5ab4490d1786": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "acaaf292f5d0dfe4",
+          "parent": "bacb5c470e290387",
           "inputs": {
             "NUM1": [
               3,
-              "562f2ee471b2a830",
+              "d6232c7121e111a9",
               [
                 4,
                 ""
@@ -5010,14 +5366,14 @@
           "x": 0,
           "y": 0
         },
-        "acaaf292f5d0dfe4": {
+        "bacb5c470e290387": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "fd8799cfe92cdd57",
+          "parent": "877119be2a9aba00",
           "inputs": {
             "NUM1": [
               3,
-              "adaaf425634dde45",
+              "b9cb5ab4490d1786",
               [
                 4,
                 ""
@@ -5037,14 +5393,14 @@
           "x": 0,
           "y": 0
         },
-        "1ea44b5878b3c88a": {
+        "9e9848e5b5a883f1": {
           "opcode": "data_replaceitemoflist",
-          "next": "11fd01615663903d",
-          "parent": "fd8799cfe92cdd57",
+          "next": "17ff496a1eafd566",
+          "parent": "877119be2a9aba00",
           "inputs": {
             "INDEX": [
               3,
-              "f4cd0cd807f45f36",
+              "78d01b3b2d294e63",
               [
                 4,
                 ""
@@ -5069,324 +5425,14 @@
           "x": 0,
           "y": 0
         },
-        "532f2a2b2fa961b3": {
-          "opcode": "data_itemoflist",
-          "next": null,
-          "parent": "f5cacfd4438e1c7a",
-          "inputs": {
-            "INDEX": [
-              3,
-              "f6cad1671bfc221f",
-              [
-                4,
-                ""
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "heap.array.start",
-              "l_heap_array_start"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "f6cad1671bfc221f": {
-          "opcode": "operator_add",
-          "next": null,
-          "parent": "532f2a2b2fa961b3",
-          "inputs": {
-            "NUM1": [
-              3,
-              [
-                12,
-                "_tscr_s0_a",
-                "vs0_12"
-              ],
-              [
-                4,
-                ""
-              ]
-            ],
-            "NUM2": [
-              1,
-              [
-                4,
-                "1"
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "f5cacfd4438e1c7a": {
-          "opcode": "operator_add",
-          "next": null,
-          "parent": "f4cd0cd807f45f36",
-          "inputs": {
-            "NUM1": [
-              3,
-              "532f2a2b2fa961b3",
-              [
-                4,
-                ""
-              ]
-            ],
-            "NUM2": [
-              1,
-              [
-                4,
-                "2"
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "f4cd0cd807f45f36": {
-          "opcode": "operator_add",
-          "next": null,
-          "parent": "1ea44b5878b3c88a",
-          "inputs": {
-            "NUM1": [
-              3,
-              "f5cacfd4438e1c7a",
-              [
-                4,
-                ""
-              ]
-            ],
-            "NUM2": [
-              1,
-              [
-                4,
-                "1"
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "11fd01615663903d": {
-          "opcode": "looks_say",
-          "next": "33e286948a432ee4",
-          "parent": "1ea44b5878b3c88a",
-          "inputs": {
-            "MESSAGE": [
-              3,
-              "d8232f97ccbed4a7",
-              [
-                4,
-                ""
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "d8232f97ccbed4a7": {
-          "opcode": "data_itemoflist",
-          "next": null,
-          "parent": "11fd01615663903d",
-          "inputs": {
-            "INDEX": [
-              3,
-              "4a9c5c263e800bdc",
-              [
-                4,
-                ""
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "heap.array.items",
-              "l_heap_array_items"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "d7232e04c8d4a758": {
-          "opcode": "data_itemoflist",
-          "next": null,
-          "parent": "499c5a93c331663b",
-          "inputs": {
-            "INDEX": [
-              3,
-              "489c590085011f5a",
-              [
-                4,
-                ""
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "heap.array.start",
-              "l_heap_array_start"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "489c590085011f5a": {
-          "opcode": "operator_add",
-          "next": null,
-          "parent": "d7232e04c8d4a758",
-          "inputs": {
-            "NUM1": [
-              3,
-              [
-                12,
-                "_tscr_s0_a",
-                "vs0_12"
-              ],
-              [
-                4,
-                ""
-              ]
-            ],
-            "NUM2": [
-              1,
-              [
-                4,
-                "1"
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "499c5a93c331663b": {
-          "opcode": "operator_add",
-          "next": null,
-          "parent": "4a9c5c263e800bdc",
-          "inputs": {
-            "NUM1": [
-              3,
-              "d7232e04c8d4a758",
-              [
-                4,
-                ""
-              ]
-            ],
-            "NUM2": [
-              1,
-              [
-                4,
-                "0"
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "4a9c5c263e800bdc": {
-          "opcode": "operator_add",
-          "next": null,
-          "parent": "d8232f97ccbed4a7",
-          "inputs": {
-            "NUM1": [
-              3,
-              "499c5a93c331663b",
-              [
-                4,
-                ""
-              ]
-            ],
-            "NUM2": [
-              1,
-              [
-                4,
-                "1"
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "33e286948a432ee4": {
-          "opcode": "looks_say",
-          "next": "26a66322c4a976ce",
-          "parent": "11fd01615663903d",
-          "inputs": {
-            "MESSAGE": [
-              3,
-              "d22326251ed3f4b5",
-              [
-                4,
-                ""
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "d22326251ed3f4b5": {
-          "opcode": "data_itemoflist",
-          "next": null,
-          "parent": "33e286948a432ee4",
-          "inputs": {
-            "INDEX": [
-              3,
-              "d09f6dafa1f15967",
-              [
-                4,
-                ""
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "heap.array.items",
-              "l_heap_array_items"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
         "d12324928f557446": {
           "opcode": "data_itemoflist",
           "next": null,
-          "parent": "d19f6f42cb21cab8",
+          "parent": "79d01cce63f76270",
           "inputs": {
             "INDEX": [
               3,
-              "d29f70d589b5592d",
+              "7ad01e61016d8039",
               [
                 4,
                 ""
@@ -5404,7 +5450,7 @@
           "x": 0,
           "y": 0
         },
-        "d29f70d589b5592d": {
+        "7ad01e61016d8039": {
           "opcode": "operator_add",
           "next": null,
           "parent": "d12324928f557446",
@@ -5435,10 +5481,10 @@
           "x": 0,
           "y": 0
         },
-        "d19f6f42cb21cab8": {
+        "79d01cce63f76270": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "d09f6dafa1f15967",
+          "parent": "78d01b3b2d294e63",
           "inputs": {
             "NUM1": [
               3,
@@ -5462,14 +5508,14 @@
           "x": 0,
           "y": 0
         },
-        "d09f6dafa1f15967": {
+        "78d01b3b2d294e63": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "d22326251ed3f4b5",
+          "parent": "9e9848e5b5a883f1",
           "inputs": {
             "NUM1": [
               3,
-              "d19f6f42cb21cab8",
+              "79d01cce63f76270",
               [
                 4,
                 ""
@@ -5489,10 +5535,10 @@
           "x": 0,
           "y": 0
         },
-        "26a66322c4a976ce": {
+        "17ff496a1eafd566": {
           "opcode": "looks_say",
-          "next": null,
-          "parent": "33e286948a432ee4",
+          "next": "25e031f335f7f3c3",
+          "parent": "9e9848e5b5a883f1",
           "inputs": {
             "MESSAGE": [
               3,
@@ -5512,11 +5558,11 @@
         "d020e468d9eda078": {
           "opcode": "data_itemoflist",
           "next": null,
-          "parent": "26a66322c4a976ce",
+          "parent": "17ff496a1eafd566",
           "inputs": {
             "INDEX": [
               3,
-              "cd9f68f647f84de4",
+              "da9f7d6d68dfdbe5",
               [
                 4,
                 ""
@@ -5525,8 +5571,8 @@
           },
           "fields": {
             "LIST": [
-              "heap.array.length",
-              "l_heap_array_length"
+              "heap.array.items",
+              "l_heap_array_items"
             ]
           },
           "shadow": false,
@@ -5534,10 +5580,35 @@
           "x": 0,
           "y": 0
         },
-        "cd9f68f647f84de4": {
+        "d120e5fb3d873b0b": {
+          "opcode": "data_itemoflist",
+          "next": null,
+          "parent": "cb9f65d0a667e7c6",
+          "inputs": {
+            "INDEX": [
+              3,
+              "cc9f676380a2b193",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.array.start",
+              "l_heap_array_start"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "cc9f676380a2b193": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "d020e468d9eda078",
+          "parent": "d120e5fb3d873b0b",
           "inputs": {
             "NUM1": [
               3,
@@ -5565,14 +5636,299 @@
           "x": 0,
           "y": 0
         },
-        "75f77988bad805b6": {
+        "cb9f65d0a667e7c6": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "da9f7d6d68dfdbe5",
+          "inputs": {
+            "NUM1": [
+              3,
+              "d120e5fb3d873b0b",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "da9f7d6d68dfdbe5": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "d020e468d9eda078",
+          "inputs": {
+            "NUM1": [
+              3,
+              "cb9f65d0a667e7c6",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "25e031f335f7f3c3": {
+          "opcode": "looks_say",
+          "next": "b42058fcd96c57f0",
+          "parent": "17ff496a1eafd566",
+          "inputs": {
+            "MESSAGE": [
+              3,
+              "8e70d384ea2c5f18",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "8e70d384ea2c5f18": {
+          "opcode": "data_itemoflist",
+          "next": null,
+          "parent": "25e031f335f7f3c3",
+          "inputs": {
+            "INDEX": [
+              3,
+              "944eb839ca6ac715",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.array.items",
+              "l_heap_array_items"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "8f70d517a1dd7857": {
+          "opcode": "data_itemoflist",
+          "next": null,
+          "parent": "954eb9cc9366bfde",
+          "inputs": {
+            "INDEX": [
+              3,
+              "964ebb5f1112a89f",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.array.start",
+              "l_heap_array_start"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "964ebb5f1112a89f": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "8f70d517a1dd7857",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_a",
+                "vs0_12"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "954eb9cc9366bfde": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "944eb839ca6ac715",
+          "inputs": {
+            "NUM1": [
+              3,
+              "8f70d517a1dd7857",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "2"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "944eb839ca6ac715": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "8e70d384ea2c5f18",
+          "inputs": {
+            "NUM1": [
+              3,
+              "954eb9cc9366bfde",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "b42058fcd96c57f0": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "25e031f335f7f3c3",
+          "inputs": {
+            "MESSAGE": [
+              3,
+              "8c70d05e93f6261a",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "8c70d05e93f6261a": {
+          "opcode": "data_itemoflist",
+          "next": null,
+          "parent": "b42058fcd96c57f0",
+          "inputs": {
+            "INDEX": [
+              3,
+              "914eb380e69f2e6a",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.array.length",
+              "l_heap_array_length"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "914eb380e69f2e6a": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "8c70d05e93f6261a",
+          "inputs": {
+            "NUM1": [
+              3,
+              [
+                12,
+                "_tscr_s0_a",
+                "vs0_12"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "d87d6a7e604caf24": {
           "opcode": "procedures_definition",
-          "next": "4b066dc14a1b4d89",
+          "next": "3ae911a7674f37b7",
           "parent": null,
           "inputs": {
             "custom_block": [
               1,
-              "68741cd1acf0af61"
+              "9b87912fea18bf07"
             ]
           },
           "fields": {},
@@ -5581,10 +5937,10 @@
           "x": 600,
           "y": 40
         },
-        "68741cd1acf0af61": {
+        "9b87912fea18bf07": {
           "opcode": "procedures_prototype",
           "next": null,
-          "parent": "75f77988bad805b6",
+          "parent": "d87d6a7e604caf24",
           "inputs": {},
           "fields": {},
           "shadow": true,
@@ -5601,135 +5957,31 @@
             "children": []
           }
         },
-        "4b066dc14a1b4d89": {
-          "opcode": "data_setvariableto",
-          "next": "4a066c2e9624b2aa",
-          "parent": "75f77988bad805b6",
-          "inputs": {
-            "VALUE": [
-              1,
-              [
-                4,
-                "0"
-              ]
-            ]
-          },
-          "fields": {
-            "VARIABLE": [
-              "_tscr_s0_add_returning",
-              "vs0_3"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "4a066c2e9624b2aa": {
-          "opcode": "data_setvariableto",
-          "next": "05a69568497184a0",
-          "parent": "4b066dc14a1b4d89",
-          "inputs": {
-            "VALUE": [
-              1,
-              [
-                4,
-                "0"
-              ]
-            ]
-          },
-          "fields": {
-            "VARIABLE": [
-              "_tscr_s0_add_ret",
-              "vs0_2"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "05a69568497184a0": {
-          "opcode": "control_if",
-          "next": "4c18eea98fd2d289",
-          "parent": "4a066c2e9624b2aa",
-          "inputs": {
-            "CONDITION": [
-              3,
-              "24d2d18ce1800186",
-              [
-                4,
-                ""
-              ]
-            ],
-            "SUBSTACK": [
-              2,
-              "c11450fa7d67dcd4"
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "24d2d18ce1800186": {
-          "opcode": "operator_equals",
-          "next": null,
-          "parent": "05a69568497184a0",
-          "inputs": {
-            "OPERAND1": [
-              3,
-              [
-                12,
-                "_tscr_s0_add_returning",
-                "vs0_3"
-              ],
-              [
-                4,
-                ""
-              ]
-            ],
-            "OPERAND2": [
-              1,
-              [
-                4,
-                "0"
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "c11450fa7d67dcd4": {
+        "3ae911a7674f37b7": {
           "opcode": "data_replaceitemoflist",
-          "next": null,
-          "parent": "05a69568497184a0",
+          "next": "3be9133aaf947382",
+          "parent": "d87d6a7e604caf24",
           "inputs": {
             "INDEX": [
               3,
-              "46e86f2648a7b044",
+              "8b302ecdf6664b4d",
               [
                 4,
                 ""
               ]
             ],
             "ITEM": [
-              3,
-              "a97ca8cb1bf4aa5b",
+              1,
               [
                 4,
-                ""
+                "0"
               ]
             ]
           },
           "fields": {
             "LIST": [
-              "heap.field.score",
-              "l_heap_field_score"
+              "abi.frame.returning",
+              "l_abi_frame_returning"
             ]
           },
           "shadow": false,
@@ -5737,99 +5989,14 @@
           "x": 0,
           "y": 0
         },
-        "961dde87853b5d0f": {
-          "opcode": "argument_reporter_string_number",
-          "next": null,
-          "parent": "46e86f2648a7b044",
-          "inputs": {},
-          "fields": {
-            "VALUE": [
-              "_tscr_s0_this",
-              null
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "a97ca8cb1bf4aa5b": {
+        "8b302ecdf6664b4d": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "c11450fa7d67dcd4",
+          "parent": "3ae911a7674f37b7",
           "inputs": {
             "NUM1": [
               3,
-              "e4b549286249dd2c",
-              [
-                4,
-                ""
-              ]
-            ],
-            "NUM2": [
-              3,
-              "277bee8a2c2e702a",
-              [
-                4,
-                ""
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "bd848e5be8e64afb": {
-          "opcode": "argument_reporter_string_number",
-          "next": null,
-          "parent": "88030962f31e063c",
-          "inputs": {},
-          "fields": {
-            "VALUE": [
-              "_tscr_s0_this",
-              null
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "e4b549286249dd2c": {
-          "opcode": "data_itemoflist",
-          "next": null,
-          "parent": "a97ca8cb1bf4aa5b",
-          "inputs": {
-            "INDEX": [
-              3,
-              "88030962f31e063c",
-              [
-                4,
-                ""
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "heap.field.score",
-              "l_heap_field_score"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "88030962f31e063c": {
-          "opcode": "operator_add",
-          "next": null,
-          "parent": "e4b549286249dd2c",
-          "inputs": {
-            "NUM1": [
-              3,
-              "bd848e5be8e64afb",
+              "e8c2f2ab6dbe8bbb",
               [
                 4,
                 ""
@@ -5849,10 +6016,365 @@
           "x": 0,
           "y": 0
         },
-        "277bee8a2c2e702a": {
+        "e8c2f2ab6dbe8bbb": {
           "opcode": "argument_reporter_string_number",
           "next": null,
-          "parent": "a97ca8cb1bf4aa5b",
+          "parent": "8b302ecdf6664b4d",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_add_callId",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "3be9133aaf947382": {
+          "opcode": "data_replaceitemoflist",
+          "next": "0da8e097f35750ef",
+          "parent": "3ae911a7674f37b7",
+          "inputs": {
+            "INDEX": [
+              3,
+              "863026ee386f6bc2",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.returnValue",
+              "l_abi_frame_returnValue"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "863026ee386f6bc2": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "3be9133aaf947382",
+          "inputs": {
+            "NUM1": [
+              3,
+              "edc2fa8a7ef52350",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "edc2fa8a7ef52350": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "863026ee386f6bc2",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_add_callId",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "0da8e097f35750ef": {
+          "opcode": "control_if",
+          "next": "5b1b44dd5155f161",
+          "parent": "3be9133aaf947382",
+          "inputs": {
+            "CONDITION": [
+              3,
+              "22d08fcf314bf2cf",
+              [
+                4,
+                ""
+              ]
+            ],
+            "SUBSTACK": [
+              2,
+              "2c19769910a04289"
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "22d08fcf314bf2cf": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "0da8e097f35750ef",
+          "inputs": {
+            "OPERAND1": [
+              3,
+              "d29c94b92634240d",
+              [
+                4,
+                ""
+              ]
+            ],
+            "OPERAND2": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "d29c94b92634240d": {
+          "opcode": "data_itemoflist",
+          "next": null,
+          "parent": "22d08fcf314bf2cf",
+          "inputs": {
+            "INDEX": [
+              3,
+              "d158f2a39185d45b",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.returning",
+              "l_abi_frame_returning"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "d158f2a39185d45b": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "d29c94b92634240d",
+          "inputs": {
+            "NUM1": [
+              3,
+              "7d276ae854eddd5e",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "7d276ae854eddd5e": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "d158f2a39185d45b",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_add_callId",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "2c19769910a04289": {
+          "opcode": "data_replaceitemoflist",
+          "next": null,
+          "parent": "0da8e097f35750ef",
+          "inputs": {
+            "INDEX": [
+              3,
+              "c3edb11bcda27f13",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              3,
+              "1e7750ccfba82222",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.field.score",
+              "l_heap_field_score"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "0d1889aef84fc96e": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "c3edb11bcda27f13",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_this",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "1e7750ccfba82222": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "2c19769910a04289",
+          "inputs": {
+            "NUM1": [
+              3,
+              "63b000e7bd4fdd8f",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              3,
+              "1a775ce592a51e61",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "3089c0928f38defa": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "18fddd778b88ac8f",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_this",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "63b000e7bd4fdd8f": {
+          "opcode": "data_itemoflist",
+          "next": null,
+          "parent": "1e7750ccfba82222",
+          "inputs": {
+            "INDEX": [
+              3,
+              "18fddd778b88ac8f",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.field.score",
+              "l_heap_field_score"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "18fddd778b88ac8f": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "63b000e7bd4fdd8f",
+          "inputs": {
+            "NUM1": [
+              3,
+              "3089c0928f38defa",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "1a775ce592a51e61": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "1e7750ccfba82222",
           "inputs": {},
           "fields": {
             "VALUE": [
@@ -5865,14 +6387,14 @@
           "x": 0,
           "y": 0
         },
-        "46e86f2648a7b044": {
+        "c3edb11bcda27f13": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "c11450fa7d67dcd4",
+          "parent": "2c19769910a04289",
           "inputs": {
             "NUM1": [
               3,
-              "961dde87853b5d0f",
+              "0d1889aef84fc96e",
               [
                 4,
                 ""
@@ -5892,14 +6414,14 @@
           "x": 0,
           "y": 0
         },
-        "4c18eea98fd2d289": {
+        "5b1b44dd5155f161": {
           "opcode": "control_if",
-          "next": "37e90ceea714c99e",
-          "parent": "05a69568497184a0",
+          "next": "bbdd10c7c397808f",
+          "parent": "0da8e097f35750ef",
           "inputs": {
             "CONDITION": [
               3,
-              "dde3d099529b4fd1",
+              "70dea7d4cf25201e",
               [
                 4,
                 ""
@@ -5907,7 +6429,7 @@
             ],
             "SUBSTACK": [
               2,
-              "1fee59b4f1df8b7e"
+              "bc9ca3f3b12c8a6b"
             ]
           },
           "fields": {},
@@ -5916,18 +6438,14 @@
           "x": 0,
           "y": 0
         },
-        "dde3d099529b4fd1": {
+        "70dea7d4cf25201e": {
           "opcode": "operator_equals",
           "next": null,
-          "parent": "4c18eea98fd2d289",
+          "parent": "5b1b44dd5155f161",
           "inputs": {
             "OPERAND1": [
               3,
-              [
-                12,
-                "_tscr_s0_add_returning",
-                "vs0_3"
-              ],
+              "182e7b886a20c42a",
               [
                 4,
                 ""
@@ -5947,79 +6465,14 @@
           "x": 0,
           "y": 0
         },
-        "1fee59b4f1df8b7e": {
-          "opcode": "data_setvariableto",
-          "next": "20ee5b4719c7faef",
-          "parent": "4c18eea98fd2d289",
-          "inputs": {
-            "VALUE": [
-              1,
-              [
-                4,
-                "1"
-              ]
-            ]
-          },
-          "fields": {
-            "VARIABLE": [
-              "_tscr_s0_add_returning",
-              "vs0_3"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "20ee5b4719c7faef": {
-          "opcode": "data_setvariableto",
-          "next": null,
-          "parent": "1fee59b4f1df8b7e",
-          "inputs": {
-            "VALUE": [
-              3,
-              "d3b76cfc6f94f074",
-              [
-                4,
-                ""
-              ]
-            ]
-          },
-          "fields": {
-            "VARIABLE": [
-              "_tscr_s0_add_ret",
-              "vs0_2"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "1ad9ce508d0282b0": {
-          "opcode": "argument_reporter_string_number",
-          "next": null,
-          "parent": "9700e2688fa3ad9e",
-          "inputs": {},
-          "fields": {
-            "VALUE": [
-              "_tscr_s0_this",
-              null
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "d3b76cfc6f94f074": {
+        "182e7b886a20c42a": {
           "opcode": "data_itemoflist",
           "next": null,
-          "parent": "20ee5b4719c7faef",
+          "parent": "70dea7d4cf25201e",
           "inputs": {
             "INDEX": [
               3,
-              "9700e2688fa3ad9e",
+              "3dd5c1300d7fa624",
               [
                 4,
                 ""
@@ -6028,8 +6481,8 @@
           },
           "fields": {
             "LIST": [
-              "heap.field.score",
-              "l_heap_field_score"
+              "abi.frame.returning",
+              "l_abi_frame_returning"
             ]
           },
           "shadow": false,
@@ -6037,14 +6490,14 @@
           "x": 0,
           "y": 0
         },
-        "9700e2688fa3ad9e": {
+        "3dd5c1300d7fa624": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "d3b76cfc6f94f074",
+          "parent": "182e7b886a20c42a",
           "inputs": {
             "NUM1": [
               3,
-              "1ad9ce508d0282b0",
+              "4aa4c97cbda59d06",
               [
                 4,
                 ""
@@ -6064,14 +6517,105 @@
           "x": 0,
           "y": 0
         },
-        "37e90ceea714c99e": {
+        "4aa4c97cbda59d06": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "3dd5c1300d7fa624",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_add_callId",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "bc9ca3f3b12c8a6b": {
           "opcode": "data_replaceitemoflist",
-          "next": "a8e1700c1769f874",
-          "parent": "4c18eea98fd2d289",
+          "next": "bd9ca586a6bf1458",
+          "parent": "5b1b44dd5155f161",
           "inputs": {
             "INDEX": [
               3,
-              "823020a271c2adee",
+              "c30a27d56cfa10bd",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.returning",
+              "l_abi_frame_returning"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "c30a27d56cfa10bd": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "bc9ca3f3b12c8a6b",
+          "inputs": {
+            "NUM1": [
+              3,
+              "754c6de351af25ab",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "754c6de351af25ab": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "c30a27d56cfa10bd",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_add_callId",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "bd9ca586a6bf1458": {
+          "opcode": "data_replaceitemoflist",
+          "next": null,
+          "parent": "bc9ca3f3b12c8a6b",
+          "inputs": {
+            "INDEX": [
+              3,
+              "c60a2c8e717109fc",
               [
                 4,
                 ""
@@ -6079,11 +6623,7 @@
             ],
             "ITEM": [
               3,
-              [
-                12,
-                "_tscr_s0_add_ret",
-                "vs0_2"
-              ],
+              "63bf0b718c39d1c5",
               [
                 4,
                 ""
@@ -6101,14 +6641,14 @@
           "x": 0,
           "y": 0
         },
-        "823020a271c2adee": {
+        "c60a2c8e717109fc": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "37e90ceea714c99e",
+          "parent": "bd9ca586a6bf1458",
           "inputs": {
             "NUM1": [
               3,
-              "e1c2e7a6efd6f28c",
+              "824c825a13d85a16",
               [
                 4,
                 ""
@@ -6128,10 +6668,10 @@
           "x": 0,
           "y": 0
         },
-        "e1c2e7a6efd6f28c": {
+        "824c825a13d85a16": {
           "opcode": "argument_reporter_string_number",
           "next": null,
-          "parent": "823020a271c2adee",
+          "parent": "c60a2c8e717109fc",
           "inputs": {},
           "fields": {
             "VALUE": [
@@ -6144,14 +6684,226 @@
           "x": 0,
           "y": 0
         },
-        "a8e1700c1769f874": {
-          "opcode": "data_replaceitemoflist",
-          "next": "abe174c589316741",
-          "parent": "37e90ceea714c99e",
+        "acd26561a2765625": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "1d0cee4d67b9ae6d",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_this",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "63bf0b718c39d1c5": {
+          "opcode": "data_itemoflist",
+          "next": null,
+          "parent": "bd9ca586a6bf1458",
           "inputs": {
             "INDEX": [
               3,
-              "832de39e09a86466",
+              "1d0cee4d67b9ae6d",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.field.score",
+              "l_heap_field_score"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "1d0cee4d67b9ae6d": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "63bf0b718c39d1c5",
+          "inputs": {
+            "NUM1": [
+              3,
+              "acd26561a2765625",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "bbdd10c7c397808f": {
+          "opcode": "data_replaceitemoflist",
+          "next": "b5dd0755b92523d1",
+          "parent": "5b1b44dd5155f161",
+          "inputs": {
+            "INDEX": [
+              3,
+              "843cefbb6dc59353",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              3,
+              "ac40a2e4eb3f3fda",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.returnValue",
+              "l_abi_frame_returnValue"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "843cefbb6dc59353": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "bbdd10c7c397808f",
+          "inputs": {
+            "NUM1": [
+              3,
+              "59ca605316c302bb",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "59ca605316c302bb": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "843cefbb6dc59353",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_add_callId",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "ac40a2e4eb3f3fda": {
+          "opcode": "data_itemoflist",
+          "next": null,
+          "parent": "bbdd10c7c397808f",
+          "inputs": {
+            "INDEX": [
+              3,
+              "853cf14e34844672",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.returnValue",
+              "l_abi_frame_returnValue"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "853cf14e34844672": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "ac40a2e4eb3f3fda",
+          "inputs": {
+            "NUM1": [
+              3,
+              "64ca71a420ce5132",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "64ca71a420ce5132": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "853cf14e34844672",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_add_callId",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "b5dd0755b92523d1": {
+          "opcode": "data_replaceitemoflist",
+          "next": "a4df2b29f81a7a31",
+          "parent": "bbdd10c7c397808f",
+          "inputs": {
+            "INDEX": [
+              3,
+              "0239e47efe1d6c6a",
               [
                 4,
                 ""
@@ -6176,14 +6928,14 @@
           "x": 0,
           "y": 0
         },
-        "832de39e09a86466": {
+        "0239e47efe1d6c6a": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "a8e1700c1769f874",
+          "parent": "b5dd0755b92523d1",
           "inputs": {
             "NUM1": [
               3,
-              "6ec60434cbaa00ee",
+              "e1cd75025c179778",
               [
                 4,
                 ""
@@ -6203,10 +6955,10 @@
           "x": 0,
           "y": 0
         },
-        "6ec60434cbaa00ee": {
+        "e1cd75025c179778": {
           "opcode": "argument_reporter_string_number",
           "next": null,
-          "parent": "832de39e09a86466",
+          "parent": "0239e47efe1d6c6a",
           "inputs": {},
           "fields": {
             "VALUE": [
@@ -6219,14 +6971,14 @@
           "x": 0,
           "y": 0
         },
-        "abe174c589316741": {
+        "a4df2b29f81a7a31": {
           "opcode": "data_replaceitemoflist",
-          "next": "02f6451e9b6365aa",
-          "parent": "a8e1700c1769f874",
+          "next": "01f404f4ed727460",
+          "parent": "b5dd0755b92523d1",
           "inputs": {
             "INDEX": [
               3,
-              "882deb7d0c88ab69",
+              "0139e2eb83840473",
               [
                 4,
                 ""
@@ -6251,14 +7003,14 @@
           "x": 0,
           "y": 0
         },
-        "882deb7d0c88ab69": {
+        "0139e2eb83840473": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "abe174c589316741",
+          "parent": "a4df2b29f81a7a31",
           "inputs": {
             "NUM1": [
               3,
-              "6dc602a102f6f459",
+              "decd70491119c9c5",
               [
                 4,
                 ""
@@ -6278,10 +7030,10 @@
           "x": 0,
           "y": 0
         },
-        "6dc602a102f6f459": {
+        "decd70491119c9c5": {
           "opcode": "argument_reporter_string_number",
           "next": null,
-          "parent": "882deb7d0c88ab69",
+          "parent": "0139e2eb83840473",
           "inputs": {},
           "fields": {
             "VALUE": [
@@ -6294,14 +7046,14 @@
           "x": 0,
           "y": 0
         },
-        "02f6451e9b6365aa": {
+        "01f404f4ed727460": {
           "opcode": "data_addtolist",
           "next": null,
-          "parent": "abe174c589316741",
+          "parent": "a4df2b29f81a7a31",
           "inputs": {
             "ITEM": [
               3,
-              "6bc5ff7bebb7989b",
+              "dccd6d234d0662d3",
               [
                 4,
                 ""
@@ -6319,10 +7071,10 @@
           "x": 0,
           "y": 0
         },
-        "6bc5ff7bebb7989b": {
+        "dccd6d234d0662d3": {
           "opcode": "argument_reporter_string_number",
           "next": null,
-          "parent": "02f6451e9b6365aa",
+          "parent": "01f404f4ed727460",
           "inputs": {},
           "fields": {
             "VALUE": [
@@ -6335,14 +7087,14 @@
           "x": 0,
           "y": 0
         },
-        "7004525e95b97d12": {
+        "6af77e8c8da7c11c": {
           "opcode": "procedures_definition",
-          "next": "4efc6bafdc515c6f",
+          "next": "cee9e869ff10cde5",
           "parent": null,
           "inputs": {
             "custom_block": [
               1,
-              "138420509f85ea22"
+              "1a8669ecb40a715e"
             ]
           },
           "fields": {},
@@ -6351,10 +7103,10 @@
           "x": 600,
           "y": 360
         },
-        "138420509f85ea22": {
+        "1a8669ecb40a715e": {
           "opcode": "procedures_prototype",
           "next": null,
-          "parent": "7004525e95b97d12",
+          "parent": "6af77e8c8da7c11c",
           "inputs": {},
           "fields": {},
           "shadow": true,
@@ -6371,135 +7123,31 @@
             "children": []
           }
         },
-        "4efc6bafdc515c6f": {
-          "opcode": "data_setvariableto",
-          "next": "4dfc6a1c954e0d42",
-          "parent": "7004525e95b97d12",
-          "inputs": {
-            "VALUE": [
-              1,
-              [
-                4,
-                "0"
-              ]
-            ]
-          },
-          "fields": {
-            "VARIABLE": [
-              "_tscr_s0_move_returning",
-              "vs0_8"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "4dfc6a1c954e0d42": {
-          "opcode": "data_setvariableto",
-          "next": "91f9ef2a83c6e624",
-          "parent": "4efc6bafdc515c6f",
-          "inputs": {
-            "VALUE": [
-              1,
-              [
-                4,
-                "0"
-              ]
-            ]
-          },
-          "fields": {
-            "VARIABLE": [
-              "_tscr_s0_move_ret",
-              "vs0_7"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "91f9ef2a83c6e624": {
-          "opcode": "control_if",
-          "next": "c84d789444318476",
-          "parent": "4dfc6a1c954e0d42",
-          "inputs": {
-            "CONDITION": [
-              3,
-              "e7c8517ccf4bd8e8",
-              [
-                4,
-                ""
-              ]
-            ],
-            "SUBSTACK": [
-              2,
-              "33408ca67c8dbad2"
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "e7c8517ccf4bd8e8": {
-          "opcode": "operator_equals",
-          "next": null,
-          "parent": "91f9ef2a83c6e624",
-          "inputs": {
-            "OPERAND1": [
-              3,
-              [
-                12,
-                "_tscr_s0_move_returning",
-                "vs0_8"
-              ],
-              [
-                4,
-                ""
-              ]
-            ],
-            "OPERAND2": [
-              1,
-              [
-                4,
-                "0"
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "33408ca67c8dbad2": {
+        "cee9e869ff10cde5": {
           "opcode": "data_replaceitemoflist",
-          "next": null,
-          "parent": "91f9ef2a83c6e624",
+          "next": "cde7a83f690b8687",
+          "parent": "6af77e8c8da7c11c",
           "inputs": {
             "INDEX": [
               3,
-              "99d0b09ba73364ab",
+              "b9b62284c30d2b16",
               [
                 4,
                 ""
               ]
             ],
             "ITEM": [
-              3,
-              "262dccc555af3d89",
+              1,
               [
                 4,
-                ""
+                "0"
               ]
             ]
           },
           "fields": {
             "LIST": [
-              "heap.field.x",
-              "l_heap_field_x"
+              "abi.frame.returning",
+              "l_abi_frame_returning"
             ]
           },
           "shadow": false,
@@ -6507,99 +7155,14 @@
           "x": 0,
           "y": 0
         },
-        "f7ddf1d19ae794b9": {
-          "opcode": "argument_reporter_string_number",
-          "next": null,
-          "parent": "99d0b09ba73364ab",
-          "inputs": {},
-          "fields": {
-            "VALUE": [
-              "_tscr_s0_this",
-              null
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "262dccc555af3d89": {
+        "b9b62284c30d2b16": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "33408ca67c8dbad2",
+          "parent": "cee9e869ff10cde5",
           "inputs": {
             "NUM1": [
               3,
-              "dd2f4fe45504fc96",
-              [
-                4,
-                ""
-              ]
-            ],
-            "NUM2": [
-              3,
-              "830fc3e50d57d389",
-              [
-                4,
-                ""
-              ]
-            ]
-          },
-          "fields": {},
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "77040ae3e37335bb": {
-          "opcode": "argument_reporter_string_number",
-          "next": null,
-          "parent": "cb663df49af2c970",
-          "inputs": {},
-          "fields": {
-            "VALUE": [
-              "_tscr_s0_this",
-              null
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "dd2f4fe45504fc96": {
-          "opcode": "data_itemoflist",
-          "next": null,
-          "parent": "262dccc555af3d89",
-          "inputs": {
-            "INDEX": [
-              3,
-              "cb663df49af2c970",
-              [
-                4,
-                ""
-              ]
-            ]
-          },
-          "fields": {
-            "LIST": [
-              "heap.field.x",
-              "l_heap_field_x"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "cb663df49af2c970": {
-          "opcode": "operator_add",
-          "next": null,
-          "parent": "dd2f4fe45504fc96",
-          "inputs": {
-            "NUM1": [
-              3,
-              "77040ae3e37335bb",
+              "c0c0b0da39a19ea6",
               [
                 4,
                 ""
@@ -6619,10 +7182,365 @@
           "x": 0,
           "y": 0
         },
-        "830fc3e50d57d389": {
+        "c0c0b0da39a19ea6": {
           "opcode": "argument_reporter_string_number",
           "next": null,
-          "parent": "262dccc555af3d89",
+          "parent": "b9b62284c30d2b16",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_move_callId",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "cde7a83f690b8687": {
+          "opcode": "data_replaceitemoflist",
+          "next": "00f24f22cc6d0524",
+          "parent": "cee9e869ff10cde5",
+          "inputs": {
+            "INDEX": [
+              3,
+              "bcb6273d90d47a5d",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.returnValue",
+              "l_abi_frame_returnValue"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "bcb6273d90d47a5d": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "cde7a83f690b8687",
+          "inputs": {
+            "NUM1": [
+              3,
+              "bdc0ac217e25dd29",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "bdc0ac217e25dd29": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "bcb6273d90d47a5d",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_move_callId",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "00f24f22cc6d0524": {
+          "opcode": "control_if",
+          "next": "bc4b27196dbfa271",
+          "parent": "cde7a83f690b8687",
+          "inputs": {
+            "CONDITION": [
+              3,
+              "72bc605a73aa985e",
+              [
+                4,
+                ""
+              ]
+            ],
+            "SUBSTACK": [
+              2,
+              "2f4b13b6453c02ca"
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "72bc605a73aa985e": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "00f24f22cc6d0524",
+          "inputs": {
+            "OPERAND1": [
+              3,
+              "478b357a52d6ea2e",
+              [
+                4,
+                ""
+              ]
+            ],
+            "OPERAND2": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "478b357a52d6ea2e": {
+          "opcode": "data_itemoflist",
+          "next": null,
+          "parent": "72bc605a73aa985e",
+          "inputs": {
+            "INDEX": [
+              3,
+              "1b0559b018a6ad26",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.returning",
+              "l_abi_frame_returning"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "1b0559b018a6ad26": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "478b357a52d6ea2e",
+          "inputs": {
+            "NUM1": [
+              3,
+              "ca0790fefbcdbf8a",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "ca0790fefbcdbf8a": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "1b0559b018a6ad26",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_move_callId",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "2f4b13b6453c02ca": {
+          "opcode": "data_replaceitemoflist",
+          "next": null,
+          "parent": "00f24f22cc6d0524",
+          "inputs": {
+            "INDEX": [
+              3,
+              "0fd82622a273d692",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              3,
+              "ba37b01df47ba761",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.field.x",
+              "l_heap_field_x"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "f3e878e19b4ba171": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "0fd82622a273d692",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_this",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "ba37b01df47ba761": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "2f4b13b6453c02ca",
+          "inputs": {
+            "NUM1": [
+              3,
+              "61259254b1be2ef6",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              3,
+              "8b120f14e18b80fe",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "f30dc8731cc9df2b": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "cf5bb6e4dbe5d750",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_this",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "61259254b1be2ef6": {
+          "opcode": "data_itemoflist",
+          "next": null,
+          "parent": "ba37b01df47ba761",
+          "inputs": {
+            "INDEX": [
+              3,
+              "cf5bb6e4dbe5d750",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.field.x",
+              "l_heap_field_x"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "cf5bb6e4dbe5d750": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "61259254b1be2ef6",
+          "inputs": {
+            "NUM1": [
+              3,
+              "f30dc8731cc9df2b",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "8b120f14e18b80fe": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "ba37b01df47ba761",
           "inputs": {},
           "fields": {
             "VALUE": [
@@ -6635,14 +7553,14 @@
           "x": 0,
           "y": 0
         },
-        "99d0b09ba73364ab": {
+        "0fd82622a273d692": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "33408ca67c8dbad2",
+          "parent": "2f4b13b6453c02ca",
           "inputs": {
             "NUM1": [
               3,
-              "f7ddf1d19ae794b9",
+              "f3e878e19b4ba171",
               [
                 4,
                 ""
@@ -6662,14 +7580,14 @@
           "x": 0,
           "y": 0
         },
-        "c84d789444318476": {
+        "bc4b27196dbfa271": {
           "opcode": "control_if",
-          "next": "d2ec2d4c6829e796",
-          "parent": "91f9ef2a83c6e624",
+          "next": "4bcc981c27fcaca2",
+          "parent": "00f24f22cc6d0524",
           "inputs": {
             "CONDITION": [
               3,
-              "6eaf6b36e5a59d5e",
+              "f4a7ef63387f220b",
               [
                 4,
                 ""
@@ -6677,7 +7595,7 @@
             ],
             "SUBSTACK": [
               2,
-              "0cb1fa6720c19b37"
+              "33d3343906622aa9"
             ]
           },
           "fields": {},
@@ -6686,18 +7604,14 @@
           "x": 0,
           "y": 0
         },
-        "6eaf6b36e5a59d5e": {
+        "f4a7ef63387f220b": {
           "opcode": "operator_equals",
           "next": null,
-          "parent": "c84d789444318476",
+          "parent": "bc4b27196dbfa271",
           "inputs": {
             "OPERAND1": [
               3,
-              [
-                12,
-                "_tscr_s0_move_returning",
-                "vs0_8"
-              ],
+              "2ecd7f74260b899c",
               [
                 4,
                 ""
@@ -6717,79 +7631,14 @@
           "x": 0,
           "y": 0
         },
-        "0cb1fa6720c19b37": {
-          "opcode": "data_setvariableto",
-          "next": "0bb1f8d4e14ff880",
-          "parent": "c84d789444318476",
-          "inputs": {
-            "VALUE": [
-              1,
-              [
-                4,
-                "1"
-              ]
-            ]
-          },
-          "fields": {
-            "VARIABLE": [
-              "_tscr_s0_move_returning",
-              "vs0_8"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "0bb1f8d4e14ff880": {
-          "opcode": "data_setvariableto",
-          "next": null,
-          "parent": "0cb1fa6720c19b37",
-          "inputs": {
-            "VALUE": [
-              3,
-              "d42d0322f2871afc",
-              [
-                4,
-                ""
-              ]
-            ]
-          },
-          "fields": {
-            "VARIABLE": [
-              "_tscr_s0_move_ret",
-              "vs0_7"
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "0efc9b81b8d9b141": {
-          "opcode": "argument_reporter_string_number",
-          "next": null,
-          "parent": "c254e6a89f62cae4",
-          "inputs": {},
-          "fields": {
-            "VALUE": [
-              "_tscr_s0_this",
-              null
-            ]
-          },
-          "shadow": false,
-          "topLevel": false,
-          "x": 0,
-          "y": 0
-        },
-        "d42d0322f2871afc": {
+        "2ecd7f74260b899c": {
           "opcode": "data_itemoflist",
           "next": null,
-          "parent": "0bb1f8d4e14ff880",
+          "parent": "f4a7ef63387f220b",
           "inputs": {
             "INDEX": [
               3,
-              "c254e6a89f62cae4",
+              "8b38fc2c04475252",
               [
                 4,
                 ""
@@ -6798,8 +7647,8 @@
           },
           "fields": {
             "LIST": [
-              "heap.field.x",
-              "l_heap_field_x"
+              "abi.frame.returning",
+              "l_abi_frame_returning"
             ]
           },
           "shadow": false,
@@ -6807,14 +7656,14 @@
           "x": 0,
           "y": 0
         },
-        "c254e6a89f62cae4": {
+        "8b38fc2c04475252": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "d42d0322f2871afc",
+          "parent": "2ecd7f74260b899c",
           "inputs": {
             "NUM1": [
               3,
-              "0efc9b81b8d9b141",
+              "f558ca80a0daa110",
               [
                 4,
                 ""
@@ -6834,14 +7683,105 @@
           "x": 0,
           "y": 0
         },
-        "d2ec2d4c6829e796": {
+        "f558ca80a0daa110": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "8b38fc2c04475252",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_move_callId",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "33d3343906622aa9": {
           "opcode": "data_replaceitemoflist",
-          "next": "d3e9f048d57a2ef6",
-          "parent": "c84d789444318476",
+          "next": "36d338f2850c052a",
+          "parent": "bc4b27196dbfa271",
           "inputs": {
             "INDEX": [
               3,
-              "2bbd91bf45a3b14f",
+              "5c753cd9c351bc99",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.returning",
+              "l_abi_frame_returning"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "5c753cd9c351bc99": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "33d3343906622aa9",
+          "inputs": {
+            "NUM1": [
+              3,
+              "1d736f97c323988f",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "1d736f97c323988f": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "5c753cd9c351bc99",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_move_callId",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "36d338f2850c052a": {
+          "opcode": "data_replaceitemoflist",
+          "next": null,
+          "parent": "33d3343906622aa9",
+          "inputs": {
+            "INDEX": [
+              3,
+              "597538205629b2cc",
               [
                 4,
                 ""
@@ -6849,11 +7789,7 @@
             ],
             "ITEM": [
               3,
-              [
-                12,
-                "_tscr_s0_move_ret",
-                "vs0_7"
-              ],
+              "5120fbf605bba388",
               [
                 4,
                 ""
@@ -6871,14 +7807,14 @@
           "x": 0,
           "y": 0
         },
-        "2bbd91bf45a3b14f": {
+        "597538205629b2cc": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "d2ec2d4c6829e796",
+          "parent": "36d338f2850c052a",
           "inputs": {
             "NUM1": [
               3,
-              "a8c2c9a9f5c8ab8d",
+              "10735b206cc9a882",
               [
                 4,
                 ""
@@ -6898,10 +7834,10 @@
           "x": 0,
           "y": 0
         },
-        "a8c2c9a9f5c8ab8d": {
+        "10735b206cc9a882": {
           "opcode": "argument_reporter_string_number",
           "next": null,
-          "parent": "2bbd91bf45a3b14f",
+          "parent": "597538205629b2cc",
           "inputs": {},
           "fields": {
             "VALUE": [
@@ -6914,14 +7850,226 @@
           "x": 0,
           "y": 0
         },
-        "d3e9f048d57a2ef6": {
-          "opcode": "data_replaceitemoflist",
-          "next": "dae9fb4d7cd6b989",
-          "parent": "d2ec2d4c6829e796",
+        "7fdf3850adcabe32": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "477478b293efeb86",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_this",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "5120fbf605bba388": {
+          "opcode": "data_itemoflist",
+          "next": null,
+          "parent": "36d338f2850c052a",
           "inputs": {
             "INDEX": [
               3,
-              "2cbd935213ddf568",
+              "477478b293efeb86",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "heap.field.x",
+              "l_heap_field_x"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "477478b293efeb86": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "5120fbf605bba388",
+          "inputs": {
+            "NUM1": [
+              3,
+              "7fdf3850adcabe32",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "4bcc981c27fcaca2": {
+          "opcode": "data_replaceitemoflist",
+          "next": "55cca7da30a7ce74",
+          "parent": "bc4b27196dbfa271",
+          "inputs": {
+            "INDEX": [
+              3,
+              "a4c74a96c5b6ef8c",
+              [
+                4,
+                ""
+              ]
+            ],
+            "ITEM": [
+              3,
+              "8707c003fa5e4a8b",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.returnValue",
+              "l_abi_frame_returnValue"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "a4c74a96c5b6ef8c": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "4bcc981c27fcaca2",
+          "inputs": {
+            "NUM1": [
+              3,
+              "3bccab6e8f843fd6",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "3bccab6e8f843fd6": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "a4c74a96c5b6ef8c",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_move_callId",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "8707c003fa5e4a8b": {
+          "opcode": "data_itemoflist",
+          "next": null,
+          "parent": "4bcc981c27fcaca2",
+          "inputs": {
+            "INDEX": [
+              3,
+              "a9c752757ac086d9",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "LIST": [
+              "abi.frame.returnValue",
+              "l_abi_frame_returnValue"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "a9c752757ac086d9": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "8707c003fa5e4a8b",
+          "inputs": {
+            "NUM1": [
+              3,
+              "3acca9db4535de73",
+              [
+                4,
+                ""
+              ]
+            ],
+            "NUM2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "3acca9db4535de73": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "a9c752757ac086d9",
+          "inputs": {},
+          "fields": {
+            "VALUE": [
+              "_tscr_s0_move_callId",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "55cca7da30a7ce74": {
+          "opcode": "data_replaceitemoflist",
+          "next": "e64b1f9b608bf82b",
+          "parent": "4bcc981c27fcaca2",
+          "inputs": {
+            "INDEX": [
+              3,
+              "aac75408d700b94a",
               [
                 4,
                 ""
@@ -6946,14 +8094,14 @@
           "x": 0,
           "y": 0
         },
-        "2cbd935213ddf568": {
+        "aac75408d700b94a": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "d3e9f048d57a2ef6",
+          "parent": "55cca7da30a7ce74",
           "inputs": {
             "NUM1": [
               3,
-              "abc2ce62daa239d2",
+              "b723f2b0ccb1c0e0",
               [
                 4,
                 ""
@@ -6973,10 +8121,10 @@
           "x": 0,
           "y": 0
         },
-        "abc2ce62daa239d2": {
+        "b723f2b0ccb1c0e0": {
           "opcode": "argument_reporter_string_number",
           "next": null,
-          "parent": "2cbd935213ddf568",
+          "parent": "aac75408d700b94a",
           "inputs": {},
           "fields": {
             "VALUE": [
@@ -6989,14 +8137,14 @@
           "x": 0,
           "y": 0
         },
-        "dae9fb4d7cd6b989": {
+        "e64b1f9b608bf82b": {
           "opcode": "data_replaceitemoflist",
-          "next": "7768c62e8dada258",
-          "parent": "d3e9f048d57a2ef6",
+          "next": "82c9ea7c7b435832",
+          "parent": "55cca7da30a7ce74",
           "inputs": {
             "INDEX": [
               3,
-              "29bd8e99886338f5",
+              "aa482bf745bd2ebf",
               [
                 4,
                 ""
@@ -7021,14 +8169,14 @@
           "x": 0,
           "y": 0
         },
-        "29bd8e99886338f5": {
+        "aa482bf745bd2ebf": {
           "opcode": "operator_add",
           "next": null,
-          "parent": "dae9fb4d7cd6b989",
+          "parent": "e64b1f9b608bf82b",
           "inputs": {
             "NUM1": [
               3,
-              "aac2cccf55a7b717",
+              "ba23f7695a49e971",
               [
                 4,
                 ""
@@ -7048,10 +8196,10 @@
           "x": 0,
           "y": 0
         },
-        "aac2cccf55a7b717": {
+        "ba23f7695a49e971": {
           "opcode": "argument_reporter_string_number",
           "next": null,
-          "parent": "29bd8e99886338f5",
+          "parent": "aa482bf745bd2ebf",
           "inputs": {},
           "fields": {
             "VALUE": [
@@ -7064,14 +8212,14 @@
           "x": 0,
           "y": 0
         },
-        "7768c62e8dada258": {
+        "82c9ea7c7b435832": {
           "opcode": "data_addtolist",
           "next": null,
-          "parent": "dae9fb4d7cd6b989",
+          "parent": "e64b1f9b608bf82b",
           "inputs": {
             "ITEM": [
               3,
-              "b0c2d641c10fb915",
+              "bc23fa8f9e816d1f",
               [
                 4,
                 ""
@@ -7089,10 +8237,10 @@
           "x": 0,
           "y": 0
         },
-        "b0c2d641c10fb915": {
+        "bc23fa8f9e816d1f": {
           "opcode": "argument_reporter_string_number",
           "next": null,
-          "parent": "7768c62e8dada258",
+          "parent": "82c9ea7c7b435832",
           "inputs": {},
           "fields": {
             "VALUE": [
