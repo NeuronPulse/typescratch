@@ -90,6 +90,24 @@ test("out-of-range array access is inert and released refs are rejected", () => 
   assert.equal(heapArrayLength(reused.state, reused.ref), 1);
 });
 
+test("releasing the top array range trims items so repeated cycles do not grow", () => {
+  const first = heapNew(INITIAL_HEAP_TABLE, ARRAY_CLASS, new Map(), 3);
+  const second = heapNew(first.state, ARRAY_CLASS, new Map(), 2);
+  assert.equal(second.state.items.length, 5);
+  const released = heapRelease(second.state, second.ref);
+  assert.equal(released.items.length, 3);
+  const reused = heapNew(released, ARRAY_CLASS, new Map(), 2);
+  assert.equal(reused.ref, second.ref);
+  assert.equal(reused.state.items.length, 5);
+});
+
+test("an out-of-order release leaves the later item range in place", () => {
+  const first = heapNew(INITIAL_HEAP_TABLE, ARRAY_CLASS, new Map(), 3);
+  const second = heapNew(first.state, ARRAY_CLASS, new Map(), 2);
+  const released = heapRelease(second.state, first.ref);
+  assert.equal(released.items.length, 5);
+});
+
 test("the heap allocator refuses the scratch-vm list limit explicitly", () => {
   const nearLimit = allocateObjectId({ nextObjectId: MAX_OBJECTS - 1, freeObjects: [] });
   assert.equal(nearLimit.id, MAX_OBJECTS - 1);

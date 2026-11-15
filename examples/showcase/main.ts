@@ -40,6 +40,8 @@ Scratch.onFlag(() => {
   results.push("factorial=" + factorial(5));
   results.push("array=" + a.get(0) + "," + a.get(1) + "," + a.get(2));
   Scratch.say("C=" + c.value + " F=" + factorial(5) + " A=" + a.get(0) + "," + a.get(1) + "," + a.get(2));
+  Scratch.free(a);
+  Scratch.free(c);
 });
 
 Scratch.onGreaterThan("timer", -1, () => {

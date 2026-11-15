@@ -145,20 +145,21 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
     fields: Map<string, TraceValue>;
     start: number;
     length: number;
+    released: boolean;
   }
   const heapObjects = new Map<number, HeapObject>();
   const heapItems: TraceValue[] = [];
-  const heapFree: number[] = [];
+  const heapFreeIds: number[] = [];
   let heapNextId = 0;
   const allocateObject = (classId: string, size = 0): number => {
-    const ref = heapFree.length > 0 ? heapFree.pop()! : heapNextId++;
+    const ref = heapFreeIds.length > 0 ? heapFreeIds.pop()! : heapNextId++;
     const fields = new Map<string, TraceValue>();
     for (const field of classById.get(classId)?.fields ?? []) {
       fields.set(field.name, field.initial ?? (field.type === "string" ? "" : 0));
     }
     const start = heapItems.length;
     for (let index = 0; index < Math.max(0, size); index++) heapItems.push(0);
-    heapObjects.set(ref, { classId, fields, start, length: Math.max(0, size) });
+    heapObjects.set(ref, { classId, fields, start, length: Math.max(0, size), released: false });
     return ref;
   };
   const fieldRef = (expr: Expr): number => Math.trunc(toNumber(evalExpr(expr)));
@@ -292,6 +293,17 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
         case "heapArrayAllocate":
           values.set(stmt.result, allocateObject("Array", Math.trunc(toNumber(evalExpr(stmt.size)))));
           break;
+        case "heapFree": {
+          const ref = fieldRef(stmt.object);
+          const object = heapObjects.get(ref);
+          if (!object || object.released) break;
+          object.released = true;
+          if (object.length > 0 && object.start + object.length === heapItems.length) {
+            heapItems.length = object.start;
+          }
+          heapFreeIds.push(ref);
+          break;
+        }
         case "fieldWrite": {
           const object = heapObjects.get(fieldRef(stmt.object));
           const value = evalExpr(stmt.value);

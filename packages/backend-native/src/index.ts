@@ -26,6 +26,7 @@ import {
   emitHeapArrayRead,
   emitHeapClassOf,
   emitHeapFieldRead,
+  emitHeapRelease,
   type HeapLayout,
 } from "./heap-blocks.ts";
 
@@ -674,6 +675,18 @@ export function lowerNative(
             { id: tokenDecl.id, name: tokenDecl.name },
             size.value,
             defaults,
+          ));
+          break;
+        }
+        case "heapFree": {
+          if (!heapLayout) {
+            bag.error(CODES.NATIVE_LOWERING, "free() without a heap layout", span);
+            break;
+          }
+          ids.push(...emitHeapRelease(
+            builder, scope, heapLayout,
+            emitValue(stmt.object, "", scope, span),
+            stmt.arraySize,
           ));
           break;
         }

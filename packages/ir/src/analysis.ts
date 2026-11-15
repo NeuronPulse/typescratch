@@ -116,6 +116,9 @@ function statementEvents(stmts: Stmt[]): YieldEvent[] {
         case "list":
           for (const arg of stmt.args) events.push(...expressionEvents(arg));
           break;
+        case "heapFree":
+          events.push(...expressionEvents(stmt.object));
+          break;
         case "break":
         case "continue":
           break;

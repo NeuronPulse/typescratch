@@ -42,13 +42,21 @@ test("internal compiler state is filtered from frame diffs but kept in round fin
     Object.keys(frame.variables).some((key) => isCompilerState(key))));
 });
 
-test("repeated green flags keep the results list idempotent and expose heap growth", async () => {
+test("repeated green flags keep the results list and every heap list stable", async () => {
   const trace = await recordTrace(sb3Of("showcase"), { greenFlags: 3 });
   assert.equal(trace.roundFinals.length, 3);
   for (const final of trace.roundFinals) assert.deepEqual(resultsOf(final), EXPECTED_RESULTS);
   assert.deepEqual(
     trace.roundFinals.map((final) => final.lists["Stage:heap.classId"]?.length ?? 0),
-    [2, 4, 6],
+    [2, 2, 2],
+  );
+  assert.deepEqual(
+    trace.roundFinals.map((final) => final.lists["Stage:heap.array.items"]?.length ?? 0),
+    [0, 0, 0],
+  );
+  assert.deepEqual(
+    trace.roundFinals.map((final) => final.lists["Stage:heap.freeObjects"]?.length ?? 0),
+    [2, 2, 2],
   );
   assert.deepEqual(trace.says, [
     "C=7 F=120 A=7,6,3", "C=7 F=120 A=7,6,3", "C=7 F=120 A=7,6,3",

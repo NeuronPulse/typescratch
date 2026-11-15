@@ -189,13 +189,23 @@ export function heapWriteArray(
   return { ...state, items };
 }
 
+/**
+ * Releases an object and returns its id to the free list. When the object's
+ * array range is the top of the item stack (LIFO release order) the range is
+ * trimmed, so repeated allocate/release cycles do not grow `heap.array.items`.
+ * Out-of-order releases leave a hole instead of shifting later ranges.
+ */
 export function heapRelease(state: HeapTableState, ref: ObjectRef): HeapTableState {
   const record = liveRecord(state, ref);
   const objects = new Map(state.objects);
   objects.set(ref, { ...record, status: "released" });
+  const end = record.arrayStart + record.arrayLength;
+  const items = record.arrayLength > 0 && end === state.items.length
+    ? state.items.slice(0, record.arrayStart)
+    : state.items;
   return {
     objects,
-    items: state.items,
+    items,
     allocator: releaseObjectId(state.allocator, ref),
   };
 }

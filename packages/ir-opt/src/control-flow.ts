@@ -352,6 +352,9 @@ export function lowerControlFlow(modules: Module[]): ControlFlowResult {
           case "heapArrayAllocate":
             next = { ...stmt, size: lift(stmt.size) };
             break;
+          case "heapFree":
+            next = { ...stmt, object: lift(stmt.object) };
+            break;
           case "fieldWrite":
             next = { ...stmt, object: lift(stmt.object), value: lift(stmt.value) };
             break;

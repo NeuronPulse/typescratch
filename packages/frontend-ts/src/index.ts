@@ -640,6 +640,7 @@ class Lowerer {
         const inner = this.checker.getTypeArguments(handleType)[0];
         const type = inner ? this.irTypeOf(inner) : "number";
         const decl = this.newVar(declaration.name.text, "number", "temp", this.span(declaration), 0);
+        decl.arraySize = Number(sizeArg.text);
         if (symbol) {
           this.arrayVars.set(symbol, { type });
           this.symbolVars.set(symbol, decl);
@@ -977,6 +978,26 @@ class Lowerer {
               type: "number", span: this.span(node),
             };
           this.emit({ k: "assign", var: handle.id, value, span: this.span(node) });
+          return this.voidConst(node);
+        }
+        if (runtimeName === "free") {
+          const argument = node.arguments[0];
+          if (!argument) {
+            this.unsupported(node, "free() expects an object reference");
+            return this.voidConst(node);
+          }
+          if (!ts.isIdentifier(argument)) {
+            this.unsupported(node, "free() expects a variable name");
+            return this.voidConst(node);
+          }
+          const symbol = this.checker.getSymbolAtLocation(argument);
+          const decl = symbol ? this.symbolVars.get(symbol) : undefined;
+          this.emit({
+            k: "heapFree",
+            object: this.lowerExpr(argument),
+            ...(decl?.arraySize !== undefined ? { arraySize: decl.arraySize } : {}),
+            span: this.span(node),
+          });
           return this.voidConst(node);
         }
         if (runtimeName === "global" || runtimeName === "local" || runtimeName === "list") {

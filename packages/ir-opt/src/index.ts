@@ -250,6 +250,9 @@ class Optimizer {
         case "frameReturn":
           result.push({ ...stmt, value: this.expr(stmt.value) });
           break;
+        case "heapFree":
+          result.push({ ...stmt, object: this.expr(stmt.object) });
+          break;
         case "return":
           result.push(stmt.value ? { ...stmt, value: this.expr(stmt.value) } : stmt);
           break;

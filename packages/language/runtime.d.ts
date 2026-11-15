@@ -51,4 +51,5 @@ export declare const Scratch: {
   local<T>(name: string, options?: ResourceOptions<T>): Handle<T>;
   list<T>(name: string): ListHandle<T>;
   array<T>(size: number): ArrayHandle<T>;
+  free(ref: unknown): void;
 };

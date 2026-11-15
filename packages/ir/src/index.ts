@@ -21,6 +21,7 @@ export interface VarDecl {
   script?: number;
   parameter?: boolean;
   className?: ClassId;
+  arraySize?: number;
   span?: SourceSpan;
 }
 
@@ -66,6 +67,7 @@ export type Stmt =
   | { k: "frameReturn"; value: Expr; list: ListId; callId: VarId; tag: string; span?: SourceSpan }
   | { k: "heapAllocate"; classId: ClassId; result: VarId; span?: SourceSpan }
   | { k: "heapArrayAllocate"; size: Expr; result: VarId; span?: SourceSpan }
+  | { k: "heapFree"; object: Expr; arraySize?: number; span?: SourceSpan }
   | { k: "fieldWrite"; object: Expr; field: string; value: Expr; span?: SourceSpan }
   | { k: "arrayWrite"; array: Expr; index: Expr; value: Expr; span?: SourceSpan }
   | {
@@ -205,6 +207,9 @@ function* stmtTree(stmts: Stmt[]): Generator<Expr> {
         break;
       case "heapArrayAllocate":
         yield* exprTree(stmt.size);
+        break;
+      case "heapFree":
+        yield* exprTree(stmt.object);
         break;
       case "fieldWrite":
         yield* exprTree(stmt.object);
@@ -350,6 +355,9 @@ export function validateModule(module: Module, bag: DiagnosticBag): void {
             bag.error(CODES.UNSUPPORTED, `IR allocates array into unknown variable ${stmt.result}`, stmt.span);
           }
           checkExpr(stmt.size);
+          break;
+        case "heapFree":
+          checkExpr(stmt.object);
           break;
         case "fieldWrite":
           if (!fieldNames.has(stmt.field)) {

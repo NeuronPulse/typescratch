@@ -306,3 +306,52 @@ export function emitHeapArrayWrite(
   builder.input(write, "ITEM", value);
   return write;
 }
+
+/**
+ * Releases an ObjectRef: tombstones the slot, trims a top-of-stack array range
+ * and returns the id to the free list. `object` must be a plain variable ref so
+ * it can be read several times without reparenting a block.
+ */
+export function emitHeapRelease(
+  builder: GraphBuilder,
+  scope: string,
+  layout: HeapLayout,
+  object: InputRef,
+  arraySize?: number,
+): BlockId[] {
+  const ids: BlockId[] = [];
+  const status = builder.add("data_replaceitemoflist", { scope, fields: listField(layout.status) });
+  builder.input(status, "INDEX", { block: oneBased(builder, scope, object) });
+  builder.input(status, "ITEM", literal("released"));
+  ids.push(status);
+
+  if (arraySize !== undefined && arraySize > 0) {
+    const start = builder.add("data_itemoflist", { scope, fields: listField(layout.arrayStart) });
+    builder.input(start, "INDEX", { block: oneBased(builder, scope, object) });
+    const size = builder.add("data_itemoflist", { scope, fields: listField(layout.arrayLength) });
+    builder.input(size, "INDEX", { block: oneBased(builder, scope, object) });
+    const end = builder.add("operator_add", { scope });
+    builder.input(end, "NUM1", { block: start });
+    builder.input(end, "NUM2", { block: size });
+    const itemCount = builder.add("data_lengthoflist", { scope, fields: listField(layout.arrayItems) });
+    const isTop = builder.add("operator_equals", { scope });
+    builder.input(isTop, "OPERAND1", { block: end });
+    builder.input(isTop, "OPERAND2", { block: itemCount });
+    const branch = builder.add("control_if", { scope });
+    builder.input(branch, "CONDITION", { block: isTop });
+    const deletes: BlockId[] = [];
+    for (let index = 0; index < arraySize; index++) {
+      const remove = builder.add("data_deleteoflist", { scope, fields: listField(layout.arrayItems) });
+      builder.input(remove, "INDEX", literal("last"));
+      deletes.push(remove);
+    }
+    builder.chain(deletes);
+    builder.substack(branch, "SUBSTACK", deletes[0]!);
+    ids.push(branch);
+  }
+
+  const free = builder.add("data_addtolist", { scope, fields: listField(layout.freeObjects) });
+  builder.input(free, "ITEM", object);
+  ids.push(free);
+  return ids;
+}
