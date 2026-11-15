@@ -18,16 +18,19 @@ import type { Target } from "@typescratch/language";
 import { validateGraph, type ProjectGraph, type RoleDecl } from "@typescratch/graph";
 import { lowerNative } from "@typescratch/backend-native";
 import { buildProjectJson, exportSb3 } from "@typescratch/exporter-sb3";
-import { planBackends, type BackendPlan, type PlanEntry } from "@typescratch/backend-planner";
+import { collectAbiUsage, planBackends, type BackendPlan, type PlanEntry } from "@typescratch/backend-planner";
 import { generateExtension, type ExtensionBundle } from "@typescratch/backend-turbowarp";
 import { assembleOutputs, type OutputFile } from "@typescratch/exporter-turbowarp";
 import { loadWorkspace } from "@typescratch/workspace";
 import {
+  ABI_LOWERING,
   allowedProfiles,
   isProfileAllowed,
+  requiredContracts,
   selectProfile,
   type AbiContract,
   type AbiProfileSelection,
+  type AbiRegionSummary,
 } from "@typescratch/runtime-abi";
 
 export type { PlanEntry } from "@typescratch/backend-planner";
@@ -70,12 +73,14 @@ export interface BuildReport {
     required: AbiContract[];
     unsupported: AbiContract[];
   };
+  abiRegions: AbiRegionSummary;
   diagnostics: Diagnostic[];
   plan: PlanEntry[];
   compatibility: {
     officialScratch: boolean;
     turboWarp: boolean;
     customExtensions: number;
+    requiredContracts: AbiContract[];
     notes: string[];
   };
   numericProfile: NumericProfileReport;
@@ -115,12 +120,14 @@ function failure(
     ok: false,
     abiProfile,
     abiContracts: { required: [], unsupported: [] },
+    abiRegions: { operations: 0, regions: 0, boundaryCalls: 0, cost: 0 },
     diagnostics: bag.items,
     plan: entries,
     compatibility: {
       officialScratch: false,
       turboWarp: false,
       customExtensions: 0,
+      requiredContracts: [],
       notes: [],
     },
     numericProfile: NUMERIC_PROFILE,
@@ -181,7 +188,6 @@ export function compile(options: CompileOptions): CompileResult {
   }
 
   const entryLabel = options.entry ?? workspaceName;
-  const abiProfile = selectProfile(requestedProfile, target);
   if (!isProfileAllowed(requestedProfile, target)) {
     bag.error(
       CODES.COMPAT,
@@ -192,7 +198,7 @@ export function compile(options: CompileOptions): CompileResult {
         "--abi-profile and --target are orthogonal, but only supported combinations are accepted.",
       ],
     );
-  } else if (requestedProfile === "extension" && abiProfile.lowering !== "extension") {
+  } else if (requestedProfile === "extension" && ABI_LOWERING !== "extension") {
     bag.error(
       CODES.COMPAT,
       "--abi-profile extension is not implemented; only the native runtime emits ABI lowering",
@@ -216,6 +222,9 @@ export function compile(options: CompileOptions): CompileResult {
     ...optimized.stats,
     controlFlowRewrites: lowered.stats.rewrites,
   };
+
+  const requiredAbiContracts = requiredContracts(collectAbiUsage(activeModules));
+  const abiProfile = selectProfile(requestedProfile, target, requiredAbiContracts);
 
   const plan = activeModules.length > 0
     ? planBackends(activeModules, target, bag, {
@@ -254,6 +263,7 @@ export function compile(options: CompileOptions): CompileResult {
     notes.push("TurboWarp Packager always runs extensions without the sandbox.");
     notes.push("Sandboxed extension calls cost at least one VM frame each.");
   }
+  notes.push(`ABI profile: ${abiProfile.reason}.`);
 
   const reportSummary = {
     target,
@@ -264,12 +274,14 @@ export function compile(options: CompileOptions): CompileResult {
       required: plan.abiContracts,
       unsupported: plan.unsupported,
     },
+    abiRegions: plan.abiRegions,
     diagnostics: bag.items,
     plan: plan.entries,
     compatibility: {
       officialScratch: bundle === undefined,
       turboWarp: true,
       customExtensions: plan.regions.length,
+      requiredContracts: plan.abiContracts,
       notes,
     },
     numericProfile: NUMERIC_PROFILE,
@@ -306,6 +318,8 @@ export function formatReport(report: BuildReport, explain = false): string {
     `  target: ${report.target}`,
     `  abi profile: ${report.abiProfile.requested} (resolved: ${report.abiProfile.resolved}, lowering: ${report.abiProfile.lowering})`,
     `  abi contracts: ${report.abiContracts.required.join(", ") || "none (static lowering only)"}`,
+    `  abi regions: ${report.abiRegions.operations} ops -> ${report.abiRegions.regions} region(s), cost ${report.abiRegions.cost}`,
+    `  abi choice: ${report.abiProfile.reason}`,
     `  blocks: ${report.blockCount}`,
     `  boundary calls: ${report.boundaryCalls}`,
     `  official Scratch compatible: ${report.compatibility.officialScratch ? "yes" : "no"}`,

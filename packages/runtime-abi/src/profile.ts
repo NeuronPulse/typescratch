@@ -1,3 +1,6 @@
+import { chooseProfile } from "./capability.ts";
+import type { AbiContract } from "./capability.ts";
+
 export type AbiProfile = "native" | "extension" | "auto";
 export type AbiLowering = "native" | "extension";
 
@@ -8,8 +11,9 @@ export const ABI_LOWERING: AbiLowering = "native";
 
 export interface AbiProfileSelection {
   requested: AbiProfile;
-  resolved: "native" | "extension";
+  resolved: AbiLowering;
   lowering: AbiLowering;
+  reason: string;
 }
 
 export function isAbiProfile(value: string): value is AbiProfile {
@@ -34,11 +38,17 @@ export function isProfileImplemented(requested: string): boolean {
   return requested !== "extension" || ABI_LOWERING === "extension";
 }
 
-export function selectProfile(requested: string, target: "scratch" | "turbowarp"): AbiProfileSelection {
+export function selectProfile(
+  requested: string,
+  target: "scratch" | "turbowarp",
+  required: readonly AbiContract[] = [],
+): AbiProfileSelection {
   const profile: AbiProfile = isAbiProfile(requested) ? requested : "auto";
+  const choice = chooseProfile(profile, target, required);
   return {
     requested: profile,
-    resolved: resolveProfile(profile, target),
+    resolved: choice.profile,
     lowering: ABI_LOWERING,
+    reason: choice.reason,
   };
 }

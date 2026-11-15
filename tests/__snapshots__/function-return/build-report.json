@@ -5,7 +5,8 @@
   "abiProfile": {
     "requested": "auto",
     "resolved": "native",
-    "lowering": "native"
+    "lowering": "native",
+    "reason": "auto: cheapest capable profile for [value, call, frame]"
   },
   "abiContracts": {
     "required": [
@@ -14,6 +15,12 @@
       "frame"
     ],
     "unsupported": []
+  },
+  "abiRegions": {
+    "operations": 6,
+    "regions": 2,
+    "boundaryCalls": 2,
+    "cost": 11
   },
   "diagnostics": [],
   "plan": [
@@ -51,7 +58,14 @@
     "officialScratch": true,
     "turboWarp": true,
     "customExtensions": 0,
-    "notes": []
+    "requiredContracts": [
+      "value",
+      "call",
+      "frame"
+    ],
+    "notes": [
+      "ABI profile: auto: cheapest capable profile for [value, call, frame]."
+    ]
   },
   "numericProfile": {
     "model": "scratch",

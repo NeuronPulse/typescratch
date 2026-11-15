@@ -1,14 +1,20 @@
 import { CODES, type DiagnosticBag, type SourceSpan } from "@typescratch/diagnostics";
-import { allCommands, allExprs, type Module, type Stmt } from "@typescratch/ir";
+import { allCommands, allExprs, type Expr, type Module, type Stmt } from "@typescratch/ir";
 import { getIntrinsic, type Target } from "@typescratch/language";
 import {
+  ABI_OPERATION_COSTS,
   EXTENSION_OPS,
   NO_ABI_USAGE,
   extensionIdFor,
   fullOpcode,
+  mergeAbiRegions,
+  regionSummary,
   requiredContracts,
   unsupportedContracts,
   type AbiContract,
+  type AbiOperation,
+  type AbiOperationKind,
+  type AbiRegionSummary,
   type AbiUsage,
   type ExtensionOpcodeSpec,
 } from "@typescratch/runtime-abi";
@@ -45,6 +51,7 @@ export interface BackendPlan {
   abiUsage: AbiUsage;
   abiContracts: AbiContract[];
   unsupported: AbiContract[];
+  abiRegions: AbiRegionSummary;
 }
 
 export interface PlannerOptions {
@@ -137,6 +144,135 @@ export function collectAbiUsage(modules: readonly Module[]): AbiUsage {
   return usage;
 }
 
+/** §3: every ABI operation in source order, so consecutive ones can share a region. */
+export function collectAbiOperations(modules: readonly Module[]): AbiOperation[] {
+  const operations: AbiOperation[] = [];
+  let sequence = 0;
+  const push = (kind: AbiOperationKind, scope: string): void => {
+    const spec = ABI_OPERATION_COSTS[kind];
+    operations.push({ kind, contract: spec.contract, cost: spec.cost, sequence: sequence++, scope });
+  };
+  const visitExpr = (expr: Expr, scope: string): void => {
+    switch (expr.k) {
+      case "objectNew":
+      case "arrayNew":
+        push("heap.allocate", scope);
+        break;
+      case "fieldRead":
+        visitExpr(expr.object, scope);
+        push("heap.field.read", scope);
+        break;
+      case "arrayLength":
+        visitExpr(expr.array, scope);
+        push("heap.array.read", scope);
+        break;
+      case "arrayRead":
+        visitExpr(expr.array, scope);
+        visitExpr(expr.index, scope);
+        push("heap.array.read", scope);
+        break;
+      case "binary":
+        visitExpr(expr.l, scope);
+        visitExpr(expr.r, scope);
+        break;
+      case "unary":
+      case "convert":
+        visitExpr(expr.value, scope);
+        break;
+      case "join":
+        for (const part of expr.parts) visitExpr(part, scope);
+        break;
+      case "intrinsic":
+      case "call":
+      case "methodCall":
+        for (const argument of expr.args) visitExpr(argument, scope);
+        break;
+      case "listRead":
+        if (expr.index) visitExpr(expr.index, scope);
+        break;
+      default:
+        break;
+    }
+  };
+  const visitStatements = (stmts: Stmt[], scope: string): void => {
+    for (const stmt of stmts) {
+      switch (stmt.k) {
+        case "invoke":
+          for (const argument of stmt.args) visitExpr(argument, scope);
+          push("frame.allocate", scope);
+          push("value.tag", scope);
+          push("call", scope);
+          push("value.untag", scope);
+          break;
+        case "virtualInvoke":
+          visitExpr(stmt.object, scope);
+          for (const argument of stmt.args) visitExpr(argument, scope);
+          push("frame.allocate", scope);
+          push("dispatch", scope);
+          push("value.untag", scope);
+          break;
+        case "frameReturn":
+          visitExpr(stmt.value, scope);
+          push("value.tag", scope);
+          push("frame.return", scope);
+          break;
+        case "heapAllocate":
+        case "heapArrayAllocate":
+          push("heap.allocate", scope);
+          break;
+        case "heapFree":
+          visitExpr(stmt.object, scope);
+          push("heap.free", scope);
+          break;
+        case "fieldWrite":
+          visitExpr(stmt.object, scope);
+          visitExpr(stmt.value, scope);
+          push("heap.field.write", scope);
+          break;
+        case "arrayWrite":
+          visitExpr(stmt.array, scope);
+          visitExpr(stmt.index, scope);
+          visitExpr(stmt.value, scope);
+          push("heap.array.write", scope);
+          break;
+        case "declare":
+          if (stmt.init) visitExpr(stmt.init, scope);
+          break;
+        case "assign":
+          visitExpr(stmt.value, scope);
+          break;
+        case "expr":
+        case "list":
+          for (const argument of stmt.args) visitExpr(argument, scope);
+          break;
+        case "return":
+          if (stmt.value) visitExpr(stmt.value, scope);
+          break;
+        case "if":
+          visitExpr(stmt.cond, scope);
+          visitStatements(stmt.then, scope);
+          if (stmt.else) visitStatements(stmt.else, scope);
+          break;
+        case "while":
+          visitExpr(stmt.cond, scope);
+          visitStatements(stmt.body, scope);
+          break;
+        case "sequence":
+          visitStatements(stmt.body, scope);
+          break;
+        default:
+          break;
+      }
+    }
+  };
+  for (const module of modules) {
+    const role = module.role?.name ?? "Sprite1";
+    module.scripts.forEach((script, index) => visitStatements(script.body, `${role}:${index}`));
+    for (const fn of module.functions ?? []) visitStatements(fn.body, `fn:${fn.id}`);
+  }
+  return operations;
+}
+
 export function planBackends(
   modules: Module | Module[],
   target: Target,
@@ -146,6 +282,7 @@ export function planBackends(
   const list = Array.isArray(modules) ? modules : [modules];
   const abiUsage = collectAbiUsage(list);
   const abiContracts = requiredContracts(abiUsage);
+  const abiRegions = regionSummary(mergeAbiRegions(collectAbiOperations(list)));
   const lowering = options.lowering ?? options.abiProfile ?? "native";
   const unsupported = unsupportedContracts(lowering, abiUsage);
   for (const contract of unsupported) {
@@ -349,5 +486,6 @@ export function planBackends(
     abiUsage,
     abiContracts,
     unsupported,
+    abiRegions,
   };
 }

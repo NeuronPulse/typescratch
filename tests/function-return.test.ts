@@ -79,13 +79,13 @@ test("the build report records the configured ABI profile for each call", () => 
   assert.equal(nativeCalls[0]!.abiProfile, "native");
   assert.equal(nativeCalls[0]!.strategy, "native");
 
-  const extension = compile({
+  const turbowarp = compile({
     entry: example("function-return"), projectRoot: ROOT, target: "turbowarp",
   });
-  assert.equal(extension.ok, true, JSON.stringify(extension.report.diagnostics));
-  const extensionCalls = extension.report.plan.filter((entry) => entry.operation.startsWith("call:"));
-  assert.equal(extensionCalls[0]!.abiProfile, "extension");
-  assert.equal(extensionCalls[0]!.strategy, "native");
+  assert.equal(turbowarp.ok, true, JSON.stringify(turbowarp.report.diagnostics));
+  const turbowarpCalls = turbowarp.report.plan.filter((entry) => entry.operation.startsWith("call:"));
+  assert.equal(turbowarpCalls[0]!.abiProfile, "native");
+  assert.equal(turbowarpCalls[0]!.strategy, "native");
 });
 
 test("recursion keeps each invocation's return state in its own frame", async () => {

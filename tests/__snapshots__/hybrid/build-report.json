@@ -4,14 +4,21 @@
   "ok": true,
   "abiProfile": {
     "requested": "auto",
-    "resolved": "extension",
-    "lowering": "native"
+    "resolved": "native",
+    "lowering": "native",
+    "reason": "auto: cheapest capable profile for [execution]"
   },
   "abiContracts": {
     "required": [
       "execution"
     ],
     "unsupported": []
+  },
+  "abiRegions": {
+    "operations": 0,
+    "regions": 0,
+    "boundaryCalls": 0,
+    "cost": 0
   },
   "diagnostics": [
     {
@@ -98,11 +105,15 @@
     "officialScratch": false,
     "turboWarp": true,
     "customExtensions": 2,
+    "requiredContracts": [
+      "execution"
+    ],
     "notes": [
       "Extension JS is embedded in project.json.extensionURLs as a data: URL; TurboWarp loads it automatically.",
       "Custom extension projects cannot be uploaded to the official Scratch website.",
       "TurboWarp Packager always runs extensions without the sandbox.",
-      "Sandboxed extension calls cost at least one VM frame each."
+      "Sandboxed extension calls cost at least one VM frame each.",
+      "ABI profile: auto: cheapest capable profile for [execution]."
     ]
   },
   "numericProfile": {

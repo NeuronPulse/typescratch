@@ -1,4 +1,4 @@
-import type { AbiLowering } from "./profile.ts";
+import type { AbiLowering, AbiProfile } from "./profile.ts";
 
 /**
  * §2 of RUNTIME_ABI: a target implements a subset of the six contracts, never a
@@ -39,6 +39,48 @@ export function requiredContracts(usage: AbiUsage): AbiContract[] {
 export function unsupportedContracts(profile: AbiLowering, usage: AbiUsage): AbiContract[] {
   const supported = new Set(capabilitiesFor(profile));
   return requiredContracts(usage).filter((contract) => !supported.has(contract));
+}
+
+/** Relative cost of a boundary crossing. Extension JS is cheaper per operation. */
+const PROFILE_COST: Readonly<Record<AbiLowering, number>> = { extension: 1, native: 8 };
+
+export interface ProfileChoice {
+  readonly profile: AbiLowering;
+  readonly reason: string;
+}
+
+/**
+ * §3 decision order: static lowering first, then honour `--abi-profile`; `auto`
+ * prefers the cheapest profile that implements every required contract. The
+ * planner never silently selects a strategy with different semantics.
+ */
+export function chooseProfile(
+  requested: AbiProfile,
+  target: "scratch" | "turbowarp",
+  required: readonly AbiContract[] = [],
+): ProfileChoice {
+  if (requested !== "auto") {
+    const profile: AbiLowering = requested === "native" ? "native" : "extension";
+    return { profile, reason: `explicit --abi-profile ${requested}` };
+  }
+  const permitted: readonly AbiLowering[] = target === "scratch"
+    ? ["native"]
+    : ["extension", "native"];
+  const capable = permitted
+    .filter((profile) => {
+      const supported = capabilitiesFor(profile);
+      // A profile that implements no contract at all is not a capable runtime,
+      // even when this particular project happens to need no ABI operation.
+      return supported.length > 0
+        && required.every((contract) => supported.includes(contract));
+    })
+    .sort((left, right) => PROFILE_COST[left] - PROFILE_COST[right]);
+  const chosen = capable[0];
+  const label = required.length > 0 ? required.join(", ") : "no ABI contracts";
+  if (!chosen) {
+    return { profile: "native", reason: `auto: no capable profile for [${label}], falling back to native` };
+  }
+  return { profile: chosen, reason: `auto: cheapest capable profile for [${label}]` };
 }
 
 export function mergeUsage(left: AbiUsage, right: AbiUsage): AbiUsage {
