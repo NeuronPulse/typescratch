@@ -84,6 +84,16 @@ test("same-named methods get distinct proccodes and dispatch by classId", async 
   }
 });
 
+test("a bare method call keeps its side effect", () => {
+  const result = build("showcase");
+  assert.equal(result.ok, true, JSON.stringify(result.report.diagnostics));
+  const trace = interpretModules(result.modules);
+  assert.deepEqual(trace.says, ["C=7 F=120 A=7,6,3"]);
+  const recorded = Object.values(trace.lists).flat();
+  assert.ok(recorded.includes("counter=7"), JSON.stringify(recorded));
+  assert.ok(recorded.includes("factorial=120"));
+});
+
 test("the plan records one dispatch operation per call site", () => {
   const result = build("memory-classes");
   const dispatches = result.report.plan.filter((entry) => entry.operation.startsWith("dispatch:"));

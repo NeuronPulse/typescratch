@@ -49,6 +49,7 @@ const cases: ConformanceCase[] = [
     label: "default-workspace",
     configPath: "packages/workspace/template/tscr.config.json",
   },
+  { label: "showcase", entry: example("showcase"), unorderedSays: true, ignoreCompilerState: true },
   { label: "edge-hat", entry: example("edge-hat") },
   { label: "memory-object", entry: example("memory-object"), ignoreCompilerState: true },
   { label: "memory-classes", entry: example("memory-classes"), ignoreCompilerState: true },

@@ -1055,7 +1055,12 @@ class Lowerer {
         }
       }
     }
-    this.lowerExpr(expression);
+    const value = this.lowerExpr(expression);
+    if (value.k === "call" || value.k === "methodCall" || value.k === "objectNew" || value.k === "arrayNew") {
+      const type: IrType = value.type === "number" || value.type === "string" ? value.type : "number";
+      const temp = this.newVar(`discard${this.counter + 1}`, type, "temp", this.span(expression));
+      this.emit({ k: "declare", var: temp.id, init: value, span: this.span(expression) });
+    }
   }
 
   private lowerStatement(node: ts.Statement): void {
