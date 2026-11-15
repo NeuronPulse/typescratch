@@ -26,6 +26,7 @@ import {
   allowedProfiles,
   isProfileAllowed,
   selectProfile,
+  type AbiContract,
   type AbiProfileSelection,
 } from "@typescratch/runtime-abi";
 
@@ -65,6 +66,10 @@ export interface BuildReport {
   entry: string;
   ok: boolean;
   abiProfile: AbiProfileSelection;
+  abiContracts: {
+    required: AbiContract[];
+    unsupported: AbiContract[];
+  };
   diagnostics: Diagnostic[];
   plan: PlanEntry[];
   compatibility: {
@@ -109,6 +114,7 @@ function failure(
     entry,
     ok: false,
     abiProfile,
+    abiContracts: { required: [], unsupported: [] },
     diagnostics: bag.items,
     plan: entries,
     compatibility: {
@@ -216,6 +222,7 @@ export function compile(options: CompileOptions): CompileResult {
       maxBoundaryCalls: options.maxBoundaryCalls,
       seed: entryLabel,
       abiProfile: abiProfile.resolved,
+      lowering: abiProfile.lowering,
     })
     : undefined;
   if (bag.hasErrors || !plan || activeModules.length === 0) {
@@ -253,6 +260,10 @@ export function compile(options: CompileOptions): CompileResult {
     entry: entryLabel,
     ok: true,
     abiProfile,
+    abiContracts: {
+      required: plan.abiContracts,
+      unsupported: plan.unsupported,
+    },
     diagnostics: bag.items,
     plan: plan.entries,
     compatibility: {
@@ -294,6 +305,7 @@ export function formatReport(report: BuildReport, explain = false): string {
     `  entry: ${report.entry}`,
     `  target: ${report.target}`,
     `  abi profile: ${report.abiProfile.requested} (resolved: ${report.abiProfile.resolved}, lowering: ${report.abiProfile.lowering})`,
+    `  abi contracts: ${report.abiContracts.required.join(", ") || "none (static lowering only)"}`,
     `  blocks: ${report.blockCount}`,
     `  boundary calls: ${report.boundaryCalls}`,
     `  official Scratch compatible: ${report.compatibility.officialScratch ? "yes" : "no"}`,

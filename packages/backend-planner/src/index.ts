@@ -3,8 +3,13 @@ import { allCommands, allExprs, type Module, type Stmt } from "@typescratch/ir";
 import { getIntrinsic, type Target } from "@typescratch/language";
 import {
   EXTENSION_OPS,
+  NO_ABI_USAGE,
   extensionIdFor,
   fullOpcode,
+  requiredContracts,
+  unsupportedContracts,
+  type AbiContract,
+  type AbiUsage,
   type ExtensionOpcodeSpec,
 } from "@typescratch/runtime-abi";
 
@@ -17,6 +22,7 @@ export interface PlanEntry {
   cost: number;
   strategy?: "static" | "native" | "extension";
   abiProfile?: "native" | "extension";
+  contract?: AbiContract;
 }
 
 export interface ExtensionRegion {
@@ -36,12 +42,18 @@ export interface BackendPlan {
   extensionInputs: Map<string, string[]>;
   boundaryCalls: number;
   nativeOps: number;
+  abiUsage: AbiUsage;
+  abiContracts: AbiContract[];
+  unsupported: AbiContract[];
 }
 
 export interface PlannerOptions {
   maxBoundaryCalls?: number;
   seed?: string;
+  /** Configured profile, recorded in PlanEntry. May differ from the actual lowering. */
   abiProfile?: "native" | "extension";
+  /** The runtime that actually emits the ABI; capability checks use this, not the declaration. */
+  lowering?: "native" | "extension";
 }
 
 export interface BackendCapability {
@@ -60,6 +72,71 @@ export function capabilityFor(intrinsic: string): BackendCapability {
   };
 }
 
+/** §2: which of the six contracts a program actually needs, derived from lowered IR. */
+export function collectAbiUsage(modules: readonly Module[]): AbiUsage {
+  const usage: AbiUsage = { ...NO_ABI_USAGE };
+  const visitStatements = (stmts: Stmt[]): void => {
+    for (const stmt of stmts) {
+      switch (stmt.k) {
+        case "invoke":
+        case "frameReturn":
+          usage.value = usage.call = usage.frame = true;
+          break;
+        case "virtualInvoke":
+          usage.value = usage.call = usage.frame = usage.dispatch = true;
+          break;
+        case "heapAllocate":
+        case "heapArrayAllocate":
+        case "heapFree":
+        case "fieldWrite":
+        case "arrayWrite":
+          usage.memory = true;
+          break;
+        case "if":
+          visitStatements(stmt.then);
+          if (stmt.else) visitStatements(stmt.else);
+          break;
+        case "while":
+        case "sequence":
+          visitStatements(stmt.body);
+          break;
+        default:
+          break;
+      }
+    }
+  };
+  for (const module of modules) {
+    for (const script of module.scripts) visitStatements(script.body);
+    for (const fn of module.functions ?? []) visitStatements(fn.body);
+    for (const expr of allExprs(module)) {
+      switch (expr.k) {
+        case "call":
+          usage.value = usage.call = usage.frame = true;
+          break;
+        case "methodCall":
+          usage.value = usage.call = usage.frame = usage.dispatch = true;
+          break;
+        case "objectNew":
+        case "arrayNew":
+        case "fieldRead":
+        case "arrayRead":
+        case "arrayLength":
+          usage.memory = true;
+          break;
+        case "intrinsic":
+          if (getIntrinsic(expr.name)?.effect === "yields") usage.execution = true;
+          break;
+        default:
+          break;
+      }
+    }
+    for (const command of allCommands(module)) {
+      if (getIntrinsic(command.name)?.effect === "yields") usage.execution = true;
+    }
+  }
+  return usage;
+}
+
 export function planBackends(
   modules: Module | Module[],
   target: Target,
@@ -67,6 +144,18 @@ export function planBackends(
   options: PlannerOptions = {},
 ): BackendPlan {
   const list = Array.isArray(modules) ? modules : [modules];
+  const abiUsage = collectAbiUsage(list);
+  const abiContracts = requiredContracts(abiUsage);
+  const lowering = options.lowering ?? options.abiProfile ?? "native";
+  const unsupported = unsupportedContracts(lowering, abiUsage);
+  for (const contract of unsupported) {
+    bag.error(
+      CODES.ABI,
+      `ABI contract ${contract} is not supported by the ${lowering} profile`,
+      undefined,
+      ["Unsupported contracts must fail at plan time, not at runtime with a wrong answer."],
+    );
+  }
   const entries: PlanEntry[] = [];
   const regions = new Map<string, ExtensionRegion>();
   const extensionIntrinsics: string[] = [];
@@ -84,6 +173,7 @@ export function planBackends(
           cost: 3,
           strategy: "native",
           abiProfile: profile,
+          contract: "frame",
         });
       }
       if (stmt.k === "virtualInvoke") {
@@ -96,6 +186,7 @@ export function planBackends(
           cost: 3 + stmt.targets.length,
           strategy: "native",
           abiProfile: profile,
+          contract: "dispatch",
         });
       }
       if (stmt.k === "if") {
@@ -255,5 +346,8 @@ export function planBackends(
     extensionInputs,
     boundaryCalls,
     nativeOps,
+    abiUsage,
+    abiContracts,
+    unsupported,
   };
 }

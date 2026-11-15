@@ -7,6 +7,16 @@
     "resolved": "native",
     "lowering": "native"
   },
+  "abiContracts": {
+    "required": [
+      "value",
+      "call",
+      "frame",
+      "memory",
+      "dispatch"
+    ],
+    "unsupported": []
+  },
   "diagnostics": [],
   "plan": [
     {
@@ -22,7 +32,8 @@
       },
       "cost": 4,
       "strategy": "native",
-      "abiProfile": "native"
+      "abiProfile": "native",
+      "contract": "dispatch"
     },
     {
       "operation": "dispatch:move",
@@ -37,7 +48,8 @@
       },
       "cost": 4,
       "strategy": "native",
-      "abiProfile": "native"
+      "abiProfile": "native",
+      "contract": "dispatch"
     },
     {
       "operation": "say",

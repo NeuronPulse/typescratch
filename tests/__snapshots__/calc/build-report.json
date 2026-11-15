@@ -7,6 +7,10 @@
     "resolved": "native",
     "lowering": "native"
   },
+  "abiContracts": {
+    "required": [],
+    "unsupported": []
+  },
   "diagnostics": [
     {
       "code": "TSCR2003",

@@ -87,3 +87,5 @@ export * from "./profile.ts";
 export * from "./frame.ts";
 export * from "./memory.ts";
 export * from "./dispatch.ts";
+export * from "./execution.ts";
+export * from "./capability.ts";

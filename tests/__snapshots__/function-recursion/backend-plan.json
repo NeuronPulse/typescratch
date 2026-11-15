@@ -13,7 +13,8 @@
       },
       "cost": 3,
       "strategy": "native",
-      "abiProfile": "native"
+      "abiProfile": "native",
+      "contract": "frame"
     },
     {
       "operation": "call:fn_factorial_1",
@@ -28,7 +29,8 @@
       },
       "cost": 3,
       "strategy": "native",
-      "abiProfile": "native"
+      "abiProfile": "native",
+      "contract": "frame"
     },
     {
       "operation": "say",

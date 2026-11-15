@@ -7,6 +7,12 @@
     "resolved": "extension",
     "lowering": "native"
   },
+  "abiContracts": {
+    "required": [
+      "execution"
+    ],
+    "unsupported": []
+  },
   "diagnostics": [
     {
       "code": "TSCR5001",
