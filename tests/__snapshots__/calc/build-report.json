@@ -2,6 +2,10 @@
   "target": "scratch",
   "entry": "examples/calc/main.ts",
   "ok": true,
+  "abiProfile": {
+    "requested": "auto",
+    "resolved": "native"
+  },
   "diagnostics": [
     {
       "code": "TSCR2003",

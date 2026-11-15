@@ -80,3 +80,8 @@ export function extensionIdFor(entry: string, intrinsicNames: string[]): string 
 export function fullOpcode(extensionId: string, spec: ExtensionOpcodeSpec): string {
   return `${extensionId}_${spec.opcode}`;
 }
+
+export * from "./value.ts";
+export * from "./conformance.ts";
+export * from "./profile.ts";
+export * from "./frame.ts";

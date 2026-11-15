@@ -62,6 +62,19 @@ test("native blocks implement the rewrite without a stop-this-script shortcut", 
   assert.equal(opcodes.includes("control_stop"), false);
 });
 
+test("rewritten control-flow temporaries are checked across yields", () => {
+  const result = compile({
+    entry: example("yield-control-flow"),
+    projectRoot: ROOT,
+    target: "scratch",
+  });
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.report.diagnostics.some((item) => item.code === "TSCR4002"),
+    JSON.stringify(result.report.diagnostics),
+  );
+});
+
 test("break outside a loop is rejected by IR validation", () => {
   const bag = new DiagnosticBag();
   const module: Module = {

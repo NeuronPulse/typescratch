@@ -206,7 +206,14 @@ class Optimizer {
           break;
         case "expr":
         case "list":
+        case "invoke":
           result.push({ ...stmt, args: stmt.args.map((argument) => this.expr(argument)) });
+          break;
+        case "frameReturn":
+          result.push({ ...stmt, value: this.expr(stmt.value) });
+          break;
+        case "return":
+          result.push(stmt.value ? { ...stmt, value: this.expr(stmt.value) } : stmt);
           break;
         case "break":
         case "continue":
@@ -224,6 +231,9 @@ class Optimizer {
         ...script,
         body: this.statements(script.body),
       })),
+      ...(module.functions
+        ? { functions: module.functions.map((fn) => ({ ...fn, body: this.statements(fn.body) })) }
+        : {}),
     };
   }
 }

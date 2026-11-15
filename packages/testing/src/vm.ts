@@ -35,6 +35,7 @@ interface VmThread {
 interface VmVariable {
   name: string;
   value: unknown;
+  type?: string;
 }
 
 interface VmList {
@@ -54,7 +55,9 @@ interface VmRuntime {
   targets: VmTarget[];
   threads: VmThread[];
   startHats(opcode: string, fields?: Record<string, string>, target?: unknown): unknown[];
+  _step(): void;
   stopAll(): void;
+  quit?(): void;
 }
 
 interface VmInstance {
@@ -175,6 +178,31 @@ function normalize(value: unknown): TraceValue {
   return String(value);
 }
 
+function collect(runtime: VmRuntime): { variables: Record<string, TraceValue>; lists: Record<string, TraceValue[]> } {
+  const variables: Record<string, TraceValue> = {};
+  const lists: Record<string, TraceValue[]> = {};
+  for (const target of runtime.targets ?? []) {
+    const name = target.getName?.() ?? target.name ?? "Sprite1";
+    const rawVariables = target.variables;
+    const variableEntries = rawVariables instanceof Map ? [...rawVariables.values()] : Object.values(rawVariables ?? {});
+    for (const variable of variableEntries) {
+      const key = `${name}:${variable.name}`;
+      if (variable.type === "list" || Array.isArray(variable.value)) {
+        const values = Array.isArray(variable.value) ? variable.value : [];
+        lists[key] = values.map(normalize);
+      } else {
+        variables[key] = normalize(variable.value);
+      }
+    }
+    const rawLists = target.lists;
+    const listEntries = rawLists instanceof Map ? [...rawLists.values()] : Object.values(rawLists ?? {});
+    for (const list of listEntries) {
+      lists[`${name}:${list.name}`] = (list.value ?? []).map(normalize);
+    }
+  }
+  return { variables, lists };
+}
+
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -197,7 +225,7 @@ async function waitUntil(predicate: () => boolean, timeoutMs: number, settleMs: 
   }
 }
 
-export async function runSb3(sb3: Uint8Array, options: RunOptions = {}): Promise<ExecutionTrace> {
+function createVm(): { vm: VmInstance; says: string[] } {
   installDom();
   const require = createRequire(import.meta.url);
   const VM = vmConstructor(require("scratch-vm") as unknown);
@@ -207,7 +235,11 @@ export async function runSb3(sb3: Uint8Array, options: RunOptions = {}): Promise
     const text = args[2];
     if (text !== undefined) says.push(String(text));
   });
+  return { vm, says };
+}
 
+export async function runSb3(sb3: Uint8Array, options: RunOptions = {}): Promise<ExecutionTrace> {
+  const { vm, says } = createVm();
   vm.start();
   const timeoutMs = options.timeoutMs ?? 5000;
   await withTimeout(vm.loadProject(Buffer.from(sb3)), timeoutMs, "scratch-vm loadProject");
@@ -221,21 +253,38 @@ export async function runSb3(sb3: Uint8Array, options: RunOptions = {}): Promise
     options.settleMs ?? 80,
   );
 
-  const variables: Record<string, TraceValue> = {};
-  const lists: Record<string, TraceValue[]> = {};
-  for (const target of vm.runtime.targets ?? []) {
-    const name = target.getName?.() ?? target.name ?? "Sprite1";
-    const rawVariables = target.variables;
-    const variableEntries = rawVariables instanceof Map ? [...rawVariables.values()] : Object.values(rawVariables ?? {});
-    for (const variable of variableEntries) {
-      variables[`${name}:${variable.name}`] = normalize(variable.value);
-    }
-    const rawLists = target.lists;
-    const listEntries = rawLists instanceof Map ? [...rawLists.values()] : Object.values(rawLists ?? {});
-    for (const list of listEntries) {
-      lists[`${name}:${list.name}`] = (list.value ?? []).map(normalize);
-    }
-  }
+  const { variables, lists } = collect(vm.runtime);
   vm.runtime.stopAll();
   return { says, commands: [], variables, lists, steps: 0 };
+}
+
+export interface StepSession {
+  readonly says: string[];
+  step(): void;
+  greenFlag(): void;
+  startHat(opcode: string, fields?: Record<string, string>): void;
+  activeThreads(): number;
+  variables(): Record<string, TraceValue>;
+  lists(): Record<string, TraceValue[]>;
+  close(): void;
+}
+
+export async function createStepSession(sb3: Uint8Array): Promise<StepSession> {
+  const { vm, says } = createVm();
+  vm.start();
+  vm.runtime.quit?.();
+  await withTimeout(vm.loadProject(Buffer.from(sb3)), 8000, "scratch-vm loadProject");
+  return {
+    says,
+    step: () => vm.runtime._step(),
+    greenFlag: () => vm.greenFlag(),
+    startHat: (opcode, fields) => { vm.runtime.startHats(opcode, fields); },
+    activeThreads: () => (vm.runtime.threads ?? []).filter((thread) => thread.stack.length > 0).length,
+    variables: () => collect(vm.runtime).variables,
+    lists: () => collect(vm.runtime).lists,
+    close: () => {
+      vm.runtime.stopAll();
+      vm.runtime.quit?.();
+    },
+  };
 }

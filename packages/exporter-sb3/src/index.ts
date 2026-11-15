@@ -20,6 +20,7 @@ function blockJson(block: ScratchBlock): Record<string, unknown> {
   };
   result.x = block.x ?? 0;
   result.y = block.y ?? 0;
+  if (block.mutation) result.mutation = block.mutation;
   return result;
 }
 

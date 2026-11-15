@@ -22,7 +22,7 @@
     "typecheck": "tsc -p tsconfig.json",
     "lint": "oxlint packages/*/src tests examples",
     "verify:vm": "node tests/vm-smoke.ts",
-    "verify": "turbo run //#typecheck //#lint //#test //#snapshots //#verify:vm //#build:packages --output-logs=errors-only"
+    "verify": "turbo run //#typecheck //#lint //#test //#snapshots //#verify:vm //#build:packages --concurrency=1 --output-logs=errors-only"
   },
   "devDependencies": {
     "@types/node": "catalog:",

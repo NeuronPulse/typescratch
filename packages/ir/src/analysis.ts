@@ -26,6 +26,9 @@ function expressionEvents(expr: Expr): YieldEvent[] {
       case "join":
         for (const part of node.parts) visit(part);
         break;
+      case "call":
+        for (const arg of node.args) visit(arg);
+        break;
       case "intrinsic":
         for (const arg of node.args) visit(arg);
         if (getIntrinsic(node.name)?.effect === "yields") {
@@ -55,6 +58,18 @@ function statementEvents(stmts: Stmt[]): YieldEvent[] {
         case "assign":
           events.push(...expressionEvents(stmt.value));
           events.push({ kind: "write", var: stmt.var, span: stmt.span });
+          break;
+        case "invoke":
+          for (const arg of stmt.args) events.push(...expressionEvents(arg));
+          events.push({ kind: "write", var: stmt.callId, span: stmt.span });
+          events.push({ kind: "write", var: stmt.result, span: stmt.span });
+          events.push({ kind: "write", var: stmt.resultTag, span: stmt.span });
+          break;
+        case "frameReturn":
+          events.push(...expressionEvents(stmt.value));
+          break;
+        case "return":
+          if (stmt.value) events.push(...expressionEvents(stmt.value));
           break;
         case "expr":
           for (const arg of stmt.args) events.push(...expressionEvents(arg));

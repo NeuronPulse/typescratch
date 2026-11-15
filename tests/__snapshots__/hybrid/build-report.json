@@ -2,6 +2,10 @@
   "target": "turbowarp",
   "entry": "examples/hybrid/main.ts",
   "ok": true,
+  "abiProfile": {
+    "requested": "auto",
+    "resolved": "extension"
+  },
   "diagnostics": [
     {
       "code": "TSCR5001",

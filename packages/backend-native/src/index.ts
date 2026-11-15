@@ -7,8 +7,15 @@ import {
   type ProjectGraph,
   type RoleDecl,
 } from "@typescratch/graph";
-import type { BinOp, Expr, Hat, ListOp, Module, Stmt, VarDecl } from "@typescratch/ir";
+import type { BinOp, Expr, FunctionDecl, FunctionId, Hat, ListOp, Module, Stmt, VarDecl, VarId } from "@typescratch/ir";
 import { getIntrinsic } from "@typescratch/language";
+import {
+  declareFrameLayout,
+  emitFrameAllocate,
+  emitFrameReturnRead,
+  emitFrameSlotAppend,
+  type FrameLayout,
+} from "./frame-blocks.ts";
 
 const HAT_OPCODES: Record<Hat["kind"], string> = {
   flag: "event_whenflagclicked",
@@ -60,6 +67,14 @@ export interface NativeLoweringResult {
   builder: GraphBuilder;
 }
 
+interface ProcedureInfo {
+  proccode: string;
+  argIds: string[];
+  argNames: string[];
+  defaults: string[];
+  callIdArg: string;
+}
+
 function initialValue(decl: VarDecl): string | number | boolean {
   if (decl.initial !== undefined) return decl.initial;
   if (decl.type === "string") return "";
@@ -81,6 +96,8 @@ function listField(name: string, id: string): Record<string, Field> {
   return { LIST: [name, id] };
 }
 
+export * from "./frame-blocks.ts";
+
 export function lowerNative(
   input: Module | Module[],
   bag: DiagnosticBag,
@@ -89,6 +106,29 @@ export function lowerNative(
   const modules = Array.isArray(input) ? input : [input];
   const builder = new GraphBuilder(options.roles ?? []);
   const variables = new Map(modules.flatMap((module) => module.vars).map((decl) => [decl.id, decl]));
+  const functions = new Map<FunctionId, FunctionDecl>();
+  const procedureInfo = new Map<FunctionId, ProcedureInfo>();
+  const paramNames = new Map<VarId, { name: string; boolean: boolean }>();
+
+  for (const module of modules) {
+    for (const fn of module.functions ?? []) {
+      functions.set(fn.id, fn);
+      const argIds = [...fn.params.map((_, index) => `input${index}`), "inputCallId"];
+      const callIdName = variables.get(fn.callId)?.name ?? "callId";
+      const argNames = [...fn.params.map((param) => param.name), callIdName];
+      procedureInfo.set(fn.id, {
+        proccode: `${fn.name} ${argIds.map(() => "%s").join(" ")}`,
+        argIds,
+        argNames,
+        defaults: argIds.map(() => ""),
+        callIdArg: "inputCallId",
+      });
+      for (const param of fn.params) {
+        paramNames.set(param.id, { name: param.name, boolean: param.type === "boolean" });
+      }
+      paramNames.set(fn.callId, { name: callIdName, boolean: false });
+    }
+  }
 
   for (const module of modules) {
     builder.setActiveTarget(module.role?.name ?? "Sprite1");
@@ -96,9 +136,17 @@ export function lowerNative(
       builder.declareVariable(decl.id, decl.name, initialValue(decl), decl.storage);
     }
     for (const decl of module.lists ?? []) {
-      builder.declareList(decl.id, decl.name, decl.initial ?? []);
+      builder.declareList(
+        decl.id, decl.name, decl.initial ?? [],
+        decl.name.startsWith("abi.frame.") ? "global" : "local",
+      );
     }
   }
+
+  builder.setActiveTarget(modules[0]?.role?.name ?? "Sprite1");
+  const layout: FrameLayout | undefined = functions.size > 0
+    ? declareFrameLayout(builder)
+    : undefined;
 
   const emitValue = (expr: Expr, owner: string, scope: string, fallback?: SourceSpan): InputRef => {
     const span = expr.span ?? fallback;
@@ -116,6 +164,14 @@ export function lowerNative(
         return { primitive };
       }
       case "read": {
+        const param = paramNames.get(expr.var);
+        if (param) {
+          const id = builder.add(
+            param.boolean ? "argument_reporter_boolean" : "argument_reporter_string_number",
+            { scope, parent: owner, span, fields: { VALUE: [param.name, null] } },
+          );
+          return { block: id };
+        }
         return { obscuredPrimitive: [12, builder.variableName(expr.var), expr.var] };
       }
       case "unary": {
@@ -221,6 +277,9 @@ export function lowerNative(
         }
         return { block: id };
       }
+      case "call":
+        bag.error(CODES.NATIVE_LOWERING, `call to ${expr.function} was not lifted by ir-opt`, span);
+        return { primitive: [4, "0"] };
     }
   };
 
@@ -305,6 +364,111 @@ export function lowerNative(
           ids.push(id);
           break;
         }
+        case "invoke": {
+          const info = procedureInfo.get(stmt.function);
+          const callDecl = variables.get(stmt.callId);
+          const resultDecl = variables.get(stmt.result);
+          if (!layout || !info || !callDecl || !resultDecl) {
+            bag.error(CODES.NATIVE_LOWERING, `cannot lower call to ${stmt.function}`, span);
+            break;
+          }
+          const token = { id: callDecl.id, name: callDecl.name };
+          ids.push(...emitFrameAllocate(builder, scope, layout, token));
+          ids.push(...emitFrameSlotAppend(builder, scope, layout, token));
+          const call = builder.add("procedures_call", {
+            scope, span,
+            mutation: {
+              tagName: "mutation",
+              proccode: info.proccode,
+              argumentids: JSON.stringify(info.argIds),
+              children: [],
+            },
+          });
+          for (let index = 0; index < stmt.args.length; index++) {
+            const argument = stmt.args[index];
+            if (!argument) continue;
+            builder.input(call, info.argIds[index]!, emitValue(argument, call, scope, span));
+          }
+          builder.input(call, info.callIdArg, {
+            obscuredPrimitive: [12, callDecl.name, callDecl.id],
+          });
+          ids.push(call);
+          const readBlock = emitFrameReturnRead(builder, scope, layout, token);
+          const set = builder.add("data_setvariableto", {
+            scope, span, fields: { VARIABLE: [resultDecl.name, resultDecl.id] },
+          });
+          builder.input(set, "VALUE", { block: readBlock });
+          ids.push(set);
+
+          const tagList = layout.lists["abi.frame.returnTag"]!;
+          const tagItem = builder.add("data_itemoflist", {
+            scope, fields: listField(tagList.name, tagList.id),
+          });
+          const tagIndex = builder.add("operator_add", { scope, parent: tagItem, span });
+          builder.input(tagIndex, "NUM1", { obscuredPrimitive: [12, callDecl.name, callDecl.id] });
+          builder.input(tagIndex, "NUM2", { primitive: [4, "1"] });
+          builder.input(tagItem, "INDEX", { block: tagIndex });
+          const tagDecl = variables.get(stmt.resultTag);
+          if (tagDecl) {
+            const setTag = builder.add("data_setvariableto", {
+              scope, span, fields: { VARIABLE: [tagDecl.name, tagDecl.id] },
+            });
+            builder.input(setTag, "VALUE", { block: tagItem });
+            ids.push(setTag);
+          }
+          break;
+        }
+        case "frameReturn": {
+          if (!layout) break;
+          const list = layout.lists["abi.frame.returnValue"]!;
+          const replace = builder.add("data_replaceitemoflist", {
+            scope, span, fields: listField(list.name, list.id),
+          });
+          const indexAdd = builder.add("operator_add", { scope, parent: replace, span });
+          builder.input(indexAdd, "NUM1", emitValue(
+            { k: "read", var: stmt.callId, type: "number" }, indexAdd, scope, span,
+          ));
+          builder.input(indexAdd, "NUM2", { primitive: [4, "1"] });
+          builder.input(replace, "INDEX", { block: indexAdd });
+          builder.input(replace, "ITEM", emitValue(stmt.value, replace, scope, span));
+          ids.push(replace);
+
+          const tagList = layout.lists["abi.frame.returnTag"]!;
+          const tagReplace = builder.add("data_replaceitemoflist", {
+            scope, span, fields: listField(tagList.name, tagList.id),
+          });
+          const tagIndex = builder.add("operator_add", { scope, parent: tagReplace, span });
+          builder.input(tagIndex, "NUM1", emitValue(
+            { k: "read", var: stmt.callId, type: "number" }, tagIndex, scope, span,
+          ));
+          builder.input(tagIndex, "NUM2", { primitive: [4, "1"] });
+          builder.input(tagReplace, "INDEX", { block: tagIndex });
+          builder.input(tagReplace, "ITEM", { primitive: [10, stmt.tag] });
+          ids.push(tagReplace);
+
+          const statusList = layout.lists["abi.frame.status"]!;
+          const statusReplace = builder.add("data_replaceitemoflist", {
+            scope, span, fields: listField(statusList.name, statusList.id),
+          });
+          const statusIndex = builder.add("operator_add", { scope, parent: statusReplace, span });
+          builder.input(statusIndex, "NUM1", emitValue(
+            { k: "read", var: stmt.callId, type: "number" }, statusIndex, scope, span,
+          ));
+          builder.input(statusIndex, "NUM2", { primitive: [4, "1"] });
+          builder.input(statusReplace, "INDEX", { block: statusIndex });
+          builder.input(statusReplace, "ITEM", { primitive: [10, "completed"] });
+          const free = builder.add("data_addtolist", {
+            scope, span, fields: listField(layout.freeFrames.name, layout.freeFrames.id),
+          });
+          builder.input(free, "ITEM", emitValue(
+            { k: "read", var: stmt.callId, type: "number" }, free, scope, span,
+          ));
+          ids.push(statusReplace, free);
+          break;
+        }
+        case "return":
+          bag.error(CODES.NATIVE_LOWERING, "return must be rewritten by ir-opt before native emission", span);
+          break;
         case "break":
         case "continue":
           bag.error(
@@ -365,6 +529,28 @@ export function lowerNative(
       const ids = emitStatements(script.body, scope);
       builder.chain([hat, ...ids]);
     });
+    for (const [index, fn] of (module.functions ?? []).entries()) {
+      const info = procedureInfo.get(fn.id)!;
+      const scope = `fn:${fn.id}`;
+      const definition = builder.add("procedures_definition", {
+        scope, topLevel: true, x: 600, y: 40 + index * 320, span: fn.span,
+      });
+      const prototype = builder.add("procedures_prototype", {
+        scope, parent: definition, shadow: true,
+        mutation: {
+          tagName: "mutation",
+          proccode: info.proccode,
+          argumentnames: JSON.stringify(info.argNames),
+          argumentids: JSON.stringify(info.argIds),
+          argumentdefaults: JSON.stringify(info.defaults),
+          warp: "false",
+          children: [],
+        },
+      });
+      builder.input(definition, "custom_block", { shadowBlock: prototype });
+      const bodyIds = emitStatements(fn.body, scope);
+      builder.chain([definition, ...bodyIds]);
+    }
   }
 
   return { graph: builder.project, builder };

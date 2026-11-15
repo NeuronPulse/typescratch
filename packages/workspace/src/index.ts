@@ -6,6 +6,7 @@ import type { Costume, RoleDecl, Sound } from "@typescratch/graph";
 export interface WorkspaceConfig {
   name?: string;
   target?: "scratch" | "turbowarp";
+  abiProfile?: string;
   src?: string;
   assets?: string;
 }

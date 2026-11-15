@@ -2,6 +2,10 @@
   "target": "scratch",
   "entry": "examples/ir-opt/main.ts",
   "ok": true,
+  "abiProfile": {
+    "requested": "auto",
+    "resolved": "native"
+  },
   "diagnostics": [],
   "plan": [
     {

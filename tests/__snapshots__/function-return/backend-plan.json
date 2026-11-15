@@ -1,0 +1,36 @@
+{
+  "entries": [
+    {
+      "operation": "call:fn_double_1",
+      "decision": "native",
+      "detail": "Frame ABI via procedures_*; configured profile: native",
+      "span": {
+        "file": "examples/function-return/main.ts",
+        "start": 142,
+        "end": 152,
+        "line": 8,
+        "column": 15
+      },
+      "cost": 3,
+      "strategy": "native",
+      "abiProfile": "native"
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/function-return/main.ts",
+        "start": 130,
+        "end": 153,
+        "line": 8,
+        "column": 3
+      },
+      "cost": 0
+    }
+  ],
+  "regions": [],
+  "extensionId": null,
+  "boundaryCalls": 0,
+  "nativeOps": 1
+}

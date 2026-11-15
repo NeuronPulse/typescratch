@@ -1,4 +1,6 @@
-import type { Expr, Module, Stmt, VarDecl } from "@typescratch/ir";
+import type {
+  Expr, FunctionDecl, IrType, ListDecl, Module, Stmt, VarDecl,
+} from "@typescratch/ir";
 
 export interface ControlFlowStats {
   rewrites: number;
@@ -8,6 +10,15 @@ export interface ControlFlowResult {
   modules: Module[];
   stats: ControlFlowStats;
 }
+
+export const FRAME_RETURN_LIST_ID = "l_abi_frame_returnValue";
+
+const FRAME_RETURN_LIST: ListDecl = {
+  id: FRAME_RETURN_LIST_ID,
+  name: "abi.frame.returnValue",
+  type: "number",
+  initial: [],
+};
 
 type WhileStmt = Extract<Stmt, { k: "while" }>;
 type IfStmt = Extract<Stmt, { k: "if" }>;
@@ -162,18 +173,192 @@ class Rewriter {
   }
 }
 
+function hasReturn(stmts: Stmt[]): boolean {
+  return stmts.some((stmt) => {
+    if (stmt.k === "return") return true;
+    if (stmt.k === "if") return hasReturn(stmt.then) || (stmt.else ? hasReturn(stmt.else) : false);
+    if (stmt.k === "while" || stmt.k === "sequence") return hasReturn(stmt.body);
+    return false;
+  });
+}
+
+function rewriteReturns(fn: FunctionDecl, body: Stmt[]): Stmt[] {
+  const condition: Expr = {
+    k: "binary",
+    op: "eq",
+    l: { k: "read", var: fn.returning, type: "number" },
+    r: number(0),
+    type: "boolean",
+  };
+  function rewriteStmt(stmt: Stmt): Stmt {
+    if (stmt.k === "return") {
+      const assigns: Stmt[] = [
+        { k: "assign", var: fn.returning, value: number(1), span: stmt.span },
+      ];
+      if (stmt.value) assigns.push({ k: "assign", var: fn.returnValue, value: stmt.value, span: stmt.span });
+      return { k: "sequence", body: assigns, span: stmt.span };
+    }
+    if (stmt.k === "if") {
+      return {
+        ...stmt,
+        then: rewriteStmts(stmt.then),
+        ...(stmt.else ? { else: rewriteStmts(stmt.else) } : {}),
+      };
+    }
+    if (stmt.k === "while") return { ...stmt, body: rewriteStmts(stmt.body) };
+    if (stmt.k === "sequence") return { ...stmt, body: rewriteStmts(stmt.body) };
+    return stmt;
+  }
+  function rewriteStmts(stmts: Stmt[]): Stmt[] {
+    return stmts.map((stmt) => ({ k: "if", cond: condition, then: [rewriteStmt(stmt)], span: stmt.span }));
+  }
+  const guarded = hasReturn(body) ? rewriteStmts(body) : body;
+  return [
+    { k: "assign", var: fn.returning, value: number(0) },
+    { k: "assign", var: fn.returnValue, value: number(0) },
+    ...guarded,
+    {
+      k: "frameReturn",
+      value: { k: "read", var: fn.returnValue, type: fn.returnType },
+      list: FRAME_RETURN_LIST_ID,
+      callId: fn.callId,
+      tag: fn.returnType === "string" ? "s" : fn.returnType === "boolean" ? "b" : fn.returnType === "void" ? "u" : "n",
+    },
+  ];
+}
+
 export function lowerControlFlow(modules: Module[]): ControlFlowResult {
   let rewrites = 0;
   const result = modules.map((module, moduleIndex) => {
     const vars = [...module.vars];
+    const lists = [...module.lists];
+    const functions = module.functions ?? [];
+    let callCounter = 0;
+
+    const makeVars = (
+      scriptIndex: number,
+      type: IrType,
+    ): { callId: VarDecl; result: VarDecl; resultTag: VarDecl } => {
+      const index = ++callCounter;
+      const callId: VarDecl = {
+        id: `vcall_${moduleIndex}_${scriptIndex}_${index}_id`,
+        name: `_tscr_s${scriptIndex}_call${index}_id`,
+        type: "number",
+        storage: "temp",
+        initial: 0,
+        script: scriptIndex,
+      };
+      const resultVar: VarDecl = {
+        id: `vcall_${moduleIndex}_${scriptIndex}_${index}_ret`,
+        name: `_tscr_s${scriptIndex}_call${index}_ret`,
+        type,
+        storage: "temp",
+        initial: 0,
+        script: scriptIndex,
+      };
+      const resultTag: VarDecl = {
+        id: `vcall_${moduleIndex}_${scriptIndex}_${index}_tag`,
+        name: `_tscr_s${scriptIndex}_call${index}_tag`,
+        type: "string",
+        storage: "temp",
+        initial: "",
+        script: scriptIndex,
+      };
+      vars.push(callId, resultVar, resultTag);
+      return { callId, result: resultVar, resultTag };
+    };
+
+    const liftExpr = (expr: Expr, prelude: Stmt[], scriptIndex: number): Expr => {
+      switch (expr.k) {
+        case "call": {
+          const args = expr.args.map((arg) => liftExpr(arg, prelude, scriptIndex));
+          const { callId, result, resultTag } = makeVars(scriptIndex, expr.type);
+          prelude.push({
+            k: "invoke", function: expr.function, args,
+            callId: callId.id, result: result.id, resultTag: resultTag.id, span: expr.span,
+          });
+          return { k: "read", var: result.id, type: expr.type, span: expr.span };
+        }
+        case "binary":
+          return { ...expr, l: liftExpr(expr.l, prelude, scriptIndex), r: liftExpr(expr.r, prelude, scriptIndex) };
+        case "unary":
+        case "convert":
+          return { ...expr, value: liftExpr(expr.value, prelude, scriptIndex) };
+        case "join":
+          return { ...expr, parts: expr.parts.map((part) => liftExpr(part, prelude, scriptIndex)) };
+        case "intrinsic":
+          return { ...expr, args: expr.args.map((arg) => liftExpr(arg, prelude, scriptIndex)) };
+        case "listRead":
+          return expr.index ? { ...expr, index: liftExpr(expr.index, prelude, scriptIndex) } : expr;
+        default:
+          return expr;
+      }
+    };
+
+    const liftStmts = (stmts: Stmt[], scriptIndex: number): Stmt[] => {
+      const out: Stmt[] = [];
+      for (const stmt of stmts) {
+        const prelude: Stmt[] = [];
+        const lift = (expr: Expr): Expr => liftExpr(expr, prelude, scriptIndex);
+        let next: Stmt;
+        switch (stmt.k) {
+          case "declare":
+            next = stmt.init ? { ...stmt, init: lift(stmt.init) } : stmt;
+            break;
+          case "assign":
+            next = { ...stmt, value: lift(stmt.value) };
+            break;
+          case "frameReturn":
+            next = { ...stmt, value: lift(stmt.value) };
+            break;
+          case "expr":
+          case "list":
+          case "invoke":
+            next = { ...stmt, args: stmt.args.map(lift) };
+            break;
+          case "return":
+            next = stmt.value ? { ...stmt, value: lift(stmt.value) } : stmt;
+            break;
+          case "if": {
+            const cond = lift(stmt.cond);
+            const then = liftStmts(stmt.then, scriptIndex);
+            const elseBody = stmt.else ? liftStmts(stmt.else, scriptIndex) : undefined;
+            next = { ...stmt, cond, then, ...(elseBody ? { else: elseBody } : {}) };
+            break;
+          }
+          case "while":
+            next = { ...stmt, cond: lift(stmt.cond), body: liftStmts(stmt.body, scriptIndex) };
+            break;
+          case "sequence":
+            next = { ...stmt, body: liftStmts(stmt.body, scriptIndex) };
+            break;
+          default:
+            next = stmt;
+        }
+        out.push(...prelude, next);
+      }
+      return out;
+    };
+
     const scripts = module.scripts.map((script, scriptIndex) => {
+      const body = liftStmts(script.body, scriptIndex);
       const rewriter = new Rewriter(moduleIndex, scriptIndex);
-      const body = rewriter.rewriteStatements(script.body);
+      const lowered = rewriter.rewriteStatements(body);
       vars.push(...rewriter.vars);
       rewrites += rewriter.rewrites;
-      return { ...script, body };
+      return { ...script, body: lowered };
     });
-    return { ...module, vars, scripts };
+    const loweredFunctions = functions.map((fn) => ({ ...fn, body: rewriteReturns(fn, liftStmts(fn.body, -1)) }));
+    if (loweredFunctions.length > 0 && !lists.some((list) => list.id === FRAME_RETURN_LIST_ID)) {
+      lists.push(FRAME_RETURN_LIST);
+    }
+    return {
+      ...module,
+      vars,
+      lists,
+      scripts,
+      ...(functions.length > 0 ? { functions: loweredFunctions } : {}),
+    };
   });
   return { modules: result, stats: { rewrites } };
 }

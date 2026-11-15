@@ -2,7 +2,7 @@ import { relative, resolve } from "node:path";
 import ts from "typescript";
 import { CODES, type DiagnosticBag, type SourceSpan } from "@typescratch/diagnostics";
 import type {
-  BinOp, Expr, Hat, IrType, ListDecl, ListOp, Module, RoleRef, Script, Stmt, VarDecl,
+  BinOp, Expr, FunctionDecl, Hat, IrType, ListDecl, ListOp, Module, RoleRef, Script, Stmt, VarDecl,
 } from "@typescratch/ir";
 import { MATH_INTRINSICS } from "@typescratch/language";
 
@@ -117,7 +117,13 @@ class Lowerer {
   private readonly vars: VarDecl[] = [];
   private readonly lists: ListDecl[] = [];
   private readonly scripts: Script[] = [];
+  private readonly functions: FunctionDecl[] = [];
+  private readonly functionSymbols = new Map<ts.Symbol, FunctionDecl>();
+  private readonly functionNodes = new Map<ts.FunctionDeclaration, FunctionDecl>();
+  private readonly callEdges = new Map<string, Set<string>>();
   private readonly symbolVars = new Map<ts.Symbol, VarDecl>();
+  private currentFunction: FunctionDecl | undefined;
+  private functionCounter = 0;
   private readonly handleVars = new Map<ts.Symbol, VarDecl>();
   private readonly handleLists = new Map<ts.Symbol, ListDecl>();
   private readonly compileTime = new Map<ts.Symbol, string | number | boolean>();
@@ -141,6 +147,10 @@ class Lowerer {
 
   lower(): Module {
     for (const statement of this.source.statements) {
+      if (ts.isFunctionDeclaration(statement)) this.declareFunction(statement);
+    }
+    for (const statement of this.source.statements) {
+      if (ts.isFunctionDeclaration(statement)) continue;
       if (ts.isImportDeclaration(statement) || ts.isEmptyStatement(statement)) continue;
       if (ts.isVariableStatement(statement)) {
         for (const declaration of statement.declarationList.declarations) {
@@ -151,12 +161,85 @@ class Lowerer {
       if (ts.isExpressionStatement(statement) && this.lowerHatStatement(statement)) continue;
       this.unsupported(statement, "top-level statements may only declare resources or register event hats");
     }
-    return {
+    for (const [node, fn] of this.functionNodes) this.lowerFunction(node, fn);
+    this.checkRecursion();
+    const module: Module = {
       entry: relative(this.root, this.source.fileName),
       scripts: this.scripts,
       vars: this.vars,
       lists: this.lists,
     };
+    if (this.functions.length > 0) module.functions = this.functions;
+    return module;
+  }
+
+  private declareFunction(node: ts.FunctionDeclaration): void {
+    const name = node.name?.text ?? `anonymous${++this.functionCounter}`;
+    const id = `fn_${name}_${++this.functionCounter}`;
+    const returnType = node.type ? this.irTypeOf(this.checker.getTypeFromTypeNode(node.type)) : "number";
+    const span = this.span(node);
+    const callId = this.newVar(`${name}_callId`, "number", "temp", span, 0);
+    const returnValue = this.newVar(`${name}_ret`, returnType, "temp", span, 0);
+    const returning = this.newVar(`${name}_returning`, "number", "temp", span, 0);
+    const params: VarDecl[] = [];
+    for (const parameter of node.parameters) {
+      if (!ts.isIdentifier(parameter.name)) {
+        this.unsupported(parameter, "destructured function parameters are not supported");
+        continue;
+      }
+      const type = this.typeOf(parameter.name);
+      if (type !== "number" && type !== "string" && type !== "boolean") {
+        this.unsupported(parameter, `function parameter ${parameter.name.text} must be number, string or boolean in v0.1`);
+        continue;
+      }
+      const decl = this.newVar(parameter.name.text, type, "temp", this.span(parameter), 0);
+      decl.parameter = true;
+      const symbol = this.checker.getSymbolAtLocation(parameter.name);
+      if (symbol) this.symbolVars.set(symbol, decl);
+      params.push(decl);
+    }
+    const fn: FunctionDecl = {
+      id, name, params, returnType, body: [],
+      callId: callId.id, returnValue: returnValue.id, returning: returning.id, span,
+    };
+    this.functions.push(fn);
+    this.functionNodes.set(node, fn);
+    this.callEdges.set(id, new Set());
+    const symbol = node.name ? this.checker.getSymbolAtLocation(node.name) : undefined;
+    if (symbol) this.functionSymbols.set(symbol, fn);
+  }
+
+  private lowerFunction(node: ts.FunctionDeclaration, fn: FunctionDecl): void {
+    this.currentFunction = fn;
+    this.scriptIndex = -1;
+    fn.body = this.withBlock(() => {
+      if (node.body) this.lowerStatement(node.body);
+    });
+    this.currentFunction = undefined;
+    this.scriptIndex = -1;
+  }
+
+  private checkRecursion(): void {
+    let reported = false;
+    const visiting = new Set<string>();
+    const visited = new Set<string>();
+    const walk = (id: string, path: string[]): void => {
+      if (reported) return;
+      if (visiting.has(id)) {
+        reported = true;
+        const cycle = [...path.slice(path.indexOf(id)), id].join(" -> ");
+        this.bag.error(CODES.RECURSION, `recursion is not supported in v0.1: ${cycle}`, undefined, [
+          "This is a semantic restriction, not an ABI limitation; it can be lifted without redesigning frames.",
+        ]);
+        return;
+      }
+      if (visited.has(id)) return;
+      visiting.add(id);
+      for (const target of this.callEdges.get(id) ?? []) walk(target, [...path, id]);
+      visiting.delete(id);
+      visited.add(id);
+    };
+    for (const fn of this.functions) walk(fn.id, []);
   }
 
   private lowerHatStatement(statement: ts.ExpressionStatement): boolean {
@@ -595,6 +678,20 @@ class Lowerer {
       };
     }
     if (ts.isCallExpression(node)) {
+      const symbol = this.checker.getSymbolAtLocation(node.expression);
+      const fn = symbol ? this.functionSymbols.get(symbol) : undefined;
+      if (fn) {
+        if (this.currentFunction) this.callEdges.get(this.currentFunction.id)?.add(fn.id);
+        if (node.arguments.length !== fn.params.length) {
+          this.unsupported(node, `${fn.name}() expects ${fn.params.length} argument(s)`);
+          return this.voidConst(node);
+        }
+        return {
+          k: "call", function: fn.id,
+          args: node.arguments.map((argument) => this.lowerExpr(argument)),
+          type: fn.returnType, span: this.span(node),
+        };
+      }
       const runtimeName = this.runtimeNameOf(node);
       if (runtimeName) {
         const list = this.listOf(node);
@@ -779,6 +876,19 @@ class Lowerer {
       this.forLoopDepth -= 1;
       this.loopDepth -= 1;
       this.emit({ k: "while", cond, body, span: this.span(node) });
+      return;
+    }
+    if (ts.isReturnStatement(node)) {
+      if (!this.currentFunction) {
+        this.unsupported(node, "return is only valid inside a function");
+        return;
+      }
+      const value = node.expression ? this.lowerExpr(node.expression) : undefined;
+      this.emit({ k: "return", value, span: this.span(node) });
+      return;
+    }
+    if (ts.isFunctionDeclaration(node)) {
+      this.unsupported(node, "nested function declarations are not supported in v0.1");
       return;
     }
     if (ts.isEmptyStatement(node)) return;

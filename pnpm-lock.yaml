@@ -337,6 +337,9 @@ importers:
       '@typescratch/language':
         specifier: workspace:*
         version: link:../language
+      '@typescratch/runtime-abi':
+        specifier: workspace:*
+        version: link:../runtime-abi
       '@typescratch/workspace':
         specifier: workspace:*
         version: link:../workspace

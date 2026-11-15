@@ -7,6 +7,7 @@ export * from "./vm.ts";
 
 export interface CompareOptions {
   ignoreExtraVariables?: boolean;
+  ignoreCompilerState?: boolean;
   tolerance?: number;
   unorderedSays?: boolean;
 }
@@ -32,6 +33,8 @@ export function compareTraces(
 ): string[] {
   const diffs: string[] = [];
   const tolerance = options.tolerance ?? 1e-9;
+  const hidden = (key: string): boolean => options.ignoreCompilerState === true
+    && (key.includes(":abi.") || key.includes(":_tscr_"));
   const wantSays = options.unorderedSays ? [...expected.says].sort() : expected.says;
   const gotSays = options.unorderedSays ? [...actual.says].sort() : actual.says;
   const count = Math.max(wantSays.length, gotSays.length);
@@ -48,6 +51,7 @@ export function compareTraces(
     ...(options.ignoreExtraVariables ? [] : Object.keys(actual.variables)),
   ]);
   for (const key of [...keys].sort()) {
+    if (hidden(key)) continue;
     const want = expected.variables[key];
     const got = actual.variables[key];
     if (!valuesEqual(want, got, tolerance)) {
@@ -59,6 +63,7 @@ export function compareTraces(
     ...(options.ignoreExtraVariables ? [] : Object.keys(actual.lists ?? {})),
   ]);
   for (const key of [...listKeys].sort()) {
+    if (hidden(key)) continue;
     const want = expected.lists?.[key] ?? [];
     const got = actual.lists?.[key] ?? [];
     const size = Math.max(want.length, got.length);

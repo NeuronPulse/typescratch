@@ -22,6 +22,12 @@ import { planBackends, type BackendPlan, type PlanEntry } from "@typescratch/bac
 import { generateExtension, type ExtensionBundle } from "@typescratch/backend-turbowarp";
 import { assembleOutputs, type OutputFile } from "@typescratch/exporter-turbowarp";
 import { loadWorkspace } from "@typescratch/workspace";
+import {
+  allowedProfiles,
+  isProfileAllowed,
+  selectProfile,
+  type AbiProfileSelection,
+} from "@typescratch/runtime-abi";
 
 export type { PlanEntry } from "@typescratch/backend-planner";
 export type { OptimizationStats } from "@typescratch/ir-opt";
@@ -51,12 +57,14 @@ export interface CompileOptions {
   outputName?: string;
   maxBoundaryCalls?: number;
   optimize?: boolean;
+  abiProfile?: string;
 }
 
 export interface BuildReport {
   target: Target;
   entry: string;
   ok: boolean;
+  abiProfile: AbiProfileSelection;
   diagnostics: Diagnostic[];
   plan: PlanEntry[];
   compatibility: {
@@ -91,6 +99,7 @@ function failure(
   target: Target,
   entry: string,
   bag: DiagnosticBag,
+  abiProfile: AbiProfileSelection,
   entries: PlanEntry[],
   modules: Module[] = [],
   graph?: ProjectGraph,
@@ -99,6 +108,7 @@ function failure(
     target,
     entry,
     ok: false,
+    abiProfile,
     diagnostics: bag.items,
     plan: entries,
     compatibility: {
@@ -123,6 +133,7 @@ export function compile(options: CompileOptions): CompileResult {
   const runtimeDts = options.runtimeDts
     ?? fileURLToPath(new URL("../../language/runtime.d.ts", import.meta.url));
   const outputName = options.outputName ?? "project.sb3";
+  let requestedProfile = options.abiProfile ?? "auto";
   const modules: Module[] = [];
   let roles: RoleDecl[] = [];
   let target: Target = options.target ?? "scratch";
@@ -141,11 +152,12 @@ export function compile(options: CompileOptions): CompileResult {
         undefined,
         ["Pass --entry <file> for a single-file build, or --config <path> for a role-based workspace."],
       );
-      return failure(target, workspaceName, bag, []);
+      return failure(target, workspaceName, bag, selectProfile(requestedProfile, target), []);
     }
     roles = workspace.roles;
     workspaceName = workspace.config.name ?? resolve(options.projectRoot, options.configPath ?? ".");
     if (!options.target && workspace.config.target) target = workspace.config.target;
+    if (!options.abiProfile && workspace.config.abiProfile) requestedProfile = workspace.config.abiProfile;
     for (const source of workspace.sources) {
       const config: FrontendConfig = {
         entry: source.file,
@@ -163,11 +175,23 @@ export function compile(options: CompileOptions): CompileResult {
   }
 
   const entryLabel = options.entry ?? workspaceName;
-  for (const module of modules) {
+  const abiProfile = selectProfile(requestedProfile, target);
+  if (!isProfileAllowed(requestedProfile, target)) {
+    bag.error(
+      CODES.COMPAT,
+      `--abi-profile ${requestedProfile} is not available for --target ${target}`,
+      undefined,
+      [
+        `Allowed profiles for ${target}: ${allowedProfiles(target).join(", ")}.`,
+        "--abi-profile and --target are orthogonal, but only supported combinations are accepted.",
+      ],
+    );
+  }
+  const lowered = lowerControlFlow(modules);
+  for (const module of lowered.modules) {
     validateModule(module, bag);
     validateYieldBoundaries(module, bag);
   }
-  const lowered = lowerControlFlow(modules);
   const optimized = options.optimize === false
     ? { modules: lowered.modules, stats: emptyOptimizationStats() }
     : optimizeModules(lowered.modules);
@@ -181,10 +205,11 @@ export function compile(options: CompileOptions): CompileResult {
     ? planBackends(activeModules, target, bag, {
       maxBoundaryCalls: options.maxBoundaryCalls,
       seed: entryLabel,
+      abiProfile: abiProfile.resolved,
     })
     : undefined;
   if (bag.hasErrors || !plan || activeModules.length === 0) {
-    return failure(target, entryLabel, bag, plan?.entries ?? [], activeModules);
+    return failure(target, entryLabel, bag, abiProfile, plan?.entries ?? [], activeModules);
   }
 
   const { graph, builder } = lowerNative(activeModules, bag, {
@@ -193,7 +218,7 @@ export function compile(options: CompileOptions): CompileResult {
     roles,
   });
   validateGraph(graph, bag);
-  if (bag.hasErrors) return failure(target, entryLabel, bag, plan.entries, activeModules, graph);
+  if (bag.hasErrors) return failure(target, entryLabel, bag, abiProfile, plan.entries, activeModules, graph);
 
   const bundle = generateExtension(plan, outputName);
   if (bundle) {
@@ -203,7 +228,7 @@ export function compile(options: CompileOptions): CompileResult {
 
   const projectJson = buildProjectJson(graph, bag);
   const sb3 = exportSb3(graph, bag);
-  if (bag.hasErrors) return failure(target, entryLabel, bag, plan.entries, activeModules, graph);
+  if (bag.hasErrors) return failure(target, entryLabel, bag, abiProfile, plan.entries, activeModules, graph);
 
   const notes: string[] = [];
   if (bundle) {
@@ -217,6 +242,7 @@ export function compile(options: CompileOptions): CompileResult {
     target,
     entry: entryLabel,
     ok: true,
+    abiProfile,
     diagnostics: bag.items,
     plan: plan.entries,
     compatibility: {
@@ -257,6 +283,7 @@ export function formatReport(report: BuildReport, explain = false): string {
     `TypeScratch ${report.ok ? "build ok" : "build failed"}`,
     `  entry: ${report.entry}`,
     `  target: ${report.target}`,
+    `  abi profile: ${report.abiProfile.requested} (resolved: ${report.abiProfile.resolved})`,
     `  blocks: ${report.blockCount}`,
     `  boundary calls: ${report.boundaryCalls}`,
     `  official Scratch compatible: ${report.compatibility.officialScratch ? "yes" : "no"}`,

@@ -25,6 +25,7 @@ export interface ScratchBlock {
   topLevel: boolean;
   x: number;
   y: number;
+  mutation?: Record<string, unknown>;
   span?: SourceSpan;
 }
 
@@ -103,6 +104,7 @@ export interface AddOptions {
   y?: number;
   shadow?: boolean;
   fields?: Record<string, Field>;
+  mutation?: Record<string, unknown>;
 }
 
 export const ICE_CREAM_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="46.944" height="74.148" viewBox="0 0 46.944 74.148"><g data-paper-data="{&quot;isPaintingLayer&quot;:true}" stroke-width="0" stroke-miterlimit="10" style="mix-blend-mode:normal"><path d="M12.047 15.937s22.88 7.452 22.689 7.964c-19.4 50.362-25.91 51.52-30.183 49.833-5.092-1.845-9.398-9.633 7.494-57.797" data-paper-data="{&quot;index&quot;:null}" fill="#d99e82"/><path d="M38.534 37.4c-6.17 4.912-11.357 4.95-19.424 3.753-5.066-1.212-5.27-1.378-7.629-2.49-1.685-.794-4.117-2.324-6.047-3.926-8.21-6.817-7.023-23.42 2.925-31.34C13.409-.622 18.627-.206 24.701.35c5.893.539 11.486 2.573 16.759 6.078 8.332 9.39 7.023 23.053-2.926 30.972" data-paper-data="{&quot;index&quot;:null}" fill="#fcb1e3"/></g></svg>';
@@ -251,6 +253,7 @@ export class GraphBuilder {
       y: options.y ?? 0,
     };
     if (options.span) block.span = options.span;
+    if (options.mutation) block.mutation = options.mutation;
     this.all.set(id, block);
     this.active.blocks.set(id, block);
     return id;
@@ -311,8 +314,14 @@ export class GraphBuilder {
     this.varNames.set(id, name);
   }
 
-  declareList(id: string, name: string, initial: VariableValue[]): void {
-    this.active.lists[id] = [name, initial];
+  declareList(
+    id: string,
+    name: string,
+    initial: VariableValue[],
+    storage: "global" | "local" = "local",
+  ): void {
+    const target = storage === "global" ? this.project.targets[0]! : this.active;
+    target.lists[id] = [name, initial];
     this.varNames.set(id, name);
   }
 

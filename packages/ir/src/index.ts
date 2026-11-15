@@ -3,6 +3,7 @@ import { CODES, type DiagnosticBag, type SourceSpan } from "@typescratch/diagnos
 export type IrType = "number" | "string" | "boolean" | "void";
 export type VarId = string;
 export type ListId = string;
+export type FunctionId = string;
 export type BinOp =
   | "add" | "sub" | "mul" | "div" | "mod"
   | "lt" | "gt" | "le" | "ge" | "eq" | "ne"
@@ -17,6 +18,7 @@ export interface VarDecl {
   storage: "global" | "local" | "temp";
   initial?: string | number | boolean;
   script?: number;
+  parameter?: boolean;
   span?: SourceSpan;
 }
 
@@ -36,7 +38,8 @@ export type Expr =
   | { k: "join"; parts: Expr[]; type: "string"; span?: SourceSpan }
   | { k: "convert"; to: "number" | "boolean"; value: Expr; type: IrType; span?: SourceSpan }
   | { k: "intrinsic"; name: string; args: Expr[]; type: IrType; span?: SourceSpan }
-  | { k: "listRead"; op: ListReadOp; list: ListId; index?: Expr; type: IrType; span?: SourceSpan };
+  | { k: "listRead"; op: ListReadOp; list: ListId; index?: Expr; type: IrType; span?: SourceSpan }
+  | { k: "call"; function: FunctionId; args: Expr[]; type: IrType; span?: SourceSpan };
 
 export type Stmt =
   | { k: "declare"; var: VarId; init?: Expr; span?: SourceSpan }
@@ -45,6 +48,9 @@ export type Stmt =
   | { k: "list"; op: ListOp; list: ListId; args: Expr[]; span?: SourceSpan }
   | { k: "break"; span?: SourceSpan }
   | { k: "continue"; span?: SourceSpan }
+  | { k: "return"; value?: Expr; span?: SourceSpan }
+  | { k: "invoke"; function: FunctionId; args: Expr[]; callId: VarId; result: VarId; resultTag: VarId; span?: SourceSpan }
+  | { k: "frameReturn"; value: Expr; list: ListId; callId: VarId; tag: string; span?: SourceSpan }
   | { k: "if"; cond: Expr; then: Stmt[]; else?: Stmt[]; span?: SourceSpan }
   | { k: "while"; cond: Expr; body: Stmt[]; span?: SourceSpan }
   | { k: "sequence"; body: Stmt[]; span?: SourceSpan };
@@ -63,6 +69,18 @@ export interface Script {
   span?: SourceSpan;
 }
 
+export interface FunctionDecl {
+  id: FunctionId;
+  name: string;
+  params: VarDecl[];
+  returnType: IrType;
+  body: Stmt[];
+  callId: VarId;
+  returnValue: VarId;
+  returning: VarId;
+  span?: SourceSpan;
+}
+
 export interface RoleRef {
   name: string;
   isStage: boolean;
@@ -73,6 +91,7 @@ export interface Module {
   scripts: Script[];
   vars: VarDecl[];
   lists: ListDecl[];
+  functions?: FunctionDecl[];
   role?: RoleRef;
 }
 
@@ -95,6 +114,7 @@ function* exprTree(expr: Expr): Generator<Expr> {
       for (const part of expr.parts) yield* exprTree(part);
       break;
     case "intrinsic":
+    case "call":
       for (const arg of expr.args) yield* exprTree(arg);
       break;
     case "listRead":
@@ -112,11 +132,16 @@ function* stmtTree(stmts: Stmt[]): Generator<Expr> {
         if (stmt.init) yield* exprTree(stmt.init);
         break;
       case "assign":
+      case "frameReturn":
         yield* exprTree(stmt.value);
         break;
       case "expr":
       case "list":
+      case "invoke":
         for (const arg of stmt.args) yield* exprTree(arg);
+        break;
+      case "return":
+        if (stmt.value) yield* exprTree(stmt.value);
         break;
       case "break":
       case "continue":
@@ -151,6 +176,7 @@ function* statementTree(stmts: Stmt[]): Generator<Stmt> {
 
 export function* allExprs(module: Module): Generator<Expr> {
   for (const script of module.scripts) yield* stmtTree(script.body);
+  for (const fn of module.functions ?? []) yield* stmtTree(fn.body);
 }
 
 export function* allCommands(module: Module): Generator<{ name: string; span?: SourceSpan }> {
@@ -166,11 +192,13 @@ export function* allCommands(module: Module): Generator<{ name: string; span?: S
     }
   };
   for (const script of module.scripts) yield* visit(script.body);
+  for (const fn of module.functions ?? []) yield* visit(fn.body);
 }
 
 export function validateModule(module: Module, bag: DiagnosticBag): void {
   const declared = new Map(module.vars.map((decl) => [decl.id, decl]));
   const declaredLists = new Set(module.lists.map((decl) => decl.id));
+  const functionIds = new Set((module.functions ?? []).map((fn) => fn.id));
   const checkExpr = (expr: Expr): void => {
     for (const child of exprTree(expr)) {
       if (child.k === "read" && !declared.has(child.var)) {
@@ -178,6 +206,9 @@ export function validateModule(module: Module, bag: DiagnosticBag): void {
       }
       if (child.k === "listRead" && !declaredLists.has(child.list)) {
         bag.error(CODES.UNSUPPORTED, `IR reads undeclared list ${child.list}`, child.span);
+      }
+      if (child.k === "call" && !functionIds.has(child.function)) {
+        bag.error(CODES.UNSUPPORTED, `IR calls undeclared function ${child.function}`, child.span);
       }
     }
   };
@@ -195,6 +226,27 @@ export function validateModule(module: Module, bag: DiagnosticBag): void {
             bag.error(CODES.UNSUPPORTED, `IR assigns unknown variable ${stmt.var}`, stmt.span);
           }
           checkExpr(stmt.value);
+          break;
+        case "frameReturn":
+          if (!declaredLists.has(stmt.list)) {
+            bag.error(CODES.UNSUPPORTED, `IR writes unknown frame list ${stmt.list}`, stmt.span);
+          }
+          if (!declared.has(stmt.callId)) {
+            bag.error(CODES.UNSUPPORTED, `IR uses unknown callId ${stmt.callId}`, stmt.span);
+          }
+          checkExpr(stmt.value);
+          break;
+        case "invoke":
+          if (!functionIds.has(stmt.function)) {
+            bag.error(CODES.UNSUPPORTED, `IR invokes undeclared function ${stmt.function}`, stmt.span);
+          }
+          if (!declared.has(stmt.result) || !declared.has(stmt.callId) || !declared.has(stmt.resultTag)) {
+            bag.error(CODES.UNSUPPORTED, `IR invoke uses undeclared temporaries`, stmt.span);
+          }
+          for (const arg of stmt.args) checkExpr(arg);
+          break;
+        case "return":
+          if (stmt.value) checkExpr(stmt.value);
           break;
         case "expr":
           for (const arg of stmt.args) checkExpr(arg);
@@ -233,7 +285,7 @@ export function validateModule(module: Module, bag: DiagnosticBag): void {
     }
   };
   for (const decl of module.vars) {
-    if (decl.type === "boolean") {
+    if (decl.type === "boolean" && !decl.parameter) {
       bag.error(
         CODES.VARIABLE_TYPE,
         `Scratch variables cannot store boolean values (${decl.name})`,
@@ -243,6 +295,7 @@ export function validateModule(module: Module, bag: DiagnosticBag): void {
     }
   }
   for (const script of module.scripts) checkStmts(script.body, 0);
+  for (const fn of module.functions ?? []) checkStmts(fn.body, 0);
 
   module.scripts.forEach((script, index) => {
     const checkPartition = (id: VarId, span?: SourceSpan): void => {

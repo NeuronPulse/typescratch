@@ -1,6 +1,7 @@
 {
   "name": "my-project",
   "target": "scratch",
+  "abiProfile": "auto",
   "src": "src",
   "assets": "assets"
 }

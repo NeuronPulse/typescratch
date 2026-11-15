@@ -14,6 +14,7 @@ const { values, positionals } = parseArgs({
     config: { type: "string" },
     target: { type: "string" },
     out: { type: "string" },
+    "abi-profile": { type: "string" },
     explain: { type: "boolean" },
     help: { type: "boolean", short: "h" },
   },
@@ -22,7 +23,7 @@ const { values, positionals } = parseArgs({
 if (values.help) {
   console.log("usage:");
   console.log("  typescratch init [path]                     scaffold the default Sprite1 workspace");
-  console.log("  typescratch <build|check|explain> [--entry <file> | --config <tscr.config.json>] [--target <scratch|turbowarp>] [--out <file>]");
+  console.log("  typescratch <build|check|explain> [--entry <file> | --config <tscr.config.json>] [--target <scratch|turbowarp>] [--abi-profile <native|extension|auto>] [--out <file>]");
   process.exit(0);
 }
 
@@ -49,6 +50,12 @@ if (target && target !== "scratch" && target !== "turbowarp") {
   process.exit(1);
 }
 
+const abiProfile = values["abi-profile"] as string | undefined;
+if (abiProfile && abiProfile !== "native" && abiProfile !== "extension" && abiProfile !== "auto") {
+  console.error(`unknown abi-profile: ${abiProfile}`);
+  process.exit(1);
+}
+
 const projectRoot = process.cwd();
 const out = values.out ?? "dist/project.sb3";
 const explain = command === "explain" || values.explain === true;
@@ -58,6 +65,7 @@ const result = compile({
   configPath: values.config,
   projectRoot,
   target,
+  abiProfile,
   explain,
   outputName: basename(out),
 });

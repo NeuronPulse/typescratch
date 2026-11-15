@@ -1,4 +1,4 @@
-import type { BinOp, Expr, Module, Stmt, VarDecl } from "@typescratch/ir";
+import type { BinOp, Expr, FunctionDecl, IrType, Module, Stmt, VarDecl } from "@typescratch/ir";
 import { castToBoolean, castToNumber, castToString } from "@typescratch/language";
 
 export type TraceValue = string | number | boolean;
@@ -104,6 +104,13 @@ export function evalIntrinsic(name: string, args: TraceValue[], profile: ValuePr
   throw new Error(`IR interpreter has no evaluation rule for intrinsic ${name}`);
 }
 
+function tagOf(type: IrType): string {
+  if (type === "number") return "n";
+  if (type === "string") return "s";
+  if (type === "boolean") return "b";
+  return "u";
+}
+
 function defaultValue(decl: VarDecl): TraceValue {
   if (decl.initial !== undefined) return decl.initial;
   if (decl.type === "string") return "";
@@ -123,9 +130,11 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
   };
   const values = new Map<string, TraceValue>();
   const lists = new Map<string, TraceValue[]>();
+  const functionMap = new Map<string, FunctionDecl>();
   for (const module of modules) {
     for (const decl of module.vars) values.set(decl.id, defaultValue(decl));
     for (const decl of module.lists ?? []) lists.set(decl.id, [...(decl.initial ?? [])]);
+    for (const fn of module.functions ?? []) functionMap.set(fn.id, fn);
   }
 
   const evalExpr = (expr: Expr): TraceValue => {
@@ -149,7 +158,24 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
         return list[index] ?? "";
       }
       case "intrinsic": return evalIntrinsic(expr.name, expr.args.map(evalExpr), profile);
+      case "call": {
+        const fn = functionMap.get(expr.function);
+        if (!fn) throw new Error(`IR interpreter cannot find function ${expr.function}`);
+        return execFunction(fn, expr.args.map(evalExpr));
+      }
     }
+  };
+
+  const execFunction = (fn: FunctionDecl, args: TraceValue[]): TraceValue => {
+    const saved = fn.params.map((param) => values.get(param.id));
+    fn.params.forEach((param, index) => values.set(param.id, args[index] ?? defaultValue(param)));
+    values.set(fn.returning, 0);
+    values.set(fn.returnValue, 0);
+    values.set(fn.callId, 0);
+    exec(fn.body);
+    const result = values.get(fn.returnValue) ?? 0;
+    fn.params.forEach((param, index) => values.set(param.id, saved[index] ?? defaultValue(param)));
+    return result;
   };
 
   const exec = (stmts: Stmt[]): void => {
@@ -200,6 +226,17 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
           }
           break;
         }
+        case "invoke": {
+          const fn = functionMap.get(stmt.function);
+          if (!fn) throw new Error(`IR interpreter cannot find function ${stmt.function}`);
+          values.set(stmt.result, execFunction(fn, stmt.args.map(evalExpr)));
+          values.set(stmt.resultTag, tagOf(fn.returnType));
+          break;
+        }
+        case "frameReturn":
+          break;
+        case "return":
+          throw new Error("return reached the IR interpreter; lowerControlFlow must run first");
         case "break":
         case "continue":
           throw new Error(`${stmt.k} reached the IR interpreter; lowerControlFlow must run first`);

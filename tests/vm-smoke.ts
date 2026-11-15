@@ -9,6 +9,7 @@ interface ConformanceCase {
   configPath?: string;
   unorderedSays?: boolean;
   triggers?: HatTrigger[];
+  ignoreCompilerState?: boolean;
 }
 
 function quiet(original: (...args: unknown[]) => void): (...args: unknown[]) => void {
@@ -48,6 +49,16 @@ const cases: ConformanceCase[] = [
     label: "default-workspace",
     configPath: "packages/workspace/template/tscr.config.json",
   },
+  { label: "function-return", entry: example("function-return"), ignoreCompilerState: true },
+  { label: "function-nested", entry: example("function-nested"), ignoreCompilerState: true },
+  { label: "function-boolean", entry: example("function-boolean"), ignoreCompilerState: true },
+  {
+    label: "function-reentrant",
+    entry: example("function-reentrant"),
+    unorderedSays: true,
+    triggers: [{ kind: "key", key: "space" }],
+    ignoreCompilerState: true,
+  },
 ];
 
 const watchdog = setTimeout(() => {
@@ -73,6 +84,7 @@ for (const item of cases) {
     const actual = await runSb3(result.sb3, { timeoutMs: 8000, triggers: item.triggers });
     const diffs = compareTraces(expected, actual, {
       ignoreExtraVariables: true,
+      ignoreCompilerState: item.ignoreCompilerState,
       unorderedSays: item.unorderedSays,
     });
     if (diffs.length > 0) {

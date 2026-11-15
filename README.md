@@ -25,7 +25,7 @@ Node.js 24 or newer, pnpm 12. The sprites have no requirements whatsoever.
 
 ```bash
 pnpm install
-pnpm verify         # typecheck, lint, 55 tests, goldens, VM conformance, CLI bundle
+pnpm verify         # typecheck, lint, 91 tests, goldens, VM conformance, CLI bundle
 pnpm build          # dist/hello.sb3
 pnpm build:default  # dist/default.sb3
 pnpm build:hybrid   # dist/hybrid.sb3 (TurboWarp)
@@ -94,13 +94,15 @@ pnpm typescratch build --config my-game/tscr.config.json --out dist/my-game.sb3
 | `typescratch check` | Validate semantics and compatibility without writing files |
 | `typescratch explain` | Print the lowering plan |
 
-Flags: `--entry <file>`, `--config <file>`, `--target scratch|turbowarp`, `--out <file>`.
+Flags: `--entry <file>`, `--config <file>`, `--target scratch|turbowarp`, `--abi-profile native|extension|auto`, `--out <file>`.
+
+`--abi-profile` chooses who implements the ABI, not where the project runs; it is orthogonal to `--target`, and only supported combinations are accepted. `--target scratch --abi-profile extension` fails with `TSCR5001`, because asking official Scratch to run a custom extension is optimism, not a build. `tscr.config.json` accepts the same `abiProfile` key.
 
 A build writes the `.sb3`, a readable `*.project.json`, a build report, a source map, and for TurboWarp targets the generated extension JS and an embedding manifest.
 
 ## 5. Language subset
 
-Supported: `number`, `string`, `boolean`, `let`/`const`, assignment and compound assignment, unary and binary operators, `if/else`, `while` with `break`/`continue`, restricted `for`, template strings, `Scratch.onFlag`, typed event hats (`onKey`, `onSpriteClicked`, `onClone`, `onBackdrop`, `onBroadcast`), `Scratch.say/wait/move/hide/show`, `Scratch.global/local` with `get/set/change`, `Scratch.list` with `push/insert/replace/deleteAt/clear/item/length`, and the native Math functions. APIs are resolved by symbol, so `import { Scratch as S }` works too.
+Supported: `number`, `string`, `boolean`, `let`/`const`, assignment and compound assignment, unary and binary operators, `if/else`, `while` with `break`/`continue`, restricted `for`, template strings, top-level `function` declarations with `return`, `Scratch.onFlag`, typed event hats (`onKey`, `onSpriteClicked`, `onClone`, `onBackdrop`, `onBroadcast`), `Scratch.say/wait/move/hide/show`, `Scratch.global/local` with `get/set/change`, `Scratch.list` with `push/insert/replace/deleteAt/clear/item/length`, and the native Math functions. APIs are resolved by symbol, so `import { Scratch as S }` works too.
 
 Scratch has no `break` or `continue`. The IR pass rewrites a loop that uses them with `done`/`skip` flags, guards every remaining statement and folds both flags into the loop condition. It is more blocks than a `goto` would be, but a `goto` is not on the menu. `for` loops reject them: the incrementor sits at the end of the lowered body, so `continue` would skip it and quietly change the program.
 
@@ -114,13 +116,17 @@ Not supported: classes, promises, `async`/`await`, generators, `eval`, dynamic i
 
 TypeScratch does not silently change semantics. Cross-type equality (Scratch considers `"10"` and `10` close friends), the difference between JS `%` and Scratch `mod`, and booleans stored as `"true"` strings are all reported rather than guessed. The build report states the numeric profile it compiled against.
 
+The Value ABI keeps the two conversion rule sets apart: `castTo*` models Scratch `Cast`, `tsTo*` models ECMAScript. Tagged pairs `[n|s|b|o|u|z, payload]` make `===` compare tags first, so `NaN === NaN` stays false and `"1" === 1` stays false on a platform that disagrees. Static paths never see a tag. A real `scratch-vm` run confirms lists preserve `NaN`, `Infinity` and `-0`, so number payloads stay plain JS numbers instead of growing a string encoding nobody asked for.
+
+A function call lowers to a native `procedures_call` custom block, and its return value travels through `abi.frame.returnValue` / `abi.frame.returnTag`, indexed by an invocation token allocated at the call site. The token comes from `abi.freeFrames` when one is free and otherwise bumps `abi.nextFrameId`; the epilogue tombstones the slot and hands the id back, so a long-running script does not grow the frame lists forever. `return` is a CFG rewrite — a `returning` guard plus an epilogue — because `control_stop this script` would unwind the whole procedure stack. Every invocation resets its own flags, so nested calls and two event threads calling the same function keep their frames apart. Boolean parameters use their own argument reporter. Recursion is rejected with `TSCR3002`: a semantic restriction, not a frame-layout limitation.
+
 Four constraints are checked before a single block is emitted. `NaN`, `Infinity` and negative `%` literals are rejected. `wait`, broadcasts and sandboxed extension calls are marked as yielding, and reading a temporary across one of them is an error. Temporaries are partitioned per hat script so concurrent scripts cannot clobber each other. And no boolean is ever stored in a Scratch variable: flags are lowered to `0`/`1`. Nineteen numeric fixtures compare JavaScript and Scratch semantics side by side, because "roughly the same" is not a specification.
 
 | Code | Area |
 | --- | --- |
 | `TSCR1xxx` | TypeScript frontend |
 | `TSCR2xxx` | Language subset |
-| `TSCR3xxx` | Lowering |
+| `TSCR3xxx` | Lowering (including `TSCR3002` recursion) |
 | `TSCR4xxx` | Runtime ABI: yield boundaries, variable types, script partitioning, numeric profile |
 | `TSCR5xxx` | Target compatibility |
 | `TSCR6xxx` | Performance |
@@ -162,7 +168,7 @@ pnpm snapshots:update # refresh five golden artifacts per case
 pnpm build:packages   # tsdown/rolldown CLI bundle
 ```
 
-55 Vitest tests cover HIR lowering, block graph integrity, deterministic output, extension embedding, workspace roles, default assets, list operations, typed event hats, IR optimization, break/continue control flow, numeric conformance and the four ABI constraints. Some tests call the real `scratch-vm` deserializer to verify shadow blocks and extension IDs. `pnpm verify:vm` is no longer optional theatre: a jsdom shim gives headless `scratch-vm` the DOM it wants, twelve compiled projects are actually run, and their SAY/variable/list traces are compared against an independent IR interpreter. Five golden artifacts — HIR, backend plan, graph, extension JS, build report — are pinned for five cases. CI runs the same gate on Node 24 and 26.
+91 Vitest tests cover HIR lowering, block graph integrity, deterministic output, extension embedding, workspace roles, default assets, list operations, typed event hats, IR optimization, break/continue control flow, numeric conformance, the four ABI constraints, Value ABI tagged pairs and strict equality, the ECMAScript/Scratch conversion split, `abi-profile` capability rules, real-VM numeric representation, thread-interleaving token atomicity, per-script control-flow isolation, custom-procedure `mutation` round trips, concurrent procedure-argument isolation, the Native frame allocator's free-list/200k bound, real-VM frame return-slot isolation, and function returns with nested, early, re-entrant, boolean-parameter and tagged-return cases. Some tests call the real `scratch-vm` deserializer to verify shadow blocks and extension IDs. `pnpm verify:vm` is no longer optional theatre: a jsdom shim gives headless `scratch-vm` the DOM it wants, sixteen compiled projects are actually run, and their SAY/variable/list traces are compared against an independent IR interpreter. Five golden artifacts — HIR, backend plan, graph, extension JS, build report — are pinned for six cases. CI runs the same gate on Node 24 and 26.
 
 ## License
 

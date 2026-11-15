@@ -1,5 +1,5 @@
 import { CODES, type DiagnosticBag, type SourceSpan } from "@typescratch/diagnostics";
-import { allCommands, allExprs, type Module } from "@typescratch/ir";
+import { allCommands, allExprs, type Module, type Stmt } from "@typescratch/ir";
 import { getIntrinsic, type Target } from "@typescratch/language";
 import {
   EXTENSION_OPS,
@@ -15,6 +15,8 @@ export interface PlanEntry {
   span?: SourceSpan;
   regionId?: string;
   cost: number;
+  strategy?: "static" | "native" | "extension";
+  abiProfile?: "native" | "extension";
 }
 
 export interface ExtensionRegion {
@@ -39,6 +41,7 @@ export interface BackendPlan {
 export interface PlannerOptions {
   maxBoundaryCalls?: number;
   seed?: string;
+  abiProfile?: "native" | "extension";
 }
 
 export interface BackendCapability {
@@ -69,7 +72,32 @@ export function planBackends(
   const extensionIntrinsics: string[] = [];
   let nativeOps = 0;
 
+  const visitCalls = (stmts: Stmt[]): void => {
+    for (const stmt of stmts) {
+      if (stmt.k === "invoke") {
+        const profile = options.abiProfile ?? "native";
+        entries.push({
+          operation: `call:${stmt.function}`,
+          decision: "native",
+          detail: `Frame ABI via procedures_*; configured profile: ${profile}`,
+          span: stmt.span,
+          cost: 3,
+          strategy: "native",
+          abiProfile: profile,
+        });
+      }
+      if (stmt.k === "if") {
+        visitCalls(stmt.then);
+        if (stmt.else) visitCalls(stmt.else);
+      }
+      if (stmt.k === "while" || stmt.k === "sequence") visitCalls(stmt.body);
+    }
+  };
+
   for (const module of list) {
+    for (const script of module.scripts) visitCalls(script.body);
+    for (const fn of module.functions ?? []) visitCalls(fn.body);
+
     for (const expr of allExprs(module)) {
       if (expr.k !== "intrinsic") continue;
       const spec = getIntrinsic(expr.name);
