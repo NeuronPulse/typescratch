@@ -186,6 +186,16 @@ export function compile(options: CompileOptions): CompileResult {
         "--abi-profile and --target are orthogonal, but only supported combinations are accepted.",
       ],
     );
+  } else if (requestedProfile === "extension" && abiProfile.lowering !== "extension") {
+    bag.error(
+      CODES.COMPAT,
+      "--abi-profile extension is not implemented; only the native runtime emits ABI lowering",
+      undefined,
+      [
+        "Value / Call / Frame / Memory / Dispatch operations still lower to native Scratch blocks on TurboWarp.",
+        "Use --abi-profile auto (or native) until the TurboWarp E2E chain provides the Extension runtime.",
+      ],
+    );
   }
   const lowered = lowerControlFlow(modules);
   for (const module of lowered.modules) {
@@ -283,7 +293,7 @@ export function formatReport(report: BuildReport, explain = false): string {
     `TypeScratch ${report.ok ? "build ok" : "build failed"}`,
     `  entry: ${report.entry}`,
     `  target: ${report.target}`,
-    `  abi profile: ${report.abiProfile.requested} (resolved: ${report.abiProfile.resolved})`,
+    `  abi profile: ${report.abiProfile.requested} (resolved: ${report.abiProfile.resolved}, lowering: ${report.abiProfile.lowering})`,
     `  blocks: ${report.blockCount}`,
     `  boundary calls: ${report.boundaryCalls}`,
     `  official Scratch compatible: ${report.compatibility.officialScratch ? "yes" : "no"}`,

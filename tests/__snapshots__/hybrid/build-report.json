@@ -4,7 +4,8 @@
   "ok": true,
   "abiProfile": {
     "requested": "auto",
-    "resolved": "extension"
+    "resolved": "extension",
+    "lowering": "native"
   },
   "diagnostics": [
     {

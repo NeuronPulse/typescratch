@@ -24,6 +24,7 @@ if (values.help) {
   console.log("usage:");
   console.log("  typescratch init [path]                     scaffold the default Sprite1 workspace");
   console.log("  typescratch <build|check|explain> [--entry <file> | --config <tscr.config.json>] [--target <scratch|turbowarp>] [--abi-profile <native|extension|auto>] [--out <file>]");
+  console.log("  note: --abi-profile extension is not implemented yet; use auto or native.");
   process.exit(0);
 }
 

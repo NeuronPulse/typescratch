@@ -96,7 +96,7 @@ pnpm typescratch build --config my-game/tscr.config.json --out dist/my-game.sb3
 
 Flags: `--entry <file>`, `--config <file>`, `--target scratch|turbowarp`, `--abi-profile native|extension|auto`, `--out <file>`.
 
-`--abi-profile` chooses who implements the ABI, not where the project runs; it is orthogonal to `--target`, and only supported combinations are accepted. `--target scratch --abi-profile extension` fails with `TSCR5001`, because asking official Scratch to run a custom extension is optimism, not a build. `tscr.config.json` accepts the same `abiProfile` key.
+`--abi-profile` chooses who implements the ABI, not where the project runs; it is orthogonal to `--target`, and only supported combinations are accepted. `--target scratch --abi-profile extension` fails with `TSCR5001`, because asking official Scratch to run a custom extension is optimism, not a build. An explicit `--abi-profile extension` fails with the same code: only the Native runtime emits ABI lowering today, so accepting the flag while quietly emitting `procedures_*` would be a lie. `auto` still resolves to `extension` on TurboWarp, but the build report states `lowering: native` so nobody mistakes the intent for the implementation. `tscr.config.json` accepts the same `abiProfile` key.
 
 A build writes the `.sb3`, a readable `*.project.json`, a build report, a source map, and for TurboWarp targets the generated extension JS and an embedding manifest.
 
