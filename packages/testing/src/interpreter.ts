@@ -150,16 +150,29 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
   const heapObjects = new Map<number, HeapObject>();
   const heapItems: TraceValue[] = [];
   const heapFreeIds: number[] = [];
+  const heapFreeIntervals: { start: number; length: number }[] = [];
   let heapNextId = 0;
-  const allocateObject = (classId: string, size = 0): number => {
+  const allocateObject = (classId: string, requested = 0): number => {
+    const size = Math.max(0, requested);
     const ref = heapFreeIds.length > 0 ? heapFreeIds.pop()! : heapNextId++;
     const fields = new Map<string, TraceValue>();
     for (const field of classById.get(classId)?.fields ?? []) {
       fields.set(field.name, field.initial ?? (field.type === "string" ? "" : 0));
     }
-    const start = heapItems.length;
-    for (let index = 0; index < Math.max(0, size); index++) heapItems.push(0);
-    heapObjects.set(ref, { classId, fields, start, length: Math.max(0, size), released: false });
+    const reusable = size > 0 ? heapFreeIntervals[heapFreeIntervals.length - 1] : undefined;
+    let start: number;
+    if (reusable && reusable.length >= size) {
+      start = reusable.start;
+      heapFreeIntervals.pop();
+      if (reusable.length > size) {
+        heapFreeIntervals.push({ start: start + size, length: reusable.length - size });
+      }
+      for (let index = 0; index < size; index++) heapItems[start + index] = 0;
+    } else {
+      start = heapItems.length;
+      for (let index = 0; index < size; index++) heapItems.push(0);
+    }
+    heapObjects.set(ref, { classId, fields, start, length: size, released: false });
     return ref;
   };
   const fieldRef = (expr: Expr): number => Math.trunc(toNumber(evalExpr(expr)));
@@ -298,8 +311,8 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
           const object = heapObjects.get(ref);
           if (!object || object.released) break;
           object.released = true;
-          if (object.length > 0 && object.start + object.length === heapItems.length) {
-            heapItems.length = object.start;
+          if (object.length > 0) {
+            heapFreeIntervals.push({ start: object.start, length: object.length });
           }
           heapFreeIds.push(ref);
           break;

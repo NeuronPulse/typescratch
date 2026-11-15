@@ -90,22 +90,34 @@ test("out-of-range array access is inert and released refs are rejected", () => 
   assert.equal(heapArrayLength(reused.state, reused.ref), 1);
 });
 
-test("releasing the top array range trims items so repeated cycles do not grow", () => {
+test("non-LIFO releases register both intervals and reuse does not append", () => {
   const first = heapNew(INITIAL_HEAP_TABLE, ARRAY_CLASS, new Map(), 3);
   const second = heapNew(first.state, ARRAY_CLASS, new Map(), 2);
-  assert.equal(second.state.items.length, 5);
-  const released = heapRelease(second.state, second.ref);
-  assert.equal(released.items.length, 3);
-  const reused = heapNew(released, ARRAY_CLASS, new Map(), 2);
-  assert.equal(reused.ref, second.ref);
+  let state = heapWriteArray(second.state, first.ref, 0, 42);
+  state = heapRelease(state, first.ref);
+  state = heapRelease(state, second.ref);
+  assert.deepEqual(state.freeIntervals, [
+    { start: 0, length: 3 },
+    { start: 3, length: 2 },
+  ]);
+  assert.equal(state.items.length, 5);
+  const reused = heapNew(state, ARRAY_CLASS, new Map(), 2);
+  assert.equal(heapArrayLength(reused.state, reused.ref), 2);
   assert.equal(reused.state.items.length, 5);
+  assert.equal(heapReadArray(reused.state, reused.ref, 0), 0, "reused slots are cleared");
 });
 
-test("an out-of-order release leaves the later item range in place", () => {
-  const first = heapNew(INITIAL_HEAP_TABLE, ARRAY_CLASS, new Map(), 3);
-  const second = heapNew(first.state, ARRAY_CLASS, new Map(), 2);
-  const released = heapRelease(second.state, first.ref);
-  assert.equal(released.items.length, 5);
+test("a larger free interval is split and the remainder is reused", () => {
+  const big = heapNew(INITIAL_HEAP_TABLE, ARRAY_CLASS, new Map(), 5);
+  const written = heapWriteArray(big.state, big.ref, 0, 42);
+  const freed = heapRelease(written, big.ref);
+  const small = heapNew(freed, ARRAY_CLASS, new Map(), 2);
+  assert.deepEqual(small.state.freeIntervals, [{ start: 2, length: 3 }]);
+  assert.equal(small.state.items.length, 5);
+  assert.equal(heapReadArray(small.state, small.ref, 0), 0);
+  const rest = heapNew(small.state, ARRAY_CLASS, new Map(), 3);
+  assert.equal(rest.state.items.length, 5);
+  assert.deepEqual(rest.state.freeIntervals, []);
 });
 
 test("the heap allocator refuses the scratch-vm list limit explicitly", () => {

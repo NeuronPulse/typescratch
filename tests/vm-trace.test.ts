@@ -52,7 +52,11 @@ test("repeated green flags keep the results list and every heap list stable", as
   );
   assert.deepEqual(
     trace.roundFinals.map((final) => final.lists["Stage:heap.array.items"]?.length ?? 0),
-    [0, 0, 0],
+    [3, 3, 3],
+  );
+  assert.deepEqual(
+    trace.roundFinals.map((final) => final.lists["Stage:heap.array.freeStart"]?.length ?? 0),
+    [1, 1, 1],
   );
   assert.deepEqual(
     trace.roundFinals.map((final) => final.lists["Stage:heap.freeObjects"]?.length ?? 0),

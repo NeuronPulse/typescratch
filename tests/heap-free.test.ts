@@ -24,10 +24,11 @@ test("heapFree survives every IR walker and reaches the block graph", () => {
     targets: { blocks: Record<string, BlockJson> }[];
   };
   const blocks = graph.targets.flatMap((target) => Object.values(target.blocks));
-  const arrayDeletes = blocks.filter((block) =>
-    block.opcode === "data_deleteoflist" && block.fields.LIST?.[0] === "heap.array.items");
-  assert.equal(arrayDeletes.length, 3, "one delete per compile-time array slot");
-  assert.ok(arrayDeletes.every((block) => JSON.stringify(block.inputs.INDEX).includes("last")));
+  assert.ok(blocks.some((block) => block.opcode === "operator_and"), "interval reuse condition");
+  assert.ok(blocks.some((block) =>
+    block.opcode === "data_addtolist" && block.fields.LIST?.[0] === "heap.array.freeStart"));
+  assert.ok(blocks.some((block) =>
+    block.opcode === "data_addtolist" && block.fields.LIST?.[0] === "heap.array.freeSize"));
 });
 
 test("released ids are reused and released slots become tombstones", async () => {
@@ -42,7 +43,9 @@ test("released ids are reused and released slots become tombstones", async () =>
       assert.deepEqual(lists["Stage:heap.classId"], ["Counter", "Array"]);
       assert.deepEqual(lists["Stage:heap.status"], ["released", "released"]);
       assert.equal(lists["Stage:heap.freeObjects"]?.length, 2);
-      assert.equal(lists["Stage:heap.array.items"]?.length, 0);
+      assert.equal(lists["Stage:heap.array.items"]?.length, 3);
+      assert.equal(lists["Stage:heap.array.freeStart"]?.length, 1);
+      assert.equal(lists["Stage:heap.array.freeSize"]?.length, 1);
     }
   } finally {
     session.close();

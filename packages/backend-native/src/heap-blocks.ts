@@ -1,6 +1,8 @@
 import type { BlockId, GraphBuilder, InputRef } from "@typescratch/graph";
 import {
   ARRAY_CLASS,
+  HEAP_ARRAY_FREE_SIZE,
+  HEAP_ARRAY_FREE_START,
   HEAP_ARRAY_ITEMS,
   HEAP_ARRAY_LENGTH,
   HEAP_ARRAY_START,
@@ -25,6 +27,10 @@ export interface HeapLayout {
   arrayStart: HeapRef;
   arrayLength: HeapRef;
   arrayItems: HeapRef;
+  freeStart: HeapRef;
+  freeSize: HeapRef;
+  reuseStart: HeapRef;
+  reuseSize: HeapRef;
   parallel: HeapRef[];
   fields: Record<string, HeapRef>;
   initial: Record<string, string>;
@@ -73,6 +79,14 @@ export function declareHeapLayout(
   builder.declareList(freeObjects.id, freeObjects.name, [], "global");
   const arrayItems: HeapRef = { id: "l_heap_array_items", name: HEAP_ARRAY_ITEMS };
   builder.declareList(arrayItems.id, arrayItems.name, [], "global");
+  const freeStart: HeapRef = { id: "l_heap_array_free_start", name: HEAP_ARRAY_FREE_START };
+  builder.declareList(freeStart.id, freeStart.name, [], "global");
+  const freeSize: HeapRef = { id: "l_heap_array_free_size", name: HEAP_ARRAY_FREE_SIZE };
+  builder.declareList(freeSize.id, freeSize.name, [], "global");
+  const reuseStart: HeapRef = { id: "v_heap_array_reuse_start", name: "heap.array.reuseStart" };
+  builder.declareVariable(reuseStart.id, reuseStart.name, 0, "global");
+  const reuseSize: HeapRef = { id: "v_heap_array_reuse_size", name: "heap.array.reuseSize" };
+  builder.declareVariable(reuseSize.id, reuseSize.name, 0, "global");
 
   const byName: Record<string, HeapRef> = {};
   const initial: Record<string, string> = {};
@@ -97,6 +111,10 @@ export function declareHeapLayout(
     arrayStart: byName[HEAP_ARRAY_START]!,
     arrayLength: byName[HEAP_ARRAY_LENGTH]!,
     arrayItems,
+    freeStart,
+    freeSize,
+    reuseStart,
+    reuseSize,
     parallel,
     fields,
     initial,
@@ -185,7 +203,11 @@ export function emitHeapAllocate(
   ];
 }
 
-/** Array sizes are compile-time constants: the fill is an unbranched, yield-free sequence. */
+/**
+ * Array sizes are compile-time constants, so both branches are fixed, unbranched
+ * with respect to yields. A freed interval is reused (and split) when the last
+ * interval is large enough; otherwise new items are appended.
+ */
 export function emitHeapArrayAllocate(
   builder: GraphBuilder,
   scope: string,
@@ -195,20 +217,96 @@ export function emitHeapArrayAllocate(
   fieldValues: Record<string, InputRef> = {},
 ): BlockId[] {
   const ids = emitHeapAllocate(builder, scope, layout, token, ARRAY_CLASS, fieldValues);
-  const lengthItems = builder.add("data_lengthoflist", { scope, fields: listField(layout.arrayItems) });
-  const startWrite = builder.add("data_replaceitemoflist", { scope, fields: listField(layout.arrayStart) });
-  builder.input(startWrite, "INDEX", { block: oneBased(builder, scope, variableRef(token)) });
-  builder.input(startWrite, "ITEM", { block: lengthItems });
-  const lengthWrite = builder.add("data_replaceitemoflist", { scope, fields: listField(layout.arrayLength) });
-  builder.input(lengthWrite, "INDEX", { block: oneBased(builder, scope, variableRef(token)) });
-  builder.input(lengthWrite, "ITEM", numberLiteral(String(size)));
-  const fills: BlockId[] = [];
-  for (let index = 0; index < size; index++) {
+  const index = (): BlockId => oneBased(builder, scope, variableRef(token));
+  const lengthItems = (): BlockId =>
+    builder.add("data_lengthoflist", { scope, fields: listField(layout.arrayItems) });
+  const writeSlot = (list: HeapRef, value: InputRef): BlockId => {
+    const write = builder.add("data_replaceitemoflist", { scope, fields: listField(list) });
+    builder.input(write, "INDEX", { block: index() });
+    builder.input(write, "ITEM", value);
+    return write;
+  };
+  const appendIds: BlockId[] = [
+    writeSlot(layout.arrayStart, { block: lengthItems() }),
+    writeSlot(layout.arrayLength, numberLiteral(String(size))),
+  ];
+  for (let position = 0; position < size; position++) {
     const fill = builder.add("data_addtolist", { scope, fields: listField(layout.arrayItems) });
     builder.input(fill, "ITEM", numberLiteral("0"));
-    fills.push(fill);
+    appendIds.push(fill);
   }
-  return [...ids, startWrite, lengthWrite, ...fills];
+  if (size <= 0) return [...ids, ...appendIds];
+
+  const freeCount = builder.add("data_lengthoflist", { scope, fields: listField(layout.freeSize) });
+  const hasAny = builder.add("operator_gt", { scope });
+  builder.input(hasAny, "OPERAND1", { block: freeCount });
+  builder.input(hasAny, "OPERAND2", numberLiteral("0"));
+  const lastSize = builder.add("data_itemoflist", { scope, fields: listField(layout.freeSize) });
+  builder.input(lastSize, "INDEX", literal("last"));
+  const fits = builder.add("operator_gt", { scope });
+  builder.input(fits, "OPERAND1", { block: lastSize });
+  builder.input(fits, "OPERAND2", numberLiteral(String(size - 1)));
+  const canReuse = builder.add("operator_and", { scope });
+  builder.input(canReuse, "OPERAND1", { block: hasAny });
+  builder.input(canReuse, "OPERAND2", { block: fits });
+  const branch = builder.add("control_if_else", { scope });
+  builder.input(branch, "CONDITION", { block: canReuse });
+
+  const remember = (list: HeapRef, target: HeapRef): BlockId => {
+    const item = builder.add("data_itemoflist", { scope, fields: listField(list) });
+    builder.input(item, "INDEX", literal("last"));
+    const set = builder.add("data_setvariableto", { scope, fields: variableField(target) });
+    builder.input(set, "VALUE", { block: item });
+    return set;
+  };
+  const dropLast = (list: HeapRef): BlockId => {
+    const drop = builder.add("data_deleteoflist", { scope, fields: listField(list) });
+    builder.input(drop, "INDEX", literal("last"));
+    return drop;
+  };
+  const reuseIds: BlockId[] = [
+    remember(layout.freeStart, layout.reuseStart),
+    remember(layout.freeSize, layout.reuseSize),
+    dropLast(layout.freeStart),
+    dropLast(layout.freeSize),
+  ];
+
+  const bigger = builder.add("operator_gt", { scope });
+  builder.input(bigger, "OPERAND1", variableRef(layout.reuseSize));
+  builder.input(bigger, "OPERAND2", numberLiteral(String(size)));
+  const split = builder.add("control_if", { scope });
+  builder.input(split, "CONDITION", { block: bigger });
+  const tailStart = builder.add("operator_add", { scope });
+  builder.input(tailStart, "NUM1", variableRef(layout.reuseStart));
+  builder.input(tailStart, "NUM2", numberLiteral(String(size)));
+  const addStart = builder.add("data_addtolist", { scope, fields: listField(layout.freeStart) });
+  builder.input(addStart, "ITEM", { block: tailStart });
+  const tailSize = builder.add("operator_subtract", { scope });
+  builder.input(tailSize, "NUM1", variableRef(layout.reuseSize));
+  builder.input(tailSize, "NUM2", numberLiteral(String(size)));
+  const addSize = builder.add("data_addtolist", { scope, fields: listField(layout.freeSize) });
+  builder.input(addSize, "ITEM", { block: tailSize });
+  builder.chain([addStart, addSize]);
+  builder.substack(split, "SUBSTACK", addStart);
+  reuseIds.push(split);
+
+  reuseIds.push(writeSlot(layout.arrayStart, variableRef(layout.reuseStart)));
+  reuseIds.push(writeSlot(layout.arrayLength, numberLiteral(String(size))));
+  for (let position = 0; position < size; position++) {
+    const at = builder.add("operator_add", { scope });
+    builder.input(at, "NUM1", variableRef(layout.reuseStart));
+    builder.input(at, "NUM2", numberLiteral(String(position + 1)));
+    const clear = builder.add("data_replaceitemoflist", { scope, fields: listField(layout.arrayItems) });
+    builder.input(clear, "INDEX", { block: at });
+    builder.input(clear, "ITEM", numberLiteral("0"));
+    reuseIds.push(clear);
+  }
+
+  builder.chain(reuseIds);
+  builder.chain(appendIds);
+  builder.substack(branch, "SUBSTACK", reuseIds[0]!);
+  builder.substack(branch, "SUBSTACK2", appendIds[0]!);
+  return [...ids, branch];
 }
 
 export function emitHeapFieldRead(
@@ -308,9 +406,10 @@ export function emitHeapArrayWrite(
 }
 
 /**
- * Releases an ObjectRef: tombstones the slot, trims a top-of-stack array range
- * and returns the id to the free list. `object` must be a plain variable ref so
- * it can be read several times without reparenting a block.
+ * Releases an ObjectRef: tombstones the slot, registers its array range in the
+ * free-interval lists and returns the id to the object free list. Any release
+ * order is correct — no range is shifted. `object` must be a plain variable ref
+ * so it can be read several times without reparenting a block.
  */
 export function emitHeapRelease(
   builder: GraphBuilder,
@@ -326,28 +425,25 @@ export function emitHeapRelease(
   ids.push(status);
 
   if (arraySize !== undefined && arraySize > 0) {
-    const start = builder.add("data_itemoflist", { scope, fields: listField(layout.arrayStart) });
-    builder.input(start, "INDEX", { block: oneBased(builder, scope, object) });
-    const size = builder.add("data_itemoflist", { scope, fields: listField(layout.arrayLength) });
-    builder.input(size, "INDEX", { block: oneBased(builder, scope, object) });
-    const end = builder.add("operator_add", { scope });
-    builder.input(end, "NUM1", { block: start });
-    builder.input(end, "NUM2", { block: size });
-    const itemCount = builder.add("data_lengthoflist", { scope, fields: listField(layout.arrayItems) });
-    const isTop = builder.add("operator_equals", { scope });
-    builder.input(isTop, "OPERAND1", { block: end });
-    builder.input(isTop, "OPERAND2", { block: itemCount });
-    const branch = builder.add("control_if", { scope });
-    builder.input(branch, "CONDITION", { block: isTop });
-    const deletes: BlockId[] = [];
-    for (let index = 0; index < arraySize; index++) {
-      const remove = builder.add("data_deleteoflist", { scope, fields: listField(layout.arrayItems) });
-      builder.input(remove, "INDEX", literal("last"));
-      deletes.push(remove);
-    }
-    builder.chain(deletes);
-    builder.substack(branch, "SUBSTACK", deletes[0]!);
-    ids.push(branch);
+    const length = builder.add("data_itemoflist", { scope, fields: listField(layout.arrayLength) });
+    builder.input(length, "INDEX", { block: oneBased(builder, scope, object) });
+    const isArray = builder.add("operator_gt", { scope });
+    builder.input(isArray, "OPERAND1", { block: length });
+    builder.input(isArray, "OPERAND2", numberLiteral("0"));
+    const guard = builder.add("control_if", { scope });
+    builder.input(guard, "CONDITION", { block: isArray });
+
+    const startValue = builder.add("data_itemoflist", { scope, fields: listField(layout.arrayStart) });
+    builder.input(startValue, "INDEX", { block: oneBased(builder, scope, object) });
+    const addStart = builder.add("data_addtolist", { scope, fields: listField(layout.freeStart) });
+    builder.input(addStart, "ITEM", { block: startValue });
+    const sizeValue = builder.add("data_itemoflist", { scope, fields: listField(layout.arrayLength) });
+    builder.input(sizeValue, "INDEX", { block: oneBased(builder, scope, object) });
+    const addSize = builder.add("data_addtolist", { scope, fields: listField(layout.freeSize) });
+    builder.input(addSize, "ITEM", { block: sizeValue });
+    builder.chain([addStart, addSize]);
+    builder.substack(guard, "SUBSTACK", addStart);
+    ids.push(guard);
   }
 
   const free = builder.add("data_addtolist", { scope, fields: listField(layout.freeObjects) });

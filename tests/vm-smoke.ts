@@ -53,6 +53,7 @@ const cases: ConformanceCase[] = [
   { label: "edge-hat", entry: example("edge-hat") },
   { label: "memory-object", entry: example("memory-object"), ignoreCompilerState: true },
   { label: "memory-classes", entry: example("memory-classes"), ignoreCompilerState: true },
+  { label: "heap-non-lifo", entry: example("heap-non-lifo"), ignoreCompilerState: true },
   { label: "function-return", entry: example("function-return"), ignoreCompilerState: true },
   { label: "function-nested", entry: example("function-nested"), ignoreCompilerState: true },
   { label: "function-boolean", entry: example("function-boolean"), ignoreCompilerState: true },

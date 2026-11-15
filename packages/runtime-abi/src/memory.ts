@@ -13,6 +13,8 @@ export const HEAP_NEXT_ID = "heap.nextObjectId";
 export const HEAP_ARRAY_START = "heap.array.start";
 export const HEAP_ARRAY_LENGTH = "heap.array.length";
 export const HEAP_ARRAY_ITEMS = "heap.array.items";
+export const HEAP_ARRAY_FREE_START = "heap.array.freeStart";
+export const HEAP_ARRAY_FREE_SIZE = "heap.array.freeSize";
 export const ARRAY_CLASS = "Array";
 
 export function heapFieldList(field: string): string {
@@ -31,7 +33,13 @@ export function heapParallelLists(fields: readonly string[]): readonly string[] 
 }
 
 export function heapAllListNames(fields: readonly string[]): readonly string[] {
-  return [...heapParallelLists(fields), HEAP_ARRAY_ITEMS, HEAP_FREE_LIST];
+  return [
+    ...heapParallelLists(fields),
+    HEAP_ARRAY_ITEMS,
+    HEAP_ARRAY_FREE_START,
+    HEAP_ARRAY_FREE_SIZE,
+    HEAP_FREE_LIST,
+  ];
 }
 
 export type HeapFieldType = "number" | "string" | "boolean";
@@ -92,15 +100,23 @@ export interface HeapRecord {
   readonly status: HeapStatus;
 }
 
+/** A released [start, start + length) slice of `heap.array.items`, available for reuse. */
+export interface HeapInterval {
+  readonly start: number;
+  readonly length: number;
+}
+
 export interface HeapTableState {
   readonly objects: ReadonlyMap<ObjectRef, HeapRecord>;
   readonly items: readonly ValuePayload[];
+  readonly freeIntervals: readonly HeapInterval[];
   readonly allocator: HeapAllocatorState;
 }
 
 export const INITIAL_HEAP_TABLE: HeapTableState = {
   objects: new Map(),
   items: [],
+  freeIntervals: [],
   allocator: INITIAL_HEAP_ALLOCATOR,
 };
 
@@ -113,14 +129,35 @@ export function heapNew(
   if (!Number.isSafeInteger(arraySize) || arraySize < 0) {
     throw new RangeError(`invalid array size ${arraySize}`);
   }
-  if (state.items.length + arraySize > MAX_OBJECTS) {
+  const reusable = arraySize > 0
+    ? state.freeIntervals[state.freeIntervals.length - 1]
+    : undefined;
+  const reuse = reusable !== undefined && reusable.length >= arraySize;
+  if (!reuse && state.items.length + arraySize > MAX_OBJECTS) {
     throw new RangeError(`heap array item limit ${MAX_OBJECTS} reached`);
   }
   const allocated = allocateObjectId(state.allocator);
-  const arrayStart = state.items.length;
-  const items = arraySize > 0
-    ? [...state.items, ...Array.from({ length: arraySize }, () => 0 as ValuePayload)]
-    : [...state.items];
+  let arrayStart: number;
+  let items: ValuePayload[];
+  let freeIntervals: HeapInterval[];
+  if (reuse && reusable) {
+    arrayStart = reusable.start;
+    freeIntervals = state.freeIntervals.slice(0, -1);
+    if (reusable.length > arraySize) {
+      freeIntervals.push({
+        start: reusable.start + arraySize,
+        length: reusable.length - arraySize,
+      });
+    }
+    items = [...state.items];
+    for (let index = 0; index < arraySize; index++) items[arrayStart + index] = 0;
+  } else {
+    arrayStart = state.items.length;
+    freeIntervals = [...state.freeIntervals];
+    items = arraySize > 0
+      ? [...state.items, ...Array.from({ length: arraySize }, () => 0 as ValuePayload)]
+      : [...state.items];
+  }
   const record: HeapRecord = {
     classId,
     fields: new Map(fieldInitials),
@@ -130,7 +167,7 @@ export function heapNew(
   };
   const objects = new Map(state.objects);
   objects.set(allocated.id, record);
-  return { ref: allocated.id, state: { objects, items, allocator: allocated.state } };
+  return { ref: allocated.id, state: { objects, items, freeIntervals, allocator: allocated.state } };
 }
 
 function liveRecord(state: HeapTableState, ref: ObjectRef): HeapRecord {
@@ -190,22 +227,22 @@ export function heapWriteArray(
 }
 
 /**
- * Releases an object and returns its id to the free list. When the object's
- * array range is the top of the item stack (LIFO release order) the range is
- * trimmed, so repeated allocate/release cycles do not grow `heap.array.items`.
- * Out-of-order releases leave a hole instead of shifting later ranges.
+ * Releases an object, returns its id to the free list and registers its array
+ * range for reuse. Any release order is correct: no range is shifted, and the
+ * next allocation takes the last interval whose length fits (splitting the
+ * remainder), falling back to appending only when nothing fits.
  */
 export function heapRelease(state: HeapTableState, ref: ObjectRef): HeapTableState {
   const record = liveRecord(state, ref);
   const objects = new Map(state.objects);
   objects.set(ref, { ...record, status: "released" });
-  const end = record.arrayStart + record.arrayLength;
-  const items = record.arrayLength > 0 && end === state.items.length
-    ? state.items.slice(0, record.arrayStart)
-    : state.items;
+  const freeIntervals = record.arrayLength > 0
+    ? [...state.freeIntervals, { start: record.arrayStart, length: record.arrayLength }]
+    : [...state.freeIntervals];
   return {
     objects,
-    items,
+    items: state.items,
+    freeIntervals,
     allocator: releaseObjectId(state.allocator, ref),
   };
 }
