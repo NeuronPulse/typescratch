@@ -2,7 +2,8 @@ import { relative, resolve } from "node:path";
 import ts from "typescript";
 import { CODES, type DiagnosticBag, type SourceSpan } from "@typescratch/diagnostics";
 import type {
-  BinOp, Expr, FunctionDecl, Hat, IrType, ListDecl, ListOp, Module, RoleRef, Script, Stmt, VarDecl,
+  BinOp, ClassDecl, DispatchTarget, Expr, FieldDecl, FunctionDecl, Hat, IrType, ListDecl, ListOp,
+  Module, RoleRef, Script, Stmt, VarDecl,
 } from "@typescratch/ir";
 import { MATH_INTRINSICS } from "@typescratch/language";
 
@@ -126,6 +127,12 @@ class Lowerer {
   private functionCounter = 0;
   private readonly handleVars = new Map<ts.Symbol, VarDecl>();
   private readonly handleLists = new Map<ts.Symbol, ListDecl>();
+  private readonly classes: ClassDecl[] = [];
+  private readonly classByName = new Map<string, ClassDecl>();
+  private readonly methodNodes = new Map<ts.MethodDeclaration, FunctionDecl>();
+  private readonly arrayVars = new Map<ts.Symbol, { type: IrType }>();
+  private currentThisVar: VarDecl | undefined;
+  private classCounter = 0;
   private readonly compileTime = new Map<ts.Symbol, string | number | boolean>();
   private current: Stmt[] = [];
   private counter = 0;
@@ -148,9 +155,10 @@ class Lowerer {
   lower(): Module {
     for (const statement of this.source.statements) {
       if (ts.isFunctionDeclaration(statement)) this.declareFunction(statement);
+      if (ts.isClassDeclaration(statement)) this.declareClass(statement);
     }
     for (const statement of this.source.statements) {
-      if (ts.isFunctionDeclaration(statement)) continue;
+      if (ts.isFunctionDeclaration(statement) || ts.isClassDeclaration(statement)) continue;
       if (ts.isImportDeclaration(statement) || ts.isEmptyStatement(statement)) continue;
       if (ts.isVariableStatement(statement)) {
         for (const declaration of statement.declarationList.declarations) {
@@ -159,9 +167,10 @@ class Lowerer {
         continue;
       }
       if (ts.isExpressionStatement(statement) && this.lowerHatStatement(statement)) continue;
-      this.unsupported(statement, "top-level statements may only declare resources or register event hats");
+      this.unsupported(statement, "top-level statements may only declare resources, classes or register event hats");
     }
     for (const [node, fn] of this.functionNodes) this.lowerFunction(node, fn);
+    for (const [node, fn] of this.methodNodes) this.lowerMethod(node, fn);
     this.checkRecursion();
     const module: Module = {
       entry: relative(this.root, this.source.fileName),
@@ -170,7 +179,153 @@ class Lowerer {
       lists: this.lists,
     };
     if (this.functions.length > 0) module.functions = this.functions;
+    if (this.classes.length > 0) module.classes = this.classes;
     return module;
+  }
+
+  private declareClass(node: ts.ClassDeclaration): void {
+    const name = node.name?.text ?? `Anonymous${++this.classCounter}`;
+    const fields: FieldDecl[] = [];
+    for (const member of node.members) {
+      if (!ts.isPropertyDeclaration(member) || !ts.isIdentifier(member.name)) continue;
+      const type = member.type
+        ? this.irTypeOf(this.checker.getTypeFromTypeNode(member.type))
+        : "number";
+      if (type !== "number" && type !== "string") {
+        this.unsupported(member, `field ${member.name.text} must be number or string in v0.2`);
+        continue;
+      }
+      const field: FieldDecl = { name: member.name.text, type };
+      const initial = member.initializer ? this.literalValue(member.initializer) : undefined;
+      if (initial !== undefined) field.initial = initial;
+      fields.push(field);
+    }
+    const cls: ClassDecl = { id: name, name, fields, methodIds: [], span: this.span(node) };
+    this.classes.push(cls);
+    this.classByName.set(name, cls);
+    for (const member of node.members) {
+      if (!ts.isMethodDeclaration(member) || !ts.isIdentifier(member.name)) continue;
+      const fn = this.declareMethod(member, cls);
+      cls.methodIds.push(fn.id);
+      this.methodNodes.set(member, fn);
+    }
+  }
+
+  private declareMethod(node: ts.MethodDeclaration, cls: ClassDecl): FunctionDecl {
+    const name = ts.isIdentifier(node.name) ? node.name.text : `anonymous${++this.functionCounter}`;
+    const id = `fn_${cls.name}_${name}_${++this.functionCounter}`;
+    const returnType = node.type
+      ? this.irTypeOf(this.checker.getTypeFromTypeNode(node.type))
+      : "number";
+    const span = this.span(node);
+    const callId = this.newVar(`${name}_callId`, "number", "temp", span, 0);
+    const returnValue = this.newVar(`${name}_ret`, returnType, "temp", span, 0);
+    const returning = this.newVar(`${name}_returning`, "number", "temp", span, 0);
+    const thisDecl = this.newVar("this", "number", "temp", span, 0);
+    thisDecl.parameter = true;
+    const params: VarDecl[] = [thisDecl];
+    for (const parameter of node.parameters) {
+      if (!ts.isIdentifier(parameter.name)) {
+        this.unsupported(parameter, "destructured method parameters are not supported");
+        continue;
+      }
+      const type = this.typeOf(parameter.name);
+      if (type !== "number" && type !== "string" && type !== "boolean") {
+        this.unsupported(parameter, `method parameter ${parameter.name.text} must be number, string or boolean`);
+        continue;
+      }
+      const decl = this.newVar(parameter.name.text, type, "temp", this.span(parameter), 0);
+      decl.parameter = true;
+      const symbol = this.checker.getSymbolAtLocation(parameter.name);
+      if (symbol) this.symbolVars.set(symbol, decl);
+      params.push(decl);
+    }
+    const fn: FunctionDecl = {
+      id, name, params, returnType, body: [],
+      callId: callId.id, returnValue: returnValue.id, returning: returning.id,
+      thisVar: thisDecl.id, classId: cls.id, span,
+    };
+    this.functions.push(fn);
+    this.callEdges.set(id, new Set());
+    return fn;
+  }
+
+  private lowerMethod(node: ts.MethodDeclaration, fn: FunctionDecl): void {
+    this.currentFunction = fn;
+    this.currentThisVar = fn.thisVar
+      ? this.vars.find((decl) => decl.id === fn.thisVar)
+      : undefined;
+    this.scriptIndex = -1;
+    fn.body = this.withBlock(() => {
+      if (node.body) this.lowerStatement(node.body);
+    });
+    this.currentFunction = undefined;
+    this.currentThisVar = undefined;
+    this.scriptIndex = -1;
+  }
+
+  private dispatchTargets(method: string): DispatchTarget[] {
+    const targets: DispatchTarget[] = [];
+    for (const cls of this.classes) {
+      for (const id of cls.methodIds) {
+        const fn = this.functions.find((item) => item.id === id);
+        if (fn?.name === method) targets.push({ classId: cls.id, function: fn.id });
+      }
+    }
+    return targets;
+  }
+
+  private objectClassOf(node: ts.Expression): string | undefined {
+    if (node.kind === ts.SyntaxKind.ThisKeyword) return this.currentFunction?.classId;
+    const type = this.checker.getTypeAtLocation(node);
+    const name = (type.getSymbol() ?? type.aliasSymbol)?.getName();
+    return name && this.classByName.has(name) ? name : undefined;
+  }
+
+  private fieldType(field: string, classHint?: string): IrType {
+    const known = classHint ? this.classByName.get(classHint) : undefined;
+    for (const cls of known ? [known] : this.classes) {
+      const found = cls.fields.find((item) => item.name === field);
+      if (found) return found.type;
+    }
+    return "number";
+  }
+
+  private methodReturnType(functionId: string): IrType {
+    return this.functions.find((fn) => fn.id === functionId)?.returnType ?? "number";
+  }
+
+  private lowerArrayCall(node: ts.CallExpression): Expr | undefined {
+    if (!ts.isPropertyAccessExpression(node.expression)) return undefined;
+    const symbol = this.checker.getSymbolAtLocation(node.expression.expression);
+    const array = symbol ? this.arrayVars.get(symbol) : undefined;
+    if (!array) return undefined;
+    const method = node.expression.name.text;
+    const object = this.lowerExpr(node.expression.expression);
+    if (method === "get" && node.arguments[0]) {
+      return {
+        k: "arrayRead",
+        array: object,
+        index: this.lowerExpr(node.arguments[0]),
+        type: array.type,
+        span: this.span(node),
+      };
+    }
+    if (method === "length") {
+      return { k: "arrayLength", array: object, type: "number", span: this.span(node) };
+    }
+    if (method === "set" && node.arguments[0] && node.arguments[1]) {
+      this.emit({
+        k: "arrayWrite",
+        array: object,
+        index: this.lowerExpr(node.arguments[0]),
+        value: this.lowerExpr(node.arguments[1]),
+        span: this.span(node),
+      });
+      return this.voidConst(node);
+    }
+    this.unsupported(node, `unsupported array method ${method}`);
+    return this.voidConst(node);
   }
 
   private declareFunction(node: ts.FunctionDeclaration): void {
@@ -479,6 +634,39 @@ class Lowerer {
         if (symbol) this.handleVars.set(symbol, decl);
         return;
       }
+      if (runtimeName === "array") {
+        if (topLevel) {
+          this.unsupported(initializer, "array() must be declared inside a script or function");
+          return;
+        }
+        const sizeArg = initializer.arguments[0];
+        if (!sizeArg || !ts.isNumericLiteral(sizeArg)) {
+          this.unsupported(initializer, "array() size must be a numeric literal");
+          return;
+        }
+        const handleType = this.checker.getTypeAtLocation(initializer) as ts.TypeReference;
+        const inner = this.checker.getTypeArguments(handleType)[0];
+        const type = inner ? this.irTypeOf(inner) : "number";
+        const decl = this.newVar(declaration.name.text, "number", "temp", this.span(declaration), 0);
+        if (symbol) {
+          this.arrayVars.set(symbol, { type });
+          this.symbolVars.set(symbol, decl);
+        }
+        this.emit({
+          k: "declare",
+          var: decl.id,
+          init: {
+            k: "arrayNew",
+            size: {
+              k: "const", value: Number(sizeArg.text), type: "number", span: this.span(sizeArg),
+            },
+            type: "number",
+            span: this.span(initializer),
+          },
+          span: this.span(declaration),
+        });
+        return;
+      }
     }
 
     const literal = initializer ? this.literalValue(initializer) : undefined;
@@ -492,7 +680,18 @@ class Lowerer {
       return;
     }
 
-    const decl = this.newVar(declaration.name.text, this.typeOf(declaration.name), "temp", this.span(declaration));
+    const isObject = initializer && ts.isNewExpression(initializer)
+      && ts.isIdentifier(initializer.expression)
+      && this.classByName.has(initializer.expression.text);
+    const decl = this.newVar(
+      declaration.name.text,
+      isObject ? "number" : this.typeOf(declaration.name),
+      "temp",
+      this.span(declaration),
+    );
+    if (isObject && initializer && ts.isNewExpression(initializer) && ts.isIdentifier(initializer.expression)) {
+      decl.className = initializer.expression.text;
+    }
     if (symbol) this.symbolVars.set(symbol, decl);
     this.emit({
       k: "declare",
@@ -590,6 +789,34 @@ class Lowerer {
         type: "boolean", span: this.span(node),
       };
     }
+    if (node.kind === ts.SyntaxKind.ThisKeyword) {
+      if (!this.currentThisVar) {
+        this.unsupported(node, "this is only valid inside a class method");
+        return this.voidConst(node);
+      }
+      return { k: "read", var: this.currentThisVar.id, type: "number", span: this.span(node) };
+    }
+    if (ts.isNewExpression(node)) {
+      if (ts.isIdentifier(node.expression) && this.classByName.has(node.expression.text)) {
+        return { k: "objectNew", classId: node.expression.text, type: "number", span: this.span(node) };
+      }
+      this.unsupported(node, "new is only supported for TypeScratch class declarations");
+      return this.voidConst(node);
+    }
+    if (ts.isPropertyAccessExpression(node)) {
+      const classHint = this.objectClassOf(node.expression);
+      if (classHint) {
+        return {
+          k: "fieldRead",
+          object: this.lowerExpr(node.expression),
+          field: node.name.text,
+          type: this.fieldType(node.name.text, classHint),
+          span: this.span(node),
+        };
+      }
+      this.unsupported(node, `unsupported property access ${node.name.text}`);
+      return this.voidConst(node);
+    }
     if (ts.isIdentifier(node)) {
       const symbol = this.checker.getSymbolAtLocation(node);
       if (symbol && this.compileTime.has(symbol)) {
@@ -678,6 +905,24 @@ class Lowerer {
       };
     }
     if (ts.isCallExpression(node)) {
+      const arrayCall = this.lowerArrayCall(node);
+      if (arrayCall) return arrayCall;
+      if (ts.isPropertyAccessExpression(node.expression)) {
+        const method = node.expression.name.text;
+        const targets = this.dispatchTargets(method);
+        const classHint = this.objectClassOf(node.expression.expression);
+        if (targets.length > 0 && classHint) {
+          return {
+            k: "methodCall",
+            object: this.lowerExpr(node.expression.expression),
+            method,
+            args: node.arguments.map((argument) => this.lowerExpr(argument)),
+            targets,
+            type: this.methodReturnType(targets[0]!.function),
+            span: this.span(node),
+          };
+        }
+      }
       const symbol = this.checker.getSymbolAtLocation(node.expression);
       const fn = symbol ? this.functionSymbols.get(symbol) : undefined;
       if (fn) {
@@ -784,6 +1029,22 @@ class Lowerer {
 
   private lowerExpressionStatement(node: ts.ExpressionStatement): void {
     const expression = node.expression;
+    if (ts.isBinaryExpression(expression)
+      && expression.operatorToken.kind === ts.SyntaxKind.EqualsToken
+      && ts.isPropertyAccessExpression(expression.left)) {
+      const access = expression.left;
+      const classHint = this.objectClassOf(access.expression);
+      if (classHint) {
+        this.emit({
+          k: "fieldWrite",
+          object: this.lowerExpr(access.expression),
+          field: access.name.text,
+          value: this.lowerExpr(expression.right),
+          span: this.span(node),
+        });
+        return;
+      }
+    }
     if (ts.isBinaryExpression(expression)) {
       const operator = COMPOUND_ASSIGNMENTS[expression.operatorToken.kind];
       if (operator && ts.isIdentifier(expression.left)) {

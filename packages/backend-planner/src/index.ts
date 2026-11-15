@@ -86,6 +86,18 @@ export function planBackends(
           abiProfile: profile,
         });
       }
+      if (stmt.k === "virtualInvoke") {
+        const profile = options.abiProfile ?? "native";
+        entries.push({
+          operation: `dispatch:${stmt.method}`,
+          decision: "native",
+          detail: `heap.classId type tests -> ${stmt.targets.length} method(s); configured profile: ${profile}`,
+          span: stmt.span,
+          cost: 3 + stmt.targets.length,
+          strategy: "native",
+          abiProfile: profile,
+        });
+      }
       if (stmt.k === "if") {
         visitCalls(stmt.then);
         if (stmt.else) visitCalls(stmt.else);

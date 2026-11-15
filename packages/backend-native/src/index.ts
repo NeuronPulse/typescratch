@@ -16,6 +16,18 @@ import {
   emitFrameSlotAppend,
   type FrameLayout,
 } from "./frame-blocks.ts";
+import {
+  declareHeapLayout,
+  emitHeapAllocate,
+  emitHeapArrayAllocate,
+  emitHeapArrayLength,
+  emitHeapArrayRead,
+  emitHeapClassOf,
+  emitHeapFieldRead,
+  type HeapLayout,
+} from "./heap-blocks.ts";
+
+export * from "./heap-blocks.ts";
 
 const HAT_OPCODES: Record<Hat["kind"], string> = {
   flag: "event_whenflagclicked",
@@ -116,8 +128,9 @@ export function lowerNative(
       const argIds = [...fn.params.map((_, index) => `input${index}`), "inputCallId"];
       const callIdName = variables.get(fn.callId)?.name ?? "callId";
       const argNames = [...fn.params.map((param) => param.name), callIdName];
+      const procedureLabel = fn.classId ? `${fn.classId}.${fn.name}` : fn.name;
       procedureInfo.set(fn.id, {
-        proccode: `${fn.name} ${argIds.map(() => "%s").join(" ")}`,
+        proccode: `${procedureLabel} ${argIds.map(() => "%s").join(" ")}`,
         argIds,
         argNames,
         defaults: argIds.map(() => ""),
@@ -146,6 +159,49 @@ export function lowerNative(
   builder.setActiveTarget(modules[0]?.role?.name ?? "Sprite1");
   const layout: FrameLayout | undefined = functions.size > 0
     ? declareFrameLayout(builder)
+    : undefined;
+
+  const classById = new Map(
+    modules.flatMap((module) => (module.classes ?? []).map((entry) => [entry.id, entry] as const)),
+  );
+  const heapFieldNames = [
+    ...new Set(
+      modules.flatMap((module) =>
+        (module.classes ?? []).flatMap((entry) => entry.fields.map((field) => field.name))),
+    ),
+  ].sort();
+  const heapInitials: Record<string, string> = {};
+  for (const module of modules) {
+    for (const entry of module.classes ?? []) {
+      for (const field of entry.fields) {
+        heapInitials[field.name] = String(field.initial ?? (field.type === "string" ? "" : 0));
+      }
+    }
+  }
+  const heapUsed = (() => {
+    const visit = (stmts: Stmt[]): boolean => stmts.some((stmt) => {
+      switch (stmt.k) {
+        case "heapAllocate":
+        case "heapArrayAllocate":
+        case "fieldWrite":
+        case "arrayWrite":
+        case "virtualInvoke":
+          return true;
+        case "if":
+          return visit(stmt.then) || (stmt.else ? visit(stmt.else) : false);
+        case "while":
+        case "sequence":
+          return visit(stmt.body);
+        default:
+          return false;
+      }
+    });
+    return modules.some((module) =>
+      module.scripts.some((script) => visit(script.body))
+      || (module.functions ?? []).some((fn) => visit(fn.body)));
+  })();
+  const heapLayout: HeapLayout | undefined = heapUsed
+    ? declareHeapLayout(builder, heapFieldNames, heapInitials)
     : undefined;
 
   const emitValue = (expr: Expr, owner: string, scope: string, fallback?: SourceSpan): InputRef => {
@@ -276,6 +332,44 @@ export function lowerNative(
           builder.input(id, names[index]!, emitValue(argument, id, scope, span));
         }
         return { block: id };
+      }
+      case "objectNew":
+      case "arrayNew":
+      case "methodCall":
+        bag.error(CODES.NATIVE_LOWERING, `${expr.k} must be lifted by ir-opt before native emission`, span);
+        return { primitive: [4, "0"] };
+      case "fieldRead": {
+        if (!heapLayout?.fields[expr.field]) {
+          bag.error(CODES.NATIVE_LOWERING, `no heap list for field ${expr.field}`, span);
+          return { primitive: [4, "0"] };
+        }
+        return {
+          block: emitHeapFieldRead(
+            builder, scope, heapLayout,
+            emitValue(expr.object, owner, scope, span), expr.field,
+          ),
+        };
+      }
+      case "arrayRead": {
+        if (!heapLayout) {
+          bag.error(CODES.NATIVE_LOWERING, "array read without a heap layout", span);
+          return { primitive: [4, "0"] };
+        }
+        const array = emitValue(expr.array, owner, scope, span);
+        const index = emitValue(expr.index, owner, scope, span);
+        return { block: emitHeapArrayRead(builder, scope, heapLayout, array, index) };
+      }
+      case "arrayLength": {
+        if (!heapLayout) {
+          bag.error(CODES.NATIVE_LOWERING, "array length without a heap layout", span);
+          return { primitive: [4, "0"] };
+        }
+        return {
+          block: emitHeapArrayLength(
+            builder, scope, heapLayout,
+            emitValue(expr.array, owner, scope, span),
+          ),
+        };
       }
       case "call":
         bag.error(CODES.NATIVE_LOWERING, `call to ${expr.function} was not lifted by ir-opt`, span);
@@ -464,6 +558,172 @@ export function lowerNative(
             { k: "read", var: stmt.callId, type: "number" }, free, scope, span,
           ));
           ids.push(statusReplace, free);
+          break;
+        }
+        case "heapAllocate": {
+          const tokenDecl = variables.get(stmt.result);
+          if (!heapLayout || !tokenDecl) {
+            bag.error(CODES.NATIVE_LOWERING, `cannot allocate object of ${stmt.classId}`, span);
+            break;
+          }
+          const fieldValues: Record<string, InputRef> = {};
+          for (const field of classById.get(stmt.classId)?.fields ?? []) {
+            fieldValues[field.name] = {
+              primitive: [10, String(field.initial ?? (field.type === "string" ? "" : 0))],
+            };
+          }
+          ids.push(...emitHeapAllocate(
+            builder, scope, heapLayout,
+            { id: tokenDecl.id, name: tokenDecl.name },
+            stmt.classId,
+            fieldValues,
+          ));
+          break;
+        }
+        case "heapArrayAllocate": {
+          const tokenDecl = variables.get(stmt.result);
+          const size = stmt.size;
+          if (!heapLayout || !tokenDecl || size.k !== "const" || typeof size.value !== "number"
+            || !Number.isSafeInteger(size.value) || size.value < 0 || size.value > 200000) {
+            bag.error(
+              CODES.NATIVE_LOWERING,
+              "array size must be a non-negative compile-time integer",
+              span,
+            );
+            break;
+          }
+          const defaults: Record<string, InputRef> = {};
+          for (const cls of classById.values()) {
+            for (const field of cls.fields) {
+              defaults[field.name] = { primitive: [10, field.type === "string" ? "" : "0"] };
+            }
+          }
+          ids.push(...emitHeapArrayAllocate(
+            builder, scope, heapLayout,
+            { id: tokenDecl.id, name: tokenDecl.name },
+            size.value,
+            defaults,
+          ));
+          break;
+        }
+        case "fieldWrite": {
+          const field = heapLayout?.fields[stmt.field];
+          if (!heapLayout || !field) {
+            bag.error(CODES.NATIVE_LOWERING, `no heap list for field ${stmt.field}`, span);
+            break;
+          }
+          const write = builder.add("data_replaceitemoflist", {
+            scope, span, fields: { LIST: [field.name, field.id] },
+          });
+          const object = emitValue(stmt.object, write, scope, span);
+          const value = emitValue(stmt.value, write, scope, span);
+          const indexAdd = builder.add("operator_add", { scope, parent: write, span });
+          builder.input(indexAdd, "NUM1", object);
+          builder.input(indexAdd, "NUM2", { primitive: [4, "1"] });
+          builder.input(write, "INDEX", { block: indexAdd });
+          builder.input(write, "ITEM", value);
+          ids.push(write);
+          break;
+        }
+        case "arrayWrite": {
+          if (!heapLayout) {
+            bag.error(CODES.NATIVE_LOWERING, "array write without a heap layout", span);
+            break;
+          }
+          const write = builder.add("data_replaceitemoflist", {
+            scope, span,
+            fields: { LIST: [heapLayout.arrayItems.name, heapLayout.arrayItems.id] },
+          });
+          const array = emitValue(stmt.array, write, scope, span);
+          const index = emitValue(stmt.index, write, scope, span);
+          const value = emitValue(stmt.value, write, scope, span);
+          const start = builder.add("data_itemoflist", {
+            scope,
+            fields: { LIST: [heapLayout.arrayStart.name, heapLayout.arrayStart.id] },
+          });
+          const startIndex = builder.add("operator_add", { scope, parent: start, span });
+          builder.input(startIndex, "NUM1", array);
+          builder.input(startIndex, "NUM2", { primitive: [4, "1"] });
+          builder.input(start, "INDEX", { block: startIndex });
+          const offset = builder.add("operator_add", { scope, parent: write, span });
+          builder.input(offset, "NUM1", { block: start });
+          builder.input(offset, "NUM2", index);
+          const position = builder.add("operator_add", { scope, parent: write, span });
+          builder.input(position, "NUM1", { block: offset });
+          builder.input(position, "NUM2", { primitive: [4, "1"] });
+          builder.input(write, "INDEX", { block: position });
+          builder.input(write, "ITEM", value);
+          ids.push(write);
+          break;
+        }
+        case "virtualInvoke": {
+          const callDecl = variables.get(stmt.callId);
+          const resultDecl = variables.get(stmt.result);
+          if (!heapLayout || !layout || !callDecl || !resultDecl) {
+            bag.error(CODES.NATIVE_LOWERING, `cannot lower virtual call ${stmt.method}`, span);
+            break;
+          }
+          const token = { id: callDecl.id, name: callDecl.name };
+          ids.push(...emitFrameAllocate(builder, scope, layout, token));
+          ids.push(...emitFrameSlotAppend(builder, scope, layout, token));
+          for (const target of stmt.targets) {
+            const info = procedureInfo.get(target.function);
+            if (!info) {
+              bag.error(CODES.NATIVE_LOWERING, `no procedure for ${target.function}`, span);
+              continue;
+            }
+            const equals = builder.add("operator_equals", { scope, span });
+            const classItem = emitHeapClassOf(
+              builder, scope, heapLayout,
+              emitValue(stmt.object, equals, scope, span),
+            );
+            builder.input(equals, "OPERAND1", { block: classItem });
+            builder.input(equals, "OPERAND2", { primitive: [10, target.classId] });
+            const branch = builder.add("control_if", { scope, span });
+            builder.input(branch, "CONDITION", { block: equals });
+            const call = builder.add("procedures_call", {
+              scope, span,
+              mutation: {
+                tagName: "mutation",
+                proccode: info.proccode,
+                argumentids: JSON.stringify(info.argIds),
+                children: [],
+              },
+            });
+            builder.input(call, info.argIds[0]!, emitValue(stmt.object, call, scope, span));
+            for (let index = 0; index < stmt.args.length; index++) {
+              const argument = stmt.args[index];
+              if (!argument) continue;
+              builder.input(call, info.argIds[index + 1]!, emitValue(argument, call, scope, span));
+            }
+            builder.input(call, info.callIdArg, {
+              obscuredPrimitive: [12, callDecl.name, callDecl.id],
+            });
+            builder.substack(branch, "SUBSTACK", call);
+            ids.push(branch);
+          }
+          const readBlock = emitFrameReturnRead(builder, scope, layout, token);
+          const set = builder.add("data_setvariableto", {
+            scope, span, fields: { VARIABLE: [resultDecl.name, resultDecl.id] },
+          });
+          builder.input(set, "VALUE", { block: readBlock });
+          ids.push(set);
+          const tagItem = builder.add("data_itemoflist", {
+            scope,
+            fields: { LIST: [layout.lists["abi.frame.returnTag"]!.name, layout.lists["abi.frame.returnTag"]!.id] },
+          });
+          const tagIndex = builder.add("operator_add", { scope, parent: tagItem, span });
+          builder.input(tagIndex, "NUM1", { obscuredPrimitive: [12, callDecl.name, callDecl.id] });
+          builder.input(tagIndex, "NUM2", { primitive: [4, "1"] });
+          builder.input(tagItem, "INDEX", { block: tagIndex });
+          const tagDecl = variables.get(stmt.resultTag);
+          if (tagDecl) {
+            const setTag = builder.add("data_setvariableto", {
+              scope, span, fields: { VARIABLE: [tagDecl.name, tagDecl.id] },
+            });
+            builder.input(setTag, "VALUE", { block: tagItem });
+            ids.push(setTag);
+          }
           break;
         }
         case "return":

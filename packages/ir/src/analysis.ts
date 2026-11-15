@@ -38,6 +38,24 @@ function expressionEvents(expr: Expr): YieldEvent[] {
       case "listRead":
         if (node.index) visit(node.index);
         break;
+      case "arrayNew":
+        visit(node.size);
+        break;
+      case "arrayLength":
+        visit(node.array);
+        break;
+      case "fieldRead":
+        visit(node.object);
+        break;
+      case "arrayRead":
+        visit(node.array);
+        visit(node.index);
+        break;
+      case "methodCall":
+        visit(node.object);
+        for (const arg of node.args) visit(arg);
+        break;
+      case "objectNew":
       case "const":
         break;
     }
@@ -60,10 +78,28 @@ function statementEvents(stmts: Stmt[]): YieldEvent[] {
           events.push({ kind: "write", var: stmt.var, span: stmt.span });
           break;
         case "invoke":
+        case "virtualInvoke":
+          if (stmt.k === "virtualInvoke") events.push(...expressionEvents(stmt.object));
           for (const arg of stmt.args) events.push(...expressionEvents(arg));
           events.push({ kind: "write", var: stmt.callId, span: stmt.span });
           events.push({ kind: "write", var: stmt.result, span: stmt.span });
           events.push({ kind: "write", var: stmt.resultTag, span: stmt.span });
+          break;
+        case "heapAllocate":
+          events.push({ kind: "write", var: stmt.result, span: stmt.span });
+          break;
+        case "heapArrayAllocate":
+          events.push(...expressionEvents(stmt.size));
+          events.push({ kind: "write", var: stmt.result, span: stmt.span });
+          break;
+        case "fieldWrite":
+          events.push(...expressionEvents(stmt.object));
+          events.push(...expressionEvents(stmt.value));
+          break;
+        case "arrayWrite":
+          events.push(...expressionEvents(stmt.array));
+          events.push(...expressionEvents(stmt.index));
+          events.push(...expressionEvents(stmt.value));
           break;
         case "frameReturn":
           events.push(...expressionEvents(stmt.value));

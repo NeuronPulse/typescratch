@@ -131,11 +131,37 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
   const values = new Map<string, TraceValue>();
   const lists = new Map<string, TraceValue[]>();
   const functionMap = new Map<string, FunctionDecl>();
+  const classById = new Map(
+    modules.flatMap((module) => (module.classes ?? []).map((entry) => [entry.id, entry] as const)),
+  );
   for (const module of modules) {
     for (const decl of module.vars) values.set(decl.id, defaultValue(decl));
     for (const decl of module.lists ?? []) lists.set(decl.id, [...(decl.initial ?? [])]);
     for (const fn of module.functions ?? []) functionMap.set(fn.id, fn);
   }
+
+  interface HeapObject {
+    classId: string;
+    fields: Map<string, TraceValue>;
+    start: number;
+    length: number;
+  }
+  const heapObjects = new Map<number, HeapObject>();
+  const heapItems: TraceValue[] = [];
+  const heapFree: number[] = [];
+  let heapNextId = 0;
+  const allocateObject = (classId: string, size = 0): number => {
+    const ref = heapFree.length > 0 ? heapFree.pop()! : heapNextId++;
+    const fields = new Map<string, TraceValue>();
+    for (const field of classById.get(classId)?.fields ?? []) {
+      fields.set(field.name, field.initial ?? (field.type === "string" ? "" : 0));
+    }
+    const start = heapItems.length;
+    for (let index = 0; index < Math.max(0, size); index++) heapItems.push(0);
+    heapObjects.set(ref, { classId, fields, start, length: Math.max(0, size) });
+    return ref;
+  };
+  const fieldRef = (expr: Expr): number => Math.trunc(toNumber(evalExpr(expr)));
 
   const evalExpr = (expr: Expr): TraceValue => {
     switch (expr.k) {
@@ -162,6 +188,27 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
         const fn = functionMap.get(expr.function);
         if (!fn) throw new Error(`IR interpreter cannot find function ${expr.function}`);
         return execFunction(fn, expr.args.map(evalExpr));
+      }
+      case "objectNew":
+        return allocateObject(expr.classId);
+      case "arrayNew":
+        return allocateObject("Array", Math.trunc(toNumber(evalExpr(expr.size))));
+      case "fieldRead":
+        return heapObjects.get(fieldRef(expr.object))?.fields.get(expr.field) ?? 0;
+      case "arrayLength":
+        return heapObjects.get(fieldRef(expr.array))?.length ?? 0;
+      case "arrayRead": {
+        const object = heapObjects.get(fieldRef(expr.array));
+        const index = Math.trunc(toNumber(evalExpr(expr.index)));
+        if (!object || index < 0 || index >= object.length) return "";
+        return heapItems[object.start + index] ?? 0;
+      }
+      case "methodCall": {
+        const classId = heapObjects.get(fieldRef(expr.object))?.classId;
+        const target = expr.targets.find((entry) => entry.classId === classId);
+        const fn = target ? functionMap.get(target.function) : undefined;
+        if (!fn) throw new Error(`IR interpreter cannot dispatch ${expr.method} on ${classId ?? "unknown"}`);
+        return execFunction(fn, [fieldRef(expr.object), ...expr.args.map(evalExpr)]);
       }
     }
   };
@@ -230,6 +277,37 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
           const fn = functionMap.get(stmt.function);
           if (!fn) throw new Error(`IR interpreter cannot find function ${stmt.function}`);
           values.set(stmt.result, execFunction(fn, stmt.args.map(evalExpr)));
+          values.set(stmt.resultTag, tagOf(fn.returnType));
+          break;
+        }
+        case "heapAllocate":
+          values.set(stmt.result, allocateObject(stmt.classId));
+          break;
+        case "heapArrayAllocate":
+          values.set(stmt.result, allocateObject("Array", Math.trunc(toNumber(evalExpr(stmt.size)))));
+          break;
+        case "fieldWrite": {
+          const object = heapObjects.get(fieldRef(stmt.object));
+          const value = evalExpr(stmt.value);
+          if (object) object.fields.set(stmt.field, value);
+          break;
+        }
+        case "arrayWrite": {
+          const object = heapObjects.get(fieldRef(stmt.array));
+          const index = Math.trunc(toNumber(evalExpr(stmt.index)));
+          const value = evalExpr(stmt.value);
+          if (object && index >= 0 && index < object.length) heapItems[object.start + index] = value;
+          break;
+        }
+        case "virtualInvoke": {
+          const ref = fieldRef(stmt.object);
+          const classId = heapObjects.get(ref)?.classId;
+          const target = stmt.targets.find((entry) => entry.classId === classId);
+          const fn = target ? functionMap.get(target.function) : undefined;
+          if (!fn) {
+            throw new Error(`IR interpreter cannot dispatch ${stmt.method} on ${classId ?? "unknown"}`);
+          }
+          values.set(stmt.result, execFunction(fn, [ref, ...stmt.args.map(evalExpr)]));
           values.set(stmt.resultTag, tagOf(fn.returnType));
           break;
         }

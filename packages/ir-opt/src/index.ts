@@ -162,6 +162,20 @@ class Optimizer {
         return { ...expr, args: expr.args.map((argument) => this.expr(argument)) };
       case "listRead":
         return expr.index ? { ...expr, index: this.expr(expr.index) } : expr;
+      case "arrayNew":
+        return { ...expr, size: this.expr(expr.size) };
+      case "arrayLength":
+        return { ...expr, array: this.expr(expr.array) };
+      case "fieldRead":
+        return { ...expr, object: this.expr(expr.object) };
+      case "arrayRead":
+        return { ...expr, array: this.expr(expr.array), index: this.expr(expr.index) };
+      case "methodCall":
+        return {
+          ...expr,
+          object: this.expr(expr.object),
+          args: expr.args.map((argument) => this.expr(argument)),
+        };
       default:
         return expr;
     }
@@ -208,6 +222,30 @@ class Optimizer {
         case "list":
         case "invoke":
           result.push({ ...stmt, args: stmt.args.map((argument) => this.expr(argument)) });
+          break;
+        case "heapArrayAllocate":
+          result.push({ ...stmt, size: this.expr(stmt.size) });
+          break;
+        case "fieldWrite":
+          result.push({ ...stmt, object: this.expr(stmt.object), value: this.expr(stmt.value) });
+          break;
+        case "arrayWrite":
+          result.push({
+            ...stmt,
+            array: this.expr(stmt.array),
+            index: this.expr(stmt.index),
+            value: this.expr(stmt.value),
+          });
+          break;
+        case "virtualInvoke":
+          result.push({
+            ...stmt,
+            object: this.expr(stmt.object),
+            args: stmt.args.map((argument) => this.expr(argument)),
+          });
+          break;
+        case "heapAllocate":
+          result.push(stmt);
           break;
         case "frameReturn":
           result.push({ ...stmt, value: this.expr(stmt.value) });

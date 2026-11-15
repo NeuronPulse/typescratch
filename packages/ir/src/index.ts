@@ -4,6 +4,7 @@ export type IrType = "number" | "string" | "boolean" | "void";
 export type VarId = string;
 export type ListId = string;
 export type FunctionId = string;
+export type ClassId = string;
 export type BinOp =
   | "add" | "sub" | "mul" | "div" | "mod"
   | "lt" | "gt" | "le" | "ge" | "eq" | "ne"
@@ -19,6 +20,7 @@ export interface VarDecl {
   initial?: string | number | boolean;
   script?: number;
   parameter?: boolean;
+  className?: ClassId;
   span?: SourceSpan;
 }
 
@@ -30,6 +32,11 @@ export interface ListDecl {
   span?: SourceSpan;
 }
 
+export interface DispatchTarget {
+  classId: ClassId;
+  function: FunctionId;
+}
+
 export type Expr =
   | { k: "const"; value: string | number | boolean; type: IrType; span?: SourceSpan }
   | { k: "read"; var: VarId; type: IrType; span?: SourceSpan }
@@ -39,7 +46,13 @@ export type Expr =
   | { k: "convert"; to: "number" | "boolean"; value: Expr; type: IrType; span?: SourceSpan }
   | { k: "intrinsic"; name: string; args: Expr[]; type: IrType; span?: SourceSpan }
   | { k: "listRead"; op: ListReadOp; list: ListId; index?: Expr; type: IrType; span?: SourceSpan }
-  | { k: "call"; function: FunctionId; args: Expr[]; type: IrType; span?: SourceSpan };
+  | { k: "call"; function: FunctionId; args: Expr[]; type: IrType; span?: SourceSpan }
+  | { k: "objectNew"; classId: ClassId; type: "number"; span?: SourceSpan }
+  | { k: "arrayNew"; size: Expr; type: "number"; span?: SourceSpan }
+  | { k: "fieldRead"; object: Expr; field: string; type: IrType; span?: SourceSpan }
+  | { k: "arrayRead"; array: Expr; index: Expr; type: IrType; span?: SourceSpan }
+  | { k: "arrayLength"; array: Expr; type: "number"; span?: SourceSpan }
+  | { k: "methodCall"; object: Expr; method: string; args: Expr[]; targets: DispatchTarget[]; type: IrType; span?: SourceSpan };
 
 export type Stmt =
   | { k: "declare"; var: VarId; init?: Expr; span?: SourceSpan }
@@ -51,6 +64,21 @@ export type Stmt =
   | { k: "return"; value?: Expr; span?: SourceSpan }
   | { k: "invoke"; function: FunctionId; args: Expr[]; callId: VarId; result: VarId; resultTag: VarId; span?: SourceSpan }
   | { k: "frameReturn"; value: Expr; list: ListId; callId: VarId; tag: string; span?: SourceSpan }
+  | { k: "heapAllocate"; classId: ClassId; result: VarId; span?: SourceSpan }
+  | { k: "heapArrayAllocate"; size: Expr; result: VarId; span?: SourceSpan }
+  | { k: "fieldWrite"; object: Expr; field: string; value: Expr; span?: SourceSpan }
+  | { k: "arrayWrite"; array: Expr; index: Expr; value: Expr; span?: SourceSpan }
+  | {
+    k: "virtualInvoke";
+    object: Expr;
+    method: string;
+    args: Expr[];
+    callId: VarId;
+    result: VarId;
+    resultTag: VarId;
+    targets: DispatchTarget[];
+    span?: SourceSpan;
+  }
   | { k: "if"; cond: Expr; then: Stmt[]; else?: Stmt[]; span?: SourceSpan }
   | { k: "while"; cond: Expr; body: Stmt[]; span?: SourceSpan }
   | { k: "sequence"; body: Stmt[]; span?: SourceSpan };
@@ -78,6 +106,22 @@ export interface FunctionDecl {
   callId: VarId;
   returnValue: VarId;
   returning: VarId;
+  thisVar?: VarId;
+  classId?: ClassId;
+  span?: SourceSpan;
+}
+
+export interface FieldDecl {
+  name: string;
+  type: IrType;
+  initial?: string | number | boolean;
+}
+
+export interface ClassDecl {
+  id: ClassId;
+  name: string;
+  fields: FieldDecl[];
+  methodIds: FunctionId[];
   span?: SourceSpan;
 }
 
@@ -92,6 +136,7 @@ export interface Module {
   vars: VarDecl[];
   lists: ListDecl[];
   functions?: FunctionDecl[];
+  classes?: ClassDecl[];
   role?: RoleRef;
 }
 
@@ -120,6 +165,23 @@ function* exprTree(expr: Expr): Generator<Expr> {
     case "listRead":
       if (expr.index) yield* exprTree(expr.index);
       break;
+    case "arrayNew":
+      yield* exprTree(expr.size);
+      break;
+    case "arrayLength":
+      yield* exprTree(expr.array);
+      break;
+    case "fieldRead":
+      yield* exprTree(expr.object);
+      break;
+    case "arrayRead":
+      yield* exprTree(expr.array);
+      yield* exprTree(expr.index);
+      break;
+    case "methodCall":
+      yield* exprTree(expr.object);
+      for (const arg of expr.args) yield* exprTree(arg);
+      break;
     default:
       break;
   }
@@ -140,11 +202,28 @@ function* stmtTree(stmts: Stmt[]): Generator<Expr> {
       case "invoke":
         for (const arg of stmt.args) yield* exprTree(arg);
         break;
+      case "heapArrayAllocate":
+        yield* exprTree(stmt.size);
+        break;
+      case "fieldWrite":
+        yield* exprTree(stmt.object);
+        yield* exprTree(stmt.value);
+        break;
+      case "arrayWrite":
+        yield* exprTree(stmt.array);
+        yield* exprTree(stmt.index);
+        yield* exprTree(stmt.value);
+        break;
+      case "virtualInvoke":
+        yield* exprTree(stmt.object);
+        for (const arg of stmt.args) yield* exprTree(arg);
+        break;
       case "return":
         if (stmt.value) yield* exprTree(stmt.value);
         break;
       case "break":
       case "continue":
+      case "heapAllocate":
         break;
       case "if":
         yield* exprTree(stmt.cond);
@@ -199,6 +278,9 @@ export function validateModule(module: Module, bag: DiagnosticBag): void {
   const declared = new Map(module.vars.map((decl) => [decl.id, decl]));
   const declaredLists = new Set(module.lists.map((decl) => decl.id));
   const functionIds = new Set((module.functions ?? []).map((fn) => fn.id));
+  const classIds = new Set((module.classes ?? []).map((entry) => entry.id));
+  const fieldNames = new Set((module.classes ?? []).flatMap((entry) => entry.fields.map((field) => field.name)));
+  const methodNames = new Set((module.functions ?? []).filter((fn) => fn.classId).map((fn) => fn.name));
   const checkExpr = (expr: Expr): void => {
     for (const child of exprTree(expr)) {
       if (child.k === "read" && !declared.has(child.var)) {
@@ -209,6 +291,15 @@ export function validateModule(module: Module, bag: DiagnosticBag): void {
       }
       if (child.k === "call" && !functionIds.has(child.function)) {
         bag.error(CODES.UNSUPPORTED, `IR calls undeclared function ${child.function}`, child.span);
+      }
+      if (child.k === "objectNew" && !classIds.has(child.classId)) {
+        bag.error(CODES.UNSUPPORTED, `IR allocates undeclared class ${child.classId}`, child.span);
+      }
+      if (child.k === "fieldRead" && !fieldNames.has(child.field)) {
+        bag.error(CODES.UNSUPPORTED, `IR reads undeclared heap field ${child.field}`, child.span);
+      }
+      if (child.k === "methodCall" && !methodNames.has(child.method)) {
+        bag.error(CODES.UNSUPPORTED, `IR calls undeclared method ${child.method}`, child.span);
       }
     }
   };
@@ -243,6 +334,47 @@ export function validateModule(module: Module, bag: DiagnosticBag): void {
           if (!declared.has(stmt.result) || !declared.has(stmt.callId) || !declared.has(stmt.resultTag)) {
             bag.error(CODES.UNSUPPORTED, `IR invoke uses undeclared temporaries`, stmt.span);
           }
+          for (const arg of stmt.args) checkExpr(arg);
+          break;
+        case "heapAllocate":
+          if (!declared.has(stmt.result)) {
+            bag.error(CODES.UNSUPPORTED, `IR allocates into unknown variable ${stmt.result}`, stmt.span);
+          }
+          if (!classIds.has(stmt.classId)) {
+            bag.error(CODES.UNSUPPORTED, `IR allocates undeclared class ${stmt.classId}`, stmt.span);
+          }
+          break;
+        case "heapArrayAllocate":
+          if (!declared.has(stmt.result)) {
+            bag.error(CODES.UNSUPPORTED, `IR allocates array into unknown variable ${stmt.result}`, stmt.span);
+          }
+          checkExpr(stmt.size);
+          break;
+        case "fieldWrite":
+          if (!fieldNames.has(stmt.field)) {
+            bag.error(CODES.UNSUPPORTED, `IR writes undeclared heap field ${stmt.field}`, stmt.span);
+          }
+          checkExpr(stmt.object);
+          checkExpr(stmt.value);
+          break;
+        case "arrayWrite":
+          checkExpr(stmt.array);
+          checkExpr(stmt.index);
+          checkExpr(stmt.value);
+          break;
+        case "virtualInvoke":
+          if (!declared.has(stmt.result) || !declared.has(stmt.callId) || !declared.has(stmt.resultTag)) {
+            bag.error(CODES.UNSUPPORTED, "IR virtualInvoke uses undeclared temporaries", stmt.span);
+          }
+          if (stmt.targets.length === 0) {
+            bag.error(CODES.UNSUPPORTED, `IR dispatch ${stmt.method} has no implementation`, stmt.span);
+          }
+          for (const target of stmt.targets) {
+            if (!functionIds.has(target.function)) {
+              bag.error(CODES.UNSUPPORTED, `IR dispatch targets undeclared method ${target.function}`, stmt.span);
+            }
+          }
+          checkExpr(stmt.object);
           for (const arg of stmt.args) checkExpr(arg);
           break;
         case "return":

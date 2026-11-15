@@ -1,0 +1,155 @@
+{
+  "entries": [
+    {
+      "operation": "dispatch:add",
+      "decision": "native",
+      "detail": "heap.classId type tests -> 1 method(s); configured profile: native",
+      "span": {
+        "file": "examples/memory-object/main.ts",
+        "start": 450,
+        "end": 458,
+        "line": 25,
+        "column": 15
+      },
+      "cost": 4,
+      "strategy": "native",
+      "abiProfile": "native"
+    },
+    {
+      "operation": "dispatch:move",
+      "decision": "native",
+      "detail": "heap.classId type tests -> 1 method(s); configured profile: native",
+      "span": {
+        "file": "examples/memory-object/main.ts",
+        "start": 475,
+        "end": 484,
+        "line": 26,
+        "column": 15
+      },
+      "cost": 4,
+      "strategy": "native",
+      "abiProfile": "native"
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/memory-object/main.ts",
+        "start": 354,
+        "end": 370,
+        "line": 21,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/memory-object/main.ts",
+        "start": 374,
+        "end": 394,
+        "line": 22,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/memory-object/main.ts",
+        "start": 414,
+        "end": 434,
+        "line": 24,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/memory-object/main.ts",
+        "start": 438,
+        "end": 459,
+        "line": 25,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/memory-object/main.ts",
+        "start": 463,
+        "end": 485,
+        "line": 26,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/memory-object/main.ts",
+        "start": 489,
+        "end": 505,
+        "line": 27,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/memory-object/main.ts",
+        "start": 578,
+        "end": 599,
+        "line": 31,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/memory-object/main.ts",
+        "start": 603,
+        "end": 624,
+        "line": 32,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/memory-object/main.ts",
+        "start": 628,
+        "end": 651,
+        "line": 33,
+        "column": 3
+      },
+      "cost": 0
+    }
+  ],
+  "regions": [],
+  "extensionId": null,
+  "boundaryCalls": 0,
+  "nativeOps": 9
+}

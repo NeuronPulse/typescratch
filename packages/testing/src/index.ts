@@ -34,7 +34,7 @@ export function compareTraces(
   const diffs: string[] = [];
   const tolerance = options.tolerance ?? 1e-9;
   const hidden = (key: string): boolean => options.ignoreCompilerState === true
-    && (key.includes(":abi.") || key.includes(":_tscr_"));
+    && (key.includes(":abi.") || key.includes(":heap.") || key.includes(":_tscr_"));
   const wantSays = options.unorderedSays ? [...expected.says].sort() : expected.says;
   const gotSays = options.unorderedSays ? [...actual.says].sort() : actual.says;
   const count = Math.max(wantSays.length, gotSays.length);

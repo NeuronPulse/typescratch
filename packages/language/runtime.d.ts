@@ -14,6 +14,13 @@ export interface ListHandle<T> {
   length(): number;
 }
 
+/** A heap-allocated array. Unlike ListHandle, two handles can alias the same ObjectRef. */
+export interface ArrayHandle<T> {
+  get(index: number): T;
+  set(index: number, value: T): void;
+  length(): number;
+}
+
 export interface ResourceOptions<T> {
   initial?: T;
 }
@@ -42,4 +49,5 @@ export declare const Scratch: {
   global<T>(name: string, options?: ResourceOptions<T>): Handle<T>;
   local<T>(name: string, options?: ResourceOptions<T>): Handle<T>;
   list<T>(name: string): ListHandle<T>;
+  array<T>(size: number): ArrayHandle<T>;
 };

@@ -16,6 +16,7 @@ export const GOLDEN_CASES: GoldenCase[] = [
   { name: "ir-opt", entry: example("ir-opt"), target: "scratch" },
   { name: "break-continue", entry: example("break-continue"), target: "scratch" },
   { name: "function-return", entry: example("function-return"), target: "scratch" },
+  { name: "memory-object", entry: example("memory-object"), target: "scratch" },
 ];
 
 export const GOLDEN_ARTIFACTS = [

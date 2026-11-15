@@ -279,6 +279,36 @@ export function lowerControlFlow(modules: Module[]): ControlFlowResult {
           });
           return { k: "read", var: result.id, type: expr.type, span: expr.span };
         }
+        case "objectNew": {
+          const { result } = makeVars(scriptIndex, "number");
+          prelude.push({
+            k: "heapAllocate", classId: expr.classId, result: result.id, span: expr.span,
+          });
+          return { k: "read", var: result.id, type: "number", span: expr.span };
+        }
+        case "arrayNew": {
+          const size = liftExpr(expr.size, prelude, scriptIndex);
+          const { result } = makeVars(scriptIndex, "number");
+          prelude.push({ k: "heapArrayAllocate", size, result: result.id, span: expr.span });
+          return { k: "read", var: result.id, type: "number", span: expr.span };
+        }
+        case "methodCall": {
+          const object = liftExpr(expr.object, prelude, scriptIndex);
+          const args = expr.args.map((arg) => liftExpr(arg, prelude, scriptIndex));
+          const { callId, result, resultTag } = makeVars(scriptIndex, expr.type);
+          prelude.push({
+            k: "virtualInvoke",
+            object,
+            method: expr.method,
+            args,
+            callId: callId.id,
+            result: result.id,
+            resultTag: resultTag.id,
+            targets: expr.targets,
+            span: expr.span,
+          });
+          return { k: "read", var: result.id, type: expr.type, span: expr.span };
+        }
         case "binary":
           return { ...expr, l: liftExpr(expr.l, prelude, scriptIndex), r: liftExpr(expr.r, prelude, scriptIndex) };
         case "unary":
@@ -315,6 +345,26 @@ export function lowerControlFlow(modules: Module[]): ControlFlowResult {
           case "list":
           case "invoke":
             next = { ...stmt, args: stmt.args.map(lift) };
+            break;
+          case "virtualInvoke":
+            next = { ...stmt, object: lift(stmt.object), args: stmt.args.map(lift) };
+            break;
+          case "heapArrayAllocate":
+            next = { ...stmt, size: lift(stmt.size) };
+            break;
+          case "fieldWrite":
+            next = { ...stmt, object: lift(stmt.object), value: lift(stmt.value) };
+            break;
+          case "arrayWrite":
+            next = {
+              ...stmt,
+              array: lift(stmt.array),
+              index: lift(stmt.index),
+              value: lift(stmt.value),
+            };
+            break;
+          case "heapAllocate":
+            next = stmt;
             break;
           case "return":
             next = stmt.value ? { ...stmt, value: lift(stmt.value) } : stmt;
