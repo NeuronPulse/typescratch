@@ -19,6 +19,7 @@ class Counter {
 }
 
 Scratch.onFlag(() => {
+  results.clear();
   const c = new Counter();
   const a = Scratch.array<number>(3);
   c.add(3);
