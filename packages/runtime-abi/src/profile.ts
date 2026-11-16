@@ -6,7 +6,11 @@ export type AbiLowering = "native" | "extension";
 
 export const ABI_PROFILES: readonly AbiProfile[] = ["native", "extension", "auto"];
 
-/** The runtime that actually emits lowering today. Only Native has a Call/Frame/Memory/Dispatch implementation. */
+/**
+ * The default runtime. Route A (2026-11-16) implements Frame storage and the
+ * four Extension frame primitives, so `extension` is now a real profile —
+ * see `contractStrategy` for the per-contract Native/Extension split.
+ */
 export const ABI_LOWERING: AbiLowering = "native";
 
 export interface AbiProfileSelection {
@@ -35,7 +39,9 @@ export function isProfileAllowed(requested: string, target: "scratch" | "turbowa
 }
 
 export function isProfileImplemented(requested: string): boolean {
-  return requested !== "extension" || ABI_LOWERING === "extension";
+  // Route A: Extension implements Frame storage; Call/Memory/Dispatch stay
+  // Native by declared mixed lowering. The profile is genuinely available.
+  return isAbiProfile(requested);
 }
 
 export function selectProfile(
@@ -48,7 +54,9 @@ export function selectProfile(
   return {
     requested: profile,
     resolved: choice.profile,
-    lowering: ABI_LOWERING,
+    // Route A: the resolved profile is the actual ABI emitter. Frame storage
+    // moves to Extension; other contracts stay Native (see contractStrategy).
+    lowering: choice.profile,
     reason: choice.reason,
   };
 }

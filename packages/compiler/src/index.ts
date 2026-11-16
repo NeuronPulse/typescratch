@@ -16,14 +16,13 @@ import {
 } from "@typescratch/ir-opt";
 import type { Target } from "@typescratch/language";
 import { validateGraph, type ProjectGraph, type RoleDecl } from "@typescratch/graph";
-import { lowerNative } from "@typescratch/backend-native";
+import { lowerNative, ExtensionFrameStore } from "@typescratch/backend-native";
 import { buildProjectJson, exportSb3 } from "@typescratch/exporter-sb3";
 import { collectAbiUsage, planBackends, type BackendPlan, type PlanEntry } from "@typescratch/backend-planner";
 import { generateExtension, type ExtensionBundle } from "@typescratch/backend-turbowarp";
 import { assembleOutputs, type OutputFile } from "@typescratch/exporter-turbowarp";
 import { loadWorkspace } from "@typescratch/workspace";
 import {
-  ABI_LOWERING,
   allowedProfiles,
   isProfileAllowed,
   requiredContracts,
@@ -198,16 +197,6 @@ export function compile(options: CompileOptions): CompileResult {
         "--abi-profile and --target are orthogonal, but only supported combinations are accepted.",
       ],
     );
-  } else if (requestedProfile === "extension" && ABI_LOWERING !== "extension") {
-    bag.error(
-      CODES.COMPAT,
-      "--abi-profile extension is not implemented; only the native runtime emits ABI lowering",
-      undefined,
-      [
-        "Value / Call / Frame / Memory / Dispatch operations still lower to native Scratch blocks on TurboWarp.",
-        "Use --abi-profile auto (or native) until the TurboWarp E2E chain provides the Extension runtime.",
-      ],
-    );
   }
   const lowered = lowerControlFlow(modules);
   for (const module of lowered.modules) {
@@ -242,6 +231,9 @@ export function compile(options: CompileOptions): CompileResult {
     extensionOpcodes: plan.extensionOpcodes,
     extensionInputs: plan.extensionInputs,
     roles,
+    frameStore: abiProfile.lowering === "extension" && plan.extensionId
+      ? new ExtensionFrameStore(plan.extensionId)
+      : undefined,
   });
   validateGraph(graph, bag);
   if (bag.hasErrors) return failure(target, entryLabel, bag, abiProfile, plan.entries, activeModules, graph);

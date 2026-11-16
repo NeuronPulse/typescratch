@@ -48,19 +48,23 @@ test("the scratch target rejects the extension abi profile with TSCR5001", () =>
   assert.deepEqual(result.report.abiProfile, {
     requested: "extension",
     resolved: "extension",
-    lowering: "native",
+    lowering: "extension",
     reason: "explicit --abi-profile extension",
   });
 });
 
-test("an explicit extension profile is rejected instead of silently lowering to native", () => {
-  const result = build({ target: "turbowarp", abiProfile: "extension" });
-  assert.equal(result.ok, false);
-  assert.ok(
-    result.report.diagnostics.some((item) => item.code === "TSCR5001" && item.message.includes("not implemented")),
-    JSON.stringify(result.report.diagnostics),
-  );
-  assert.equal(isProfileImplemented("extension"), false);
+test("an explicit extension profile lowers Frame to Extension and leaves Call Native", () => {
+  const result = compile({
+    entry: example("function-return"), projectRoot: ROOT,
+    target: "turbowarp", abiProfile: "extension",
+  });
+  assert.equal(result.ok, true, JSON.stringify(result.report.diagnostics));
+  assert.equal(result.report.abiProfile.lowering, "extension");
+  const frame = result.report.plan.find((entry) => entry.contract === "frame");
+  const call = result.report.plan.find((entry) => entry.contract === "call");
+  assert.equal(frame?.strategy, "extension");
+  assert.equal(call?.strategy, "native");
+  assert.ok(isProfileImplemented("extension"));
   assert.equal(isProfileImplemented("auto"), true);
   assert.equal(isProfileImplemented("native"), true);
 });

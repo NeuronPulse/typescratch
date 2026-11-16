@@ -82,6 +82,9 @@ test("unsupported contracts fail at plan time with TSCR4001", () => {
   const bag = new DiagnosticBag();
   planBackends(result.modules, "scratch", bag, { abiProfile: "extension" });
   const abiErrors = bag.items.filter((item) => item.code === "TSCR4001");
-  assert.equal(abiErrors.length, result.report.abiContracts.required.length);
+  // Route A declares Call/Value/Frame as Native-backed mixed lowering; only
+  // Memory and Dispatch have no Extension implementation and must fail.
+  assert.equal(abiErrors.length, 2);
   assert.ok(abiErrors.some((item) => item.message.includes("memory")));
+  assert.ok(abiErrors.some((item) => item.message.includes("dispatch")));
 });

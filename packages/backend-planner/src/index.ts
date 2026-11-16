@@ -4,7 +4,9 @@ import { getIntrinsic, type Target } from "@typescratch/language";
 import {
   ABI_OPERATION_COSTS,
   EXTENSION_OPS,
+  FRAME_EXTENSION_OPS,
   NO_ABI_USAGE,
+  contractStrategy,
   extensionIdFor,
   fullOpcode,
   mergeAbiRegions,
@@ -285,7 +287,13 @@ export function planBackends(
   const abiContracts = requiredContracts(abiUsage);
   const abiRegions = regionSummary(mergeAbiRegions(collectAbiOperations(list)));
   const lowering = options.lowering ?? options.abiProfile ?? "native";
-  const unsupported = unsupportedContracts(lowering, abiUsage);
+  // Route A is an explicitly mixed profile: Extension owns frame storage;
+  // Call/Value stay Native by declared design. Memory/Dispatch have no
+  // Extension implementation in this milestone and must fail at plan time
+  // rather than silently falling back (acceptance item (e)).
+  const unsupported = lowering === "extension"
+    ? requiredContracts(abiUsage).filter((contract) => contract === "memory" || contract === "dispatch")
+    : unsupportedContracts(lowering, abiUsage);
   for (const contract of unsupported) {
     bag.error(
       CODES.ABI,
@@ -303,27 +311,68 @@ export function planBackends(
     for (const stmt of stmts) {
       if (stmt.k === "invoke") {
         const profile = options.abiProfile ?? "native";
+        if (lowering === "native") {
+          entries.push({
+            operation: `call:${stmt.function}`,
+            decision: "native",
+            detail: `Frame ABI via procedures_*; configured profile: ${profile}`,
+            span: stmt.span,
+            cost: 3,
+            strategy: "native",
+            abiProfile: profile,
+            contract: "frame",
+          });
+          continue;
+        }
+        const frameStrategy = contractStrategy("frame", lowering);
+        const callStrategy = contractStrategy("call", lowering);
+        entries.push({
+          operation: `frame:${stmt.function}`,
+          decision: frameStrategy,
+          detail: frameStrategy === "extension"
+            ? "Frame ABI via Extension Map<callId, CallFrame>; call flow stays Native"
+            : "Frame ABI via native parallel lists and procedures_*",
+          span: stmt.span,
+          cost: frameStrategy === "extension" ? 4 : 3,
+          strategy: frameStrategy,
+          abiProfile: frameStrategy,
+          contract: "frame",
+        });
         entries.push({
           operation: `call:${stmt.function}`,
-          decision: "native",
-          detail: `Frame ABI via procedures_*; configured profile: ${profile}`,
+          decision: callStrategy,
+          detail: "Call ABI via native procedures_call and CFG return flow",
           span: stmt.span,
-          cost: 3,
-          strategy: "native",
-          abiProfile: profile,
-          contract: "frame",
+          cost: 1,
+          strategy: callStrategy,
+          abiProfile: callStrategy,
+          contract: "call",
         });
       }
       if (stmt.k === "virtualInvoke") {
         const profile = options.abiProfile ?? "native";
+        if (lowering === "native") {
+          entries.push({
+            operation: `dispatch:${stmt.method}`,
+            decision: "native",
+            detail: `heap.classId type tests -> ${stmt.targets.length} method(s); configured profile: ${profile}`,
+            span: stmt.span,
+            cost: 3 + stmt.targets.length,
+            strategy: "native",
+            abiProfile: profile,
+            contract: "dispatch",
+          });
+          continue;
+        }
+        const dispatchStrategy = contractStrategy("dispatch", lowering);
         entries.push({
           operation: `dispatch:${stmt.method}`,
-          decision: "native",
-          detail: `heap.classId type tests -> ${stmt.targets.length} method(s); configured profile: ${profile}`,
+          decision: dispatchStrategy,
+          detail: `heap.classId type tests -> ${stmt.targets.length} method(s); dispatch stays Native`,
           span: stmt.span,
           cost: 3 + stmt.targets.length,
-          strategy: "native",
-          abiProfile: profile,
+          strategy: dispatchStrategy,
+          abiProfile: dispatchStrategy,
           contract: "dispatch",
         });
       }
@@ -437,6 +486,17 @@ export function planBackends(
     }
   }
 
+  // Route A: Extension owns frame storage. Each frame primitive is a real
+  // generated extension block, so each counts as one boundary crossing.
+  if (lowering === "extension" && abiUsage.frame) {
+    for (const [intrinsic, spec] of Object.entries(FRAME_EXTENSION_OPS)) {
+      regions.set(intrinsic, {
+        id: intrinsic, intrinsic, opcode: spec.opcode, spec,
+        occurrences: 1,
+      });
+      extensionIntrinsics.push(intrinsic);
+    }
+  }
   const regionList = [...regions.values()].sort((left, right) =>
     left.intrinsic.localeCompare(right.intrinsic),
   );

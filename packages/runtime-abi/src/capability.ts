@@ -32,6 +32,21 @@ export function capabilitiesFor(profile: AbiLowering): readonly AbiContract[] {
   return profile === "native" ? ABI_CONTRACTS : [];
 }
 
+/**
+ * §5.8 Route A is an explicitly mixed implementation. This is the *actual*
+ * emitter per contract, not what `--abi-profile` was asked for. Frame storage
+ * is the only contract Extension owns; Call/Value/Memory/Dispatch keep their
+ * Native implementation. BuildReport must expose this table, never a single
+ * "extension" label that conceals the split.
+ */
+export function contractStrategy(
+  contract: AbiContract,
+  profile: AbiLowering,
+): "native" | "extension" {
+  if (profile === "native") return "native";
+  return contract === "frame" ? "extension" : "native";
+}
+
 export function requiredContracts(usage: AbiUsage): AbiContract[] {
   return ABI_CONTRACTS.filter((contract) => usage[contract]);
 }
