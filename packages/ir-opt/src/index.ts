@@ -1,5 +1,6 @@
 import type { Expr, Module, Stmt } from "@typescratch/ir";
 import { castToBoolean, castToNumber, castToString, type RuntimeValue } from "@typescratch/language";
+import { abstractEquals, tag } from "@typescratch/runtime-abi";
 
 export interface OptimizeOptions {
   folding?: boolean;
@@ -70,6 +71,17 @@ class Optimizer {
     return undefined;
   }
 
+  /**
+   * §4.2: fold `==` with the Value ABI contract, never Scratch Cast. Only when
+   * both operands are compile-time constants, so the case-sensitive string
+   * answer is exact and no runtime costume/helper sprite is needed.
+   */
+  private foldAbstractEq(expr: Expr): Expr | undefined {
+    if (expr.k !== "abstractEq" || expr.l.k !== "const" || expr.r.k !== "const") return undefined;
+    const equal = abstractEquals(tag(expr.l.value as string | number | boolean), tag(expr.r.value as string | number | boolean));
+    return { k: "const", type: "boolean", value: expr.negate ? !equal : equal, span: expr.span };
+  }
+
   private foldUnary(expr: Expr): Expr | undefined {
     if (expr.k !== "unary" || expr.value.k !== "const") return undefined;
     const value = expr.value.value as RuntimeValue;
@@ -84,10 +96,17 @@ class Optimizer {
 
   private expr(expr: Expr): Expr {
     switch (expr.k) {
-      case "abstractEq":
-        // Never fold with JS rules here: the native backend approximates this
-        // operation, only the ABI contract has the exact semantics.
-        return { ...expr, l: this.expr(expr.l), r: this.expr(expr.r) };
+      case "abstractEq": {
+        const node: Expr = { ...expr, l: this.expr(expr.l), r: this.expr(expr.r) };
+        if (this.options.folding) {
+          const folded = this.foldAbstractEq(node);
+          if (folded) {
+            this.stats.folded += 1;
+            return folded;
+          }
+        }
+        return node;
+      }
       case "binary": {
         const node: Expr = { ...expr, l: this.expr(expr.l), r: this.expr(expr.r) };
         if (this.options.folding) {

@@ -58,6 +58,34 @@ test("folded arithmetic leaves no native operator blocks", () => {
   assert.equal(opcodes.has("control_if_else"), false);
 });
 
+test("abstractEq folds literal strings with case-sensitive ECMAScript semantics", () => {
+  const cases: [string, string, boolean][] = [
+    ["A", "a", false], ["a", "a", true], ["HELLO", "hello", false],
+    ["Hello", "Hello", true], ["", "", true], ["AbC", "Abc", false],
+    ["123", "123", true], ["a b", "a b", true],
+  ];
+  for (const [left, right, expected] of cases) {
+    const module: Module = {
+      entry: "synthetic.ts", vars: [], lists: [],
+      scripts: [{ hat: { kind: "flag" }, body: [{
+        k: "expr", name: "say", args: [{
+          k: "abstractEq", negate: false, type: "boolean",
+          l: { k: "const", value: left, type: "string" },
+          r: { k: "const", value: right, type: "string" },
+        }],
+      }] }],
+    };
+    const result = optimizeModules([module]);
+    const stmt = result.modules[0]!.scripts[0]!.body[0]!;
+    assert.equal(stmt.k, "expr");
+    if (stmt.k !== "expr") continue;
+    const folded = stmt.args[0] as { k: string; value?: unknown; type?: string };
+    assert.equal(folded.k, "const");
+    assert.equal(folded.value, expected);
+    assert.equal(folded.type, "boolean");
+  }
+});
+
 test("comparison and modulo are never folded across the JavaScript/Scratch semantic gap", () => {
   const module: Module = {
     entry: "synthetic.ts",
