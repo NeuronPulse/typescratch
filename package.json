@@ -25,6 +25,7 @@
     "lint": "oxlint packages/*/src tests examples",
     "verify:vm": "node tests/vm-smoke.ts",
     "verify:e2e": "bash tests/e2e-turbowarp.sh",
+    "verify:e2e:frame": "bash tests/e2e-frame-extension.sh",
     "verify": "turbo run //#typecheck //#lint //#test //#snapshots //#verify:vm //#build:packages --concurrency=1 --output-logs=errors-only"
   },
   "devDependencies": {

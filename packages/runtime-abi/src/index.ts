@@ -103,7 +103,16 @@ export const FRAME_EXTENSION_OPS: Readonly<Record<string, ExtensionOpcodeSpec>> 
     blockType: "COMMAND", text: "frameFree [A]", arguments: numberArgs("A"),
     returns: "void", guard: "number",
     build: (values) => values[0] ?? "0",
-    body: (values) => [`frames.delete(${values[0]}); freeIds.push(${values[0]});`],
+    // §5.8 native `emitFrameRelease` tombstones status and returns the id to
+    // the free list — it never deletes returnValue/returnTag slots. The caller
+    // reads its return value *after* the callee's frameReturn, so deleting the
+    // Map entry here makes a correct call look like TSCR_FRAME_MISSING. Keep
+    // the data; frameAlloc overwrites the frame when the id is reused.
+    body: (values) => [
+      `const freed = frames.get(${values[0]});`,
+      `if (freed) freed.status = "completed";`,
+      `freeIds.push(${values[0]});`,
+    ],
   },
   "abi.frame.set": {
     intrinsic: "abi.frame.set", opcode: "tscr_frame_set",

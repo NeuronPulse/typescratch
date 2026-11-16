@@ -50,11 +50,19 @@ function blockSource(region: ExtensionRegion): string {
 
 function handlerSource(region: ExtensionRegion): string {
   const names = region.spec.arguments.map((argument) => argument.name);
-  const declarations = names
-    .map((name) => region.spec.guard === "number"
+  // Per-argument types matter for mixed signatures: frame.set takes a numeric
+  // callId but string slot/value. A single global `guard` would Number() the
+  // slot name into NaN. Prefer each argument's declared type; keep `guard` as
+  // the fallback for legacy specs that declare no argument types.
+  const declarations = region.spec.arguments
+    .map((argument) => argument.type === "NUMBER"
+      ? `const ${argument.name} = Number(args.${argument.name});`
+      : `const ${argument.name} = String(args.${argument.name});`)
+    .join("\n        ")
+    || names.map((name) => region.spec.guard === "number"
       ? `const ${name} = Number(args.${name});`
       : `const ${name} = String(args.${name});`)
-    .join("\n        ");
+      .join("\n        ");
   const body = region.spec.body
     ? region.spec.body(names).join("\n        ")
     : (region.spec.guard === "number"
