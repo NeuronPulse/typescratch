@@ -276,6 +276,18 @@ export function lowerNative(
         }
         return accumulated;
       }
+      case "abstractEq": {
+        // Native Scratch has no JS ToNumber/strict-string primitive: Cast.compare
+        // is case-insensitive and coerces numeric-looking strings. This is the
+        // closest native approximation; TSCR2003 keeps the limitation visible.
+        const equals = builder.add("operator_equals", { scope, parent: owner, span });
+        builder.input(equals, "OPERAND1", emitValue(expr.l, equals, scope, span));
+        builder.input(equals, "OPERAND2", emitValue(expr.r, equals, scope, span));
+        if (!expr.negate) return { block: equals };
+        const not = builder.add("operator_not", { scope, parent: owner, span });
+        builder.input(not, "OPERAND", { block: equals });
+        return { block: not };
+      }
       case "binary": {
         let comparison = expr.op;
         let negate = false;

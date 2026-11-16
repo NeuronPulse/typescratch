@@ -42,6 +42,8 @@ export type Expr =
   | { k: "const"; value: string | number | boolean; type: IrType; span?: SourceSpan }
   | { k: "read"; var: VarId; type: IrType; span?: SourceSpan }
   | { k: "binary"; op: BinOp; l: Expr; r: Expr; type: IrType; span?: SourceSpan }
+  /** §4.2 ECMAScript abstract equality (`==` / `!=`), never Scratch loose equality. */
+  | { k: "abstractEq"; l: Expr; r: Expr; negate: boolean; type: "boolean"; span?: SourceSpan }
   | { k: "unary"; op: "not" | "neg"; value: Expr; type: IrType; span?: SourceSpan }
   | { k: "join"; parts: Expr[]; type: "string"; span?: SourceSpan }
   | { k: "convert"; to: "number" | "boolean"; value: Expr; type: IrType; span?: SourceSpan }
@@ -151,6 +153,7 @@ function* exprTree(expr: Expr): Generator<Expr> {
   yield expr;
   switch (expr.k) {
     case "binary":
+    case "abstractEq":
       yield* exprTree(expr.l);
       yield* exprTree(expr.r);
       break;

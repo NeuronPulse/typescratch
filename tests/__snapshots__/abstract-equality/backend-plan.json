@@ -1,0 +1,60 @@
+{
+  "entries": [
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/abstract-equality/main.ts",
+        "start": 383,
+        "end": 420,
+        "line": 11,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/abstract-equality/main.ts",
+        "start": 424,
+        "end": 461,
+        "line": 12,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/abstract-equality/main.ts",
+        "start": 465,
+        "end": 497,
+        "line": 13,
+        "column": 3
+      },
+      "cost": 0
+    },
+    {
+      "operation": "say",
+      "decision": "native",
+      "detail": "looks_say",
+      "span": {
+        "file": "examples/abstract-equality/main.ts",
+        "start": 501,
+        "end": 535,
+        "line": 14,
+        "column": 3
+      },
+      "cost": 0
+    }
+  ],
+  "regions": [],
+  "extensionId": null,
+  "boundaryCalls": 0,
+  "nativeOps": 4
+}

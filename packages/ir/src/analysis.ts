@@ -16,6 +16,7 @@ function expressionEvents(expr: Expr): YieldEvent[] {
         events.push({ kind: "read", var: node.var, span: node.span });
         break;
       case "binary":
+      case "abstractEq":
         visit(node.l);
         visit(node.r);
         break;

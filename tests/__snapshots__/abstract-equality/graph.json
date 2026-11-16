@@ -1,0 +1,519 @@
+{
+  "targets": [
+    {
+      "isStage": true,
+      "name": "Stage",
+      "variables": {},
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {},
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "3016e033879a5bf9e79e2f0bd4d37715",
+          "name": "Backdrop1",
+          "md5ext": "3016e033879a5bf9e79e2f0bd4d37715.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 2,
+          "rotationCenterX": 0,
+          "rotationCenterY": 0
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 0,
+      "tempo": 60,
+      "videoState": "on",
+      "videoTransparency": 50,
+      "textToSpeechLanguage": null
+    },
+    {
+      "isStage": false,
+      "name": "Sprite1",
+      "variables": {
+        "vs0_1": [
+          "_tscr_s0_asNumber",
+          0
+        ],
+        "vs0_2": [
+          "_tscr_s0_two",
+          0
+        ],
+        "vs0_3": [
+          "_tscr_s0_three",
+          0
+        ]
+      },
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {
+        "65aa0dd820e71aca": {
+          "opcode": "event_whenflagclicked",
+          "next": "5198ec49b71b3b3d",
+          "parent": null,
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": true,
+          "x": 40,
+          "y": 40
+        },
+        "5198ec49b71b3b3d": {
+          "opcode": "data_setvariableto",
+          "next": "aeb5ac0b3fc58a9b",
+          "parent": "65aa0dd820e71aca",
+          "inputs": {
+            "VALUE": [
+              1,
+              [
+                10,
+                "1"
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "_tscr_s0_asNumber",
+              "vs0_1"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "aeb5ac0b3fc58a9b": {
+          "opcode": "data_setvariableto",
+          "next": "26f52dcc7de8f2e6",
+          "parent": "5198ec49b71b3b3d",
+          "inputs": {
+            "VALUE": [
+              1,
+              [
+                10,
+                "2"
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "_tscr_s0_two",
+              "vs0_2"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "26f52dcc7de8f2e6": {
+          "opcode": "data_setvariableto",
+          "next": "1b1bd3a1bfc36409",
+          "parent": "aeb5ac0b3fc58a9b",
+          "inputs": {
+            "VALUE": [
+              1,
+              [
+                10,
+                "3"
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "_tscr_s0_three",
+              "vs0_3"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "1b1bd3a1bfc36409": {
+          "opcode": "looks_say",
+          "next": "36062626b98c1352",
+          "parent": "26f52dcc7de8f2e6",
+          "inputs": {
+            "MESSAGE": [
+              3,
+              "ff9bef5468304cdc",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "ff9bef5468304cdc": {
+          "opcode": "operator_join",
+          "next": null,
+          "parent": "1b1bd3a1bfc36409",
+          "inputs": {
+            "STRING1": [
+              1,
+              [
+                10,
+                ""
+              ]
+            ],
+            "STRING2": [
+              3,
+              "0a942d44ee57f680",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "0a942d44ee57f680": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "ff9bef5468304cdc",
+          "inputs": {
+            "OPERAND1": [
+              3,
+              [
+                12,
+                "_tscr_s0_asNumber",
+                "vs0_1"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "OPERAND2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "36062626b98c1352": {
+          "opcode": "looks_say",
+          "next": "f2661766a2b917fc",
+          "parent": "1b1bd3a1bfc36409",
+          "inputs": {
+            "MESSAGE": [
+              3,
+              "fccc992dcda13095",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "fccc992dcda13095": {
+          "opcode": "operator_join",
+          "next": null,
+          "parent": "36062626b98c1352",
+          "inputs": {
+            "STRING1": [
+              1,
+              [
+                10,
+                ""
+              ]
+            ],
+            "STRING2": [
+              3,
+              "8cdf87dcb0faa0e4",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "d8b2a3e4f0834b20": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "8cdf87dcb0faa0e4",
+          "inputs": {
+            "OPERAND1": [
+              3,
+              [
+                12,
+                "_tscr_s0_asNumber",
+                "vs0_1"
+              ],
+              [
+                4,
+                ""
+              ]
+            ],
+            "OPERAND2": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "8cdf87dcb0faa0e4": {
+          "opcode": "operator_not",
+          "next": null,
+          "parent": "fccc992dcda13095",
+          "inputs": {
+            "OPERAND": [
+              3,
+              "d8b2a3e4f0834b20",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "f2661766a2b917fc": {
+          "opcode": "looks_say",
+          "next": "8024506624802a14",
+          "parent": "36062626b98c1352",
+          "inputs": {
+            "MESSAGE": [
+              3,
+              "ba5b6b195967c7d1",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "ba5b6b195967c7d1": {
+          "opcode": "operator_join",
+          "next": null,
+          "parent": "f2661766a2b917fc",
+          "inputs": {
+            "STRING1": [
+              1,
+              [
+                10,
+                ""
+              ]
+            ],
+            "STRING2": [
+              3,
+              "f04d30c8da453b96",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "f04d30c8da453b96": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "ba5b6b195967c7d1",
+          "inputs": {
+            "OPERAND1": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ],
+            "OPERAND2": [
+              3,
+              [
+                12,
+                "_tscr_s0_two",
+                "vs0_2"
+              ],
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "8024506624802a14": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "f2661766a2b917fc",
+          "inputs": {
+            "MESSAGE": [
+              3,
+              "ab1a6b2b04d5850b",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "ab1a6b2b04d5850b": {
+          "opcode": "operator_join",
+          "next": null,
+          "parent": "8024506624802a14",
+          "inputs": {
+            "STRING1": [
+              1,
+              [
+                10,
+                ""
+              ]
+            ],
+            "STRING2": [
+              3,
+              "14aef028632e054c",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "e56c08a3ad773f8b": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "14aef028632e054c",
+          "inputs": {
+            "OPERAND1": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ],
+            "OPERAND2": [
+              3,
+              [
+                12,
+                "_tscr_s0_three",
+                "vs0_3"
+              ],
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        },
+        "14aef028632e054c": {
+          "opcode": "operator_not",
+          "next": null,
+          "parent": "ab1a6b2b04d5850b",
+          "inputs": {
+            "OPERAND": [
+              3,
+              "e56c08a3ad773f8b",
+              [
+                4,
+                ""
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false,
+          "x": 0,
+          "y": 0
+        }
+      },
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "efb13d50694fa45d4de475346c7b86ec",
+          "name": "Costume1",
+          "md5ext": "efb13d50694fa45d4de475346c7b86ec.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 2,
+          "rotationCenterX": 0,
+          "rotationCenterY": 0
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "size": 100,
+      "direction": 90,
+      "draggable": false,
+      "rotationStyle": "all around"
+    }
+  ],
+  "monitors": [],
+  "extensions": [],
+  "meta": {
+    "semver": "3.0.0",
+    "vm": "0.2.0",
+    "agent": "TypeScratch 0.1.0"
+  }
+}

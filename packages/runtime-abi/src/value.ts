@@ -55,6 +55,37 @@ export function strictEquals(left: TaggedValue, right: TaggedValue): boolean {
   }
 }
 
+/**
+ * §4.2: ECMAScript abstract equality over tagged values. Uses the `tsTo*`
+ * rule set, never Scratch `Cast` — Scratch's `operator_equals` compares
+ * case-insensitively and coerces numeric-looking strings, so it cannot
+ * express this contract.
+ */
+export function abstractEquals(left: TaggedValue, right: TaggedValue): boolean {
+  const [leftTag] = left;
+  const [rightTag] = right;
+  if ((leftTag === "u" && rightTag === "z") || (leftTag === "z" && rightTag === "u")) {
+    return true;
+  }
+  if (leftTag === rightTag) {
+    if (leftTag === "n") return numberStrictEquals(Number(left[1]), Number(right[1]));
+    if (leftTag === "o") return Number(left[1]) === Number(right[1]);
+    if (leftTag === "u" || leftTag === "z") return true;
+    return left[1] === right[1];
+  }
+  // ToNumber on booleans first.
+  if (leftTag === "b") return abstractEquals(tag(tsToNumber(left)), right);
+  if (rightTag === "b") return abstractEquals(left, tag(tsToNumber(right)));
+  // A primitive object converts to "[object Object]" (§4.1 ObjectRef payload).
+  if (leftTag === "o") return abstractEquals(tag(tsToString(left)), right);
+  if (rightTag === "o") return abstractEquals(left, tag(tsToString(right)));
+  // number <-> string: JS ToNumber applies to the string operand.
+  if ((leftTag === "n" && rightTag === "s") || (leftTag === "s" && rightTag === "n")) {
+    return numberStrictEquals(tsToNumber(left), tsToNumber(right));
+  }
+  return false;
+}
+
 export function tsToNumber(value: TaggedValue): number {
   const [kind, payload] = value;
   switch (kind) {

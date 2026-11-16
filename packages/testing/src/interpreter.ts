@@ -1,5 +1,6 @@
 import type { BinOp, Expr, FunctionDecl, IrType, Module, Stmt, VarDecl } from "@typescratch/ir";
 import { castToBoolean, castToNumber, castToString } from "@typescratch/language";
+import { abstractEquals, tag } from "@typescratch/runtime-abi";
 
 export type TraceValue = string | number | boolean;
 export type ValueProfile = "scratch" | "javascript";
@@ -187,6 +188,10 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
         return expr.op === "not" ? !toBoolean(value) : -toNumber(value);
       }
       case "binary": return evalBinary(expr.op, evalExpr(expr.l), evalExpr(expr.r), profile);
+      case "abstractEq": {
+        const equal = abstractEquals(tag(evalExpr(expr.l)), tag(evalExpr(expr.r)));
+        return expr.negate ? !equal : equal;
+      }
       case "convert": {
         const value = evalExpr(expr.value);
         return expr.to === "number" ? toNumber(value) : toBoolean(value);

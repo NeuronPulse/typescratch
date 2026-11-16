@@ -310,6 +310,7 @@ export function lowerControlFlow(modules: Module[]): ControlFlowResult {
           return { k: "read", var: result.id, type: expr.type, span: expr.span };
         }
         case "binary":
+        case "abstractEq":
           return { ...expr, l: liftExpr(expr.l, prelude, scriptIndex), r: liftExpr(expr.r, prelude, scriptIndex) };
         case "unary":
         case "convert":

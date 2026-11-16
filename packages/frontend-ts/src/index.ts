@@ -859,6 +859,22 @@ class Lowerer {
       if (kind === ts.SyntaxKind.PlusToken && (this.typeOf(node.left) === "string" || this.typeOf(node.right) === "string")) {
         return { k: "join", parts: [left, right], type: "string", span: this.span(node) };
       }
+      if (kind === ts.SyntaxKind.EqualsEqualsToken || kind === ts.SyntaxKind.ExclamationEqualsToken) {
+        if (!this.warnedLooseEquality) {
+          this.warnedLooseEquality = true;
+          this.bag.warning(
+            CODES.UNSAFE_SEMANTICS,
+            "== and != use the Value ABI abstractEquality contract; native Scratch can only approximate ECMAScript ToNumber and strict string comparison",
+            this.span(node),
+          );
+        }
+        return {
+          k: "abstractEq", l: left, r: right,
+          negate: kind === ts.SyntaxKind.ExclamationEqualsToken,
+          type: "boolean",
+          span: this.span(node),
+        };
+      }
       if (op === "eq" || op === "ne") {
         if (left.type !== right.type && left.type !== "void" && right.type !== "void") {
           this.bag.warning(
@@ -867,10 +883,6 @@ class Lowerer {
             this.span(node),
             ["Use explicit conversions to keep TypeScript semantics."],
           );
-        }
-        if (!this.warnedLooseEquality && (kind === ts.SyntaxKind.EqualsEqualsToken || kind === ts.SyntaxKind.ExclamationEqualsToken)) {
-          this.warnedLooseEquality = true;
-          this.bag.warning(CODES.UNSAFE_SEMANTICS, "== and != are lowered to Scratch equality, not JavaScript abstract equality", this.span(node));
         }
       }
       if (op === "mod") {

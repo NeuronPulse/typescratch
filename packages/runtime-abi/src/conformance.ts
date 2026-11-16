@@ -1,4 +1,5 @@
 import {
+  abstractEquals,
   objectRef,
   strictEquals,
   tag,
@@ -25,9 +26,16 @@ export interface ConversionFixture {
   boolean: boolean;
 }
 
+export interface AbstractEqualityFixture {
+  readonly label: string;
+  readonly left: TaggedValue;
+  readonly right: TaggedValue;
+}
+
 export interface ValueConformanceReport {
   pairs: number;
   conversions: number;
+  abstractPairs: number;
   mismatches: string[];
 }
 
@@ -87,6 +95,51 @@ export const CONVERSION_FIXTURES: readonly ConversionFixture[] = [
   { label: "object ref", value: tag(objectRef(9)), number: Number.NaN, string: "[object Object]", boolean: true },
 ];
 
+const objectInstances = new Map<number, object>();
+
+function javascriptValue(value: TaggedValue): unknown {
+  switch (value[0]) {
+    case "n": return Number(value[1]);
+    case "s": return String(value[1]);
+    case "b": return Number(value[1]) !== 0;
+    case "o": {
+      const id = Number(value[1]);
+      let instance = objectInstances.get(id);
+      if (!instance) {
+        instance = { objectRef: id };
+        objectInstances.set(id, instance);
+      }
+      return instance;
+    }
+    case "u": return undefined;
+    case "z": return null;
+  }
+}
+
+// eslint-disable-next-line eqeqeq -- the oracle is JavaScript's own abstract equality
+function javascriptLooseEquals(left: unknown, right: unknown): boolean {
+  return left == right;
+}
+
+const abstractRepresentatives: readonly TaggedValue[] = [
+  tag(0), tag(-0), tag(1), tag(Number.NaN),
+  tag(""), tag("0"), tag("1"), tag("01"), tag("abc"), tag("false"),
+  tag(true), tag(false), tag(undefined), tag(null),
+  tag(objectRef(3)), tag(objectRef(4)),
+];
+
+function describe(value: TaggedValue): string {
+  return `${value[0]}:${String(value[1])}`;
+}
+
+/** Full cross-product checked against JavaScript `==`, not against Scratch Cast. */
+export const ABSTRACT_EQUALITY_FIXTURES: readonly AbstractEqualityFixture[] =
+  abstractRepresentatives.flatMap((left) => abstractRepresentatives.map((right) => ({
+    label: `${describe(left)} == ${describe(right)}`,
+    left,
+    right,
+  })));
+
 function sameNumber(left: number, right: number): boolean {
   return Object.is(left, right);
 }
@@ -97,6 +150,13 @@ export function runValueConformance(): ValueConformanceReport {
     const actual = strictEquals(fixture.left, fixture.right);
     if (actual !== fixture.expected) {
       mismatches.push(`${fixture.label}: expected ${fixture.expected}, got ${actual}`);
+    }
+  }
+  for (const fixture of ABSTRACT_EQUALITY_FIXTURES) {
+    const actual = abstractEquals(fixture.left, fixture.right);
+    const expected = javascriptLooseEquals(javascriptValue(fixture.left), javascriptValue(fixture.right));
+    if (actual !== expected) {
+      mismatches.push(`abstract ${fixture.label}: expected ${expected}, got ${actual}`);
     }
   }
   for (const fixture of CONVERSION_FIXTURES) {
@@ -116,6 +176,7 @@ export function runValueConformance(): ValueConformanceReport {
   return {
     pairs: VALUE_PAIR_FIXTURES.length,
     conversions: CONVERSION_FIXTURES.length,
+    abstractPairs: ABSTRACT_EQUALITY_FIXTURES.length,
     mismatches,
   };
 }

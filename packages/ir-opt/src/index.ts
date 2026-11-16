@@ -84,6 +84,10 @@ class Optimizer {
 
   private expr(expr: Expr): Expr {
     switch (expr.k) {
+      case "abstractEq":
+        // Never fold with JS rules here: the native backend approximates this
+        // operation, only the ABI contract has the exact semantics.
+        return { ...expr, l: this.expr(expr.l), r: this.expr(expr.r) };
       case "binary": {
         const node: Expr = { ...expr, l: this.expr(expr.l), r: this.expr(expr.r) };
         if (this.options.folding) {

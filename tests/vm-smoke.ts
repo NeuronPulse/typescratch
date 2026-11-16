@@ -27,6 +27,7 @@ console.log = quiet(console.log.bind(console));
 const cases: ConformanceCase[] = [
   { label: "hello-native", entry: example("hello-native") },
   { label: "calc", entry: example("calc") },
+  { label: "abstract-equality", entry: example("abstract-equality") },
   { label: "logical", entry: example("logical") },
   { label: "constant", entry: example("constant") },
   { label: "alias", entry: example("alias") },

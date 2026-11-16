@@ -172,6 +172,7 @@ export function collectAbiOperations(modules: readonly Module[]): AbiOperation[]
         push("heap.array.read", scope);
         break;
       case "binary":
+      case "abstractEq":
         visitExpr(expr.l, scope);
         visitExpr(expr.r, scope);
         break;
