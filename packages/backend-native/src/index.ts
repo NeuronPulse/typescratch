@@ -9,15 +9,8 @@ import {
 } from "@typescratch/graph";
 import type { BinOp, Expr, FunctionDecl, FunctionId, Hat, ListOp, Module, Stmt, VarDecl, VarId } from "@typescratch/ir";
 import { getIntrinsic } from "@typescratch/language";
-import {
-  declareFrameLayout,
-  emitFrameAllocate,
-  emitFrameReturnReadAt,
-  emitFrameSlotAppend,
-  emitFrameSlotRead,
-  emitFrameSlotWrite,
-  type FrameLayout,
-} from "./frame-blocks.ts";
+import { type FrameLayout } from "./frame-blocks.ts";
+import { nativeFrameStore, type FrameStore } from "./frame-store.ts";
 import {
   declareHeapLayout,
   emitHeapAllocate,
@@ -76,6 +69,7 @@ export interface NativeLoweringOptions {
   extensionOpcodes?: Map<string, string>;
   extensionInputs?: Map<string, string[]>;
   roles?: RoleDecl[];
+  frameStore?: FrameStore;
 }
 
 export interface NativeLoweringResult {
@@ -113,6 +107,7 @@ function listField(name: string, id: string): Record<string, Field> {
 }
 
 export * from "./frame-blocks.ts";
+export * from "./frame-store.ts";
 
 export function lowerNative(
   input: Module | Module[],
@@ -165,8 +160,9 @@ export function lowerNative(
   }
 
   builder.setActiveTarget(modules[0]?.role?.name ?? "Sprite1");
+  const frameStore: FrameStore = options.frameStore ?? nativeFrameStore;
   const layout: FrameLayout | undefined = functions.size > 0
-    ? declareFrameLayout(builder)
+    ? frameStore.declareLayout(builder)
     : undefined;
 
   const classById = new Map(
@@ -429,9 +425,9 @@ export function lowerNative(
   ): InputRef => {
     if (!callerCallId || !layout) return { obscuredPrimitive: [12, fallback.name, fallback.id] };
     return {
-      block: emitFrameSlotRead(
+      block: frameStore.readSlot(
         builder, scope, layout, "abi.frame.callToken",
-        { block: frameKey(scope, span, callerCallId) },
+        { block: frameKey(scope, span, callerCallId) }, span,
       ),
     };
   };
@@ -542,10 +538,10 @@ export function lowerNative(
             break;
           }
           const token = { id: callDecl.id, name: callDecl.name };
-          ids.push(...emitFrameAllocate(builder, scope, layout, token));
-          ids.push(...emitFrameSlotAppend(builder, scope, layout, token));
+          ids.push(...frameStore.allocate(builder, scope, layout, token));
+          ids.push(...frameStore.appendSlots(builder, scope, layout, token));
           if (callerCallId) {
-            ids.push(emitFrameSlotWrite(
+            ids.push(frameStore.writeSlot(
               builder, scope, layout, "abi.frame.callToken",
               { block: frameKey(scope, span, callerCallId) },
               { obscuredPrimitive: [12, callDecl.name, callDecl.id] },
@@ -569,7 +565,7 @@ export function lowerNative(
             obscuredPrimitive: [12, callDecl.name, callDecl.id],
           });
           ids.push(call);
-          const readBlock = emitFrameReturnReadAt(
+          const readBlock = frameStore.readReturnAt(
             builder, scope, layout, callToken(scope, span, callerCallId, callDecl),
           );
           const set = builder.add("data_setvariableto", {
@@ -578,14 +574,10 @@ export function lowerNative(
           builder.input(set, "VALUE", { block: readBlock });
           ids.push(set);
 
-          const tagList = layout.lists["abi.frame.returnTag"]!;
-          const tagItem = builder.add("data_itemoflist", {
-            scope, fields: listField(tagList.name, tagList.id),
-          });
-          const tagIndex = builder.add("operator_add", { scope, parent: tagItem, span });
-          builder.input(tagIndex, "NUM1", callToken(scope, span, callerCallId, callDecl));
-          builder.input(tagIndex, "NUM2", { primitive: [4, "1"] });
-          builder.input(tagItem, "INDEX", { block: tagIndex });
+          const tagItem = frameStore.readTagAt(
+            builder, scope, layout,
+            () => callToken(scope, span, callerCallId, callDecl), span,
+          );
           const tagDecl = variables.get(stmt.resultTag);
           if (tagDecl) {
             const setTag = builder.add("data_setvariableto", {
@@ -598,50 +590,15 @@ export function lowerNative(
         }
         case "frameReturn": {
           if (!layout) break;
-          const list = layout.lists["abi.frame.returnValue"]!;
-          const replace = builder.add("data_replaceitemoflist", {
-            scope, span, fields: listField(list.name, list.id),
-          });
-          const indexAdd = builder.add("operator_add", { scope, parent: replace, span });
-          builder.input(indexAdd, "NUM1", emitValue(
-            { k: "read", var: stmt.callId, type: "number" }, indexAdd, scope, span,
+          const callId = (owner: string) => emitValue(
+            { k: "read", var: stmt.callId, type: "number" }, owner, scope, span,
+          );
+          ids.push(frameStore.writeReturn(
+            builder, scope, layout, callId,
+            (owner) => emitValue(stmt.value, owner, scope, span), span,
           ));
-          builder.input(indexAdd, "NUM2", { primitive: [4, "1"] });
-          builder.input(replace, "INDEX", { block: indexAdd });
-          builder.input(replace, "ITEM", emitValue(stmt.value, replace, scope, span));
-          ids.push(replace);
-
-          const tagList = layout.lists["abi.frame.returnTag"]!;
-          const tagReplace = builder.add("data_replaceitemoflist", {
-            scope, span, fields: listField(tagList.name, tagList.id),
-          });
-          const tagIndex = builder.add("operator_add", { scope, parent: tagReplace, span });
-          builder.input(tagIndex, "NUM1", emitValue(
-            { k: "read", var: stmt.callId, type: "number" }, tagIndex, scope, span,
-          ));
-          builder.input(tagIndex, "NUM2", { primitive: [4, "1"] });
-          builder.input(tagReplace, "INDEX", { block: tagIndex });
-          builder.input(tagReplace, "ITEM", { primitive: [10, stmt.tag] });
-          ids.push(tagReplace);
-
-          const statusList = layout.lists["abi.frame.status"]!;
-          const statusReplace = builder.add("data_replaceitemoflist", {
-            scope, span, fields: listField(statusList.name, statusList.id),
-          });
-          const statusIndex = builder.add("operator_add", { scope, parent: statusReplace, span });
-          builder.input(statusIndex, "NUM1", emitValue(
-            { k: "read", var: stmt.callId, type: "number" }, statusIndex, scope, span,
-          ));
-          builder.input(statusIndex, "NUM2", { primitive: [4, "1"] });
-          builder.input(statusReplace, "INDEX", { block: statusIndex });
-          builder.input(statusReplace, "ITEM", { primitive: [10, "completed"] });
-          const free = builder.add("data_addtolist", {
-            scope, span, fields: listField(layout.freeFrames.name, layout.freeFrames.id),
-          });
-          builder.input(free, "ITEM", emitValue(
-            { k: "read", var: stmt.callId, type: "number" }, free, scope, span,
-          ));
-          ids.push(statusReplace, free);
+          ids.push(frameStore.writeTag(builder, scope, layout, callId, stmt.tag, span));
+          ids.push(...frameStore.complete(builder, scope, layout, callId, callId, span));
           break;
         }
         case "heapAllocate": {
@@ -760,10 +717,10 @@ export function lowerNative(
             break;
           }
           const token = { id: callDecl.id, name: callDecl.name };
-          ids.push(...emitFrameAllocate(builder, scope, layout, token));
-          ids.push(...emitFrameSlotAppend(builder, scope, layout, token));
+          ids.push(...frameStore.allocate(builder, scope, layout, token));
+          ids.push(...frameStore.appendSlots(builder, scope, layout, token));
           if (callerCallId) {
-            ids.push(emitFrameSlotWrite(
+            ids.push(frameStore.writeSlot(
               builder, scope, layout, "abi.frame.callToken",
               { block: frameKey(scope, span, callerCallId) },
               { obscuredPrimitive: [12, callDecl.name, callDecl.id] },
@@ -805,7 +762,7 @@ export function lowerNative(
             builder.substack(branch, "SUBSTACK", call);
             ids.push(branch);
           }
-          const readBlock = emitFrameReturnReadAt(
+          const readBlock = frameStore.readReturnAt(
             builder, scope, layout, callToken(scope, span, callerCallId, callDecl),
           );
           const set = builder.add("data_setvariableto", {
@@ -813,14 +770,10 @@ export function lowerNative(
           });
           builder.input(set, "VALUE", { block: readBlock });
           ids.push(set);
-          const tagItem = builder.add("data_itemoflist", {
-            scope,
-            fields: { LIST: [layout.lists["abi.frame.returnTag"]!.name, layout.lists["abi.frame.returnTag"]!.id] },
-          });
-          const tagIndex = builder.add("operator_add", { scope, parent: tagItem, span });
-          builder.input(tagIndex, "NUM1", callToken(scope, span, callerCallId, callDecl));
-          builder.input(tagIndex, "NUM2", { primitive: [4, "1"] });
-          builder.input(tagItem, "INDEX", { block: tagIndex });
+          const tagItem = frameStore.readTagAt(
+            builder, scope, layout,
+            () => callToken(scope, span, callerCallId, callDecl), span,
+          );
           const tagDecl = variables.get(stmt.resultTag);
           if (tagDecl) {
             const setTag = builder.add("data_setvariableto", {
