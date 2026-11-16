@@ -11,7 +11,7 @@ export interface AbiArgument {
 export interface ExtensionOpcodeSpec {
   intrinsic: string;
   opcode: string;
-  blockType: "REPORTER" | "BOOLEAN";
+  blockType: "REPORTER" | "BOOLEAN" | "COMMAND";
   text: string;
   arguments: AbiArgument[];
   returns: AbiValueType;
@@ -100,21 +100,21 @@ export const FRAME_EXTENSION_OPS: Readonly<Record<string, ExtensionOpcodeSpec>> 
   },
   "abi.frame.free": {
     intrinsic: "abi.frame.free", opcode: "tscr_frame_free",
-    blockType: "REPORTER", text: "frameFree [A]", arguments: numberArgs("A"),
-    returns: "number", guard: "number",
+    blockType: "COMMAND", text: "frameFree [A]", arguments: numberArgs("A"),
+    returns: "void", guard: "number",
     build: (values) => values[0] ?? "0",
-    body: (values) => [`frames.delete(${values[0]}); freeIds.push(${values[0]}); return 0;`],
+    body: (values) => [`frames.delete(${values[0]}); freeIds.push(${values[0]});`],
   },
   "abi.frame.set": {
     intrinsic: "abi.frame.set", opcode: "tscr_frame_set",
-    blockType: "REPORTER", text: "frameSet [A] [B] [C]",
+    blockType: "COMMAND", text: "frameSet [A] [B] [C]",
     arguments: [...numberArgs("A"), ...stringArgs("B", "C")],
     returns: "number", guard: "number",
     build: (values) => values[0] ?? "0",
     body: (values) => [
       `const frame = frames.get(${values[0]});`,
       `if (!frame) { window.__tscrFrameStats.missingErrors++; throw new Error('TSCR_FRAME_MISSING: set ' + ${values[0]}); }`,
-      `frame.slots.set(${values[1]}, String(${values[2]})); return 0;`,
+      `frame.slots.set(${values[1]}, String(${values[2]}));`,
     ],
     throws: true,
   },
