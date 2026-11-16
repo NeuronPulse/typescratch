@@ -41,7 +41,7 @@ export class ExtensionFrameStore implements FrameStore {
       scope, fields: { VARIABLE: [token.name, token.id] as [string, string] },
     });
     builder.input(set, "VALUE", { block: alloc });
-    builder.chain([alloc, set]);
+    // Only `set` is a top-level statement; `alloc` is its VALUE input block.
     return [set];
   }
 
