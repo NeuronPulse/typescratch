@@ -108,6 +108,7 @@ function listField(name: string, id: string): Record<string, Field> {
 
 export * from "./frame-blocks.ts";
 export * from "./frame-store.ts";
+export * from "./extension-frame-store.ts";
 
 export function lowerNative(
   input: Module | Module[],

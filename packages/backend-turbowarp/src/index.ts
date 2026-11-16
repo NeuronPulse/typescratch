@@ -1,4 +1,5 @@
 import type { BackendPlan, ExtensionRegion } from "@typescratch/backend-planner";
+import { FRAME_EXTENSION_OPS, FRAME_EXTENSION_PREAMBLE } from "@typescratch/runtime-abi";
 
 export interface ExtensionManifest {
   schema: 1;
@@ -54,21 +55,31 @@ function handlerSource(region: ExtensionRegion): string {
       ? `const ${name} = Number(args.${name});`
       : `const ${name} = String(args.${name});`)
     .join("\n        ");
-  const validation = region.spec.guard === "number"
-    ? `if (![${names.join(", ")}].every(Number.isFinite)) return 0;`
-    : "";
+  const body = region.spec.body
+    ? region.spec.body(names).join("\n        ")
+    : (region.spec.guard === "number"
+      ? `if (![${names.join(", ")}].every(Number.isFinite)) return 0;\n        return ${region.spec.build(names)};`
+      : `return ${region.spec.build(names)};`);
+  // Typed-failure contract: frameGet must let exceptions reach the VM thread.
+  if (region.spec.throws) {
+    return [
+      `    ${region.spec.opcode}(args) {`,
+      `        ${declarations}`,
+      `        ${body}`,
+      "    }",
+    ].join("\n");
+  }
   const fallback = region.spec.returns === "number" ? "0" : '""';
   return [
     `    ${region.spec.opcode}(args) {`,
     "      try {",
     `        ${declarations}`,
-    validation ? `        ${validation}` : "",
-    `        return ${region.spec.build(names)};`,
+    `        ${body}`,
     "      } catch {",
     `        return ${fallback};`,
     "      }",
     "    }",
-  ].filter((line) => line !== "").join("\n");
+  ].join("\n");
 }
 
 export function generateExtension(
@@ -78,9 +89,11 @@ export function generateExtension(
   if (!plan.extensionId || plan.regions.length === 0) return undefined;
   const id = plan.extensionId;
   const filename = `extensions/${id}.js`;
+  const hasFrameOps = plan.regions.some((region) => FRAME_EXTENSION_OPS[region.intrinsic]);
   const code = [
     "(function (Scratch) {",
     "  'use strict';",
+    ...(hasFrameOps ? [`  ${FRAME_EXTENSION_PREAMBLE}`] : []),
     "  class TypeScratchGenerated {",
     "    getInfo() {",
     "      return {",
