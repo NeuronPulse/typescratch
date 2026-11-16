@@ -1,0 +1,2 @@
+[    9191ms] [WARNING] [.WebGL-0x3e4000fda00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels @ https://turbowarp.org/editor:148
+[   12300ms] [WARNING] [.WebGL-0x3e4000fda00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels @ https://turbowarp.org/editor:0

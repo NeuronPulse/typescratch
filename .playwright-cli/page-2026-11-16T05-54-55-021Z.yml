@@ -1,0 +1,95 @@
+- generic:
+  - generic [ref=e3]:
+    - generic [ref=e5]:
+      - generic [ref=e10]: 载入作品
+      - generic [ref=e11]: 下载素材中……（第 2 / 2 个）
+    - generic [ref=e15]:
+      - generic [ref=e20]: 新建作品
+      - generic [ref=e21]: 下载素材中……（第 2 / 2 个）
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]:
+          - generic [ref=e27] [cursor=pointer]: Settings
+          - generic [ref=e31] [cursor=pointer]: 文件
+          - generic [ref=e35] [cursor=pointer]: 编辑
+          - generic [ref=e39] [cursor=pointer]: 插件
+          - generic [ref=e42] [cursor=pointer]: 高级
+        - textbox [ref=e47]:
+          - /placeholder: 在此填写作品标题
+          - text: 作品
+        - link [ref=e49] [cursor=pointer]:
+          - /url: https://scratch.mit.edu/users/GarboMuffin/#comments
+          - button [ref=e50]:
+            - generic [ref=e51]: TurboWarp 反馈
+      - generic [ref=e52]: 保存到电脑
+    - generic [ref=e56]:
+      - generic [ref=e57]:
+        - generic [ref=e58]:
+          - tablist [ref=e59]:
+            - tab [selected] [ref=e60] [cursor=pointer]:
+              - generic [ref=e62]: 代码
+            - tab [ref=e63] [cursor=pointer]:
+              - generic [ref=e65]: 造型
+            - tab [ref=e66] [cursor=pointer]:
+              - generic [ref=e68]: 声音
+          - tabpanel [ref=e69]:
+            - button [ref=e74] [cursor=pointer]
+        - generic [ref=e76]: 书包
+      - generic [ref=e78]:
+        - generic [ref=e81]:
+          - generic [ref=e82]:
+            - img [ref=e83] [cursor=pointer]
+            - img [ref=e84] [cursor=pointer]
+          - generic [ref=e85]:
+            - generic [ref=e87]:
+              - button [ref=e88] [cursor=pointer]
+              - button [pressed] [ref=e90] [cursor=pointer]
+            - button [ref=e93] [cursor=pointer]
+        - generic [ref=e103]:
+          - generic [ref=e104]:
+            - generic [ref=e105]:
+              - generic [ref=e107]:
+                - generic [ref=e108]: 角色
+                - textbox [disabled] [ref=e109]:
+                  - /placeholder: 名字
+              - generic [ref=e112]:
+                - generic [ref=e113]: x
+                - spinbutton [disabled] [ref=e114]
+              - generic [ref=e117]:
+                - generic [ref=e118]: "y"
+                - spinbutton [disabled] [ref=e119]
+            - generic [ref=e120]:
+              - generic [ref=e121]:
+                - generic [ref=e122]: 显示
+                - generic [ref=e124]:
+                  - button [disabled] [ref=e125]
+                  - button [disabled] [ref=e127]
+              - generic [ref=e130]:
+                - generic [ref=e131]: 大小
+                - spinbutton [disabled] [ref=e132]
+              - generic [ref=e134]:
+                - generic [ref=e135]: 方向
+                - spinbutton [disabled] [ref=e136]
+          - generic [ref=e139]:
+            - button [ref=e140] [cursor=pointer]
+            - generic [ref=e142]:
+              - button [ref=e144] [cursor=pointer]
+              - button [ref=e147] [cursor=pointer]
+              - button [ref=e150] [cursor=pointer]
+              - button [ref=e153] [cursor=pointer]
+  - dialog "扩展安全警告" [active] [ref=e157]:
+    - generic [ref=e158]:
+      - generic [ref=e159]:
+        - generic [ref=e160]: 扩展安全警告
+        - button "Close" [ref=e162] [cursor=pointer]
+      - generic [ref=e164]:
+        - generic [ref=e165]:
+          - text: 此作品希望通过以下代码加载一个自定义扩展：
+          - textbox [ref=e166]: "(function (Scratch) { 'use strict'; class TypeScratchGenerated { getInfo() { return { id: \"tscr4995f9dafc31\", name: 'TypeScratch generated', blocks: [ { opcode: \"tscr_intrinsic_math_hypot\", blockType: Scratch.BlockType.REPORTER, text: \"hypot [A] [B]\", arguments: { A: { type: Scratch.ArgumentType.NUMBER }, B: { type: Scratch.ArgumentType.NUMBER } } }, { opcode: \"tscr_intrinsic_string_upper\", blockType: Scratch.BlockType.REPORTER, text: \"uppercase [A]\", arguments: { A: { type: Scratch.ArgumentType.STRING } } } ] }; } tscr_intrinsic_math_hypot(args) { try { const A = Number(args.A); const B = Number(args.B); if (![A, B].every(Number.isFinite)) return 0; return Math.hypot(A, B); } catch { return 0; } } tscr_intrinsic_string_upper(args) { try { const A = String(args.A); return String(A).toUpperCase(); } catch { return \"\"; } } } Scratch.extensions.register(new TypeScratchGenerated()); })(Scratch);"
+          - generic [ref=e167]:
+            - checkbox "在非沙盒环境下运行" [ref=e168]
+            - generic [ref=e169]: 在非沙盒环境下运行
+          - generic [ref=e170]: 即使代码在沙盒中运行，它仍能访问像IP地址或大概位置等设备信息。请在继续使用扩展前确保你信任此作者。
+        - generic [ref=e171]:
+          - button "拒绝" [ref=e172] [cursor=pointer]
+          - button "允许" [ref=e173] [cursor=pointer]

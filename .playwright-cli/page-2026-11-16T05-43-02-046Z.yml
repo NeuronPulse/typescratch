@@ -1,0 +1,197 @@
+- generic [ref=f1e3]:
+  - generic [ref=f1e23]:
+    - generic [ref=f1e24]:
+      - generic [ref=f1e25] [cursor=pointer]: Settings
+      - generic [ref=f1e29] [cursor=pointer]: 文件
+      - generic [ref=f1e33] [cursor=pointer]: 编辑
+      - generic [ref=f1e37] [cursor=pointer]: 插件
+      - generic [ref=f1e40] [cursor=pointer]: 高级
+    - textbox "在此填写作品标题" [ref=f1e491]: 作品
+    - button "查看作品页面" [ref=f1e493] [cursor=pointer]
+    - link [ref=f1e496] [cursor=pointer]:
+      - /url: https://scratch.mit.edu/users/GarboMuffin/#comments
+      - button "TurboWarp 反馈" [ref=f1e497]
+  - generic [ref=f1e51]:
+    - generic [ref=f1e52]:
+      - generic [ref=f1e53]:
+        - tablist [ref=f1e54]:
+          - tab "代码" [selected] [ref=f1e498] [cursor=pointer]
+          - tab "造型" [ref=f1e499] [cursor=pointer]
+          - tab "声音" [ref=f1e500] [cursor=pointer]
+          - searchbox [ref=f1e67]
+        - tabpanel "代码" [ref=f1e501]:
+          - generic [ref=f1e71]:
+            - generic [ref=f1e502]:
+              - generic [ref=f1e503]: 运动
+              - generic [ref=f1e507]: 外观
+              - generic [ref=f1e511]: 声音
+              - generic [ref=f1e515]: 事件
+              - generic [ref=f1e519]: 控制
+              - generic [ref=f1e523]: 侦测
+              - generic [ref=f1e527]: 运算
+              - generic [ref=f1e531]: 变量
+              - generic [ref=f1e535]: 自制积木
+              - generic [ref=f1e539]: TypeScratch generated
+            - img [ref=f1e110]:
+              - generic [ref=f1e544]:
+                - generic [ref=f1e546]:
+                  - generic [ref=f1e548]:
+                    - generic [ref=f1e550]: "3"
+                    - generic [ref=f1e554]: "4"
+                    - generic [ref=f1e558]: hypot
+                  - generic [ref=f1e559]:
+                    - generic [ref=f1e561]:
+                      - generic [ref=f1e563]: hello
+                      - generic [ref=f1e567]: uppercase
+                    - generic [ref=f1e568]:
+                      - generic [ref=f1e570]: "2"
+                      - generic [ref=f1e574]: 说
+                    - generic [ref=f1e575]: 说
+                  - generic [ref=f1e576]: 说
+                - generic [ref=f1e577]: 当
+                - generic [ref=f1e580]: 被点击
+            - img [ref=f1e126]:
+              - generic [ref=f1e129]:
+                - generic [ref=f1e588] [cursor=pointer]
+                - generic [ref=f1e610] [cursor=pointer]
+                - generic [ref=f1e616] [cursor=pointer]
+                - generic [ref=f1e621] [cursor=pointer]
+                - generic [ref=f1e626] [cursor=pointer]
+                - generic [ref=f1e631] [cursor=pointer]
+                - generic [ref=f1e636] [cursor=pointer]
+                - generic [ref=f1e642] [cursor=pointer]
+                - generic [ref=f1e647] [cursor=pointer]
+                - generic [ref=f1e652] [cursor=pointer]
+                - generic [ref=f1e657] [cursor=pointer]
+                - generic [ref=f1e674]:
+                  - generic [ref=f1e676]: "10"
+                  - generic [ref=f1e680]: 移动
+                  - generic [ref=f1e681]: 步
+                - generic [ref=f1e683]:
+                  - generic [ref=f1e685]: "15"
+                  - generic [ref=f1e689]: 右转
+                  - generic [ref=f1e692]: 度
+                - generic [ref=f1e694]:
+                  - generic [ref=f1e696]: "15"
+                  - generic [ref=f1e700]: 左转
+                  - generic [ref=f1e703]: 度
+                - generic [ref=f1e705]:
+                  - generic [ref=f1e707]: 随机位置
+                  - generic [ref=f1e712]: 移到
+                - generic [ref=f1e714]:
+                  - generic [ref=f1e716]: "0"
+                  - generic [ref=f1e720]: "0"
+                  - generic [ref=f1e724]: "移到 x:"
+                  - generic [ref=f1e725]: "y:"
+                - generic [ref=f1e727]:
+                  - generic [ref=f1e729]: "1"
+                  - generic [ref=f1e733]: 随机位置
+                  - generic [ref=f1e738]: 在
+                  - generic [ref=f1e739]: 秒内滑行到
+                - generic [ref=f1e741]:
+                  - generic [ref=f1e743]: "1"
+                  - generic [ref=f1e747]: "0"
+                  - generic [ref=f1e751]: "0"
+                  - generic [ref=f1e755]: 在
+                  - generic [ref=f1e756]: "秒内滑行到 x:"
+                  - generic [ref=f1e757]: "y:"
+                - generic [ref=f1e759]:
+                  - generic [ref=f1e761]: "90"
+                  - generic [ref=f1e765]: 面向
+                  - generic [ref=f1e766]: 方向
+                - generic [ref=f1e768]:
+                  - generic [ref=f1e770]: 鼠标指针
+                  - generic [ref=f1e775]: 面向
+                - generic [ref=f1e777]:
+                  - generic [ref=f1e779]: "10"
+                  - generic [ref=f1e783]: 将x坐标增加
+                - generic [ref=f1e785]:
+                  - generic [ref=f1e787]: "0"
+                  - generic [ref=f1e791]: 将x坐标设为
+                - generic [ref=f1e799] [cursor=pointer]
+                - generic [ref=f1e804] [cursor=pointer]
+                - generic [ref=f1e809] [cursor=pointer]
+                - generic [ref=f1e827] [cursor=pointer]
+                - generic [ref=f1e832] [cursor=pointer]
+                - generic [ref=f1e839] [cursor=pointer]
+                - generic [ref=f1e863]: 运动
+                - generic [ref=f1e866]: 外观
+                - generic [ref=f1e869]: 声音
+                - generic [ref=f1e872]: 事件
+                - generic [ref=f1e875]: 控制
+                - generic [ref=f1e878]: 侦测
+                - generic [ref=f1e881]: 运算
+                - generic [ref=f1e884]: 变量
+                - generic [ref=f1e887]: 建立一个变量
+                - generic [ref=f1e891]: 建立一个列表
+                - generic [ref=f1e895]: 自制积木
+                - generic [ref=f1e898]: 制作新的积木
+                - generic [ref=f1e902]: TypeScratch generated
+          - button "添加扩展" [ref=f1e905] [cursor=pointer]
+      - generic [ref=f1e360]: 书包
+    - generic [ref=f1e362]:
+      - generic [ref=f1e365]:
+        - generic [ref=f1e366]:
+          - img "运行" [ref=f1e906] [cursor=pointer]
+          - img "暂停" [ref=f1e907] [cursor=pointer]
+          - img "停止" [ref=f1e908] [cursor=pointer]
+        - generic [ref=f1e370]:
+          - generic [ref=f1e372]:
+            - button "缩小舞台" [ref=f1e909] [cursor=pointer]
+            - button "完整大小" [pressed] [ref=f1e910] [cursor=pointer]
+          - button [ref=f1e911] [cursor=pointer]:
+            - img "完整大小" [ref=f1e912]
+      - generic [ref=f1e387]:
+        - generic [ref=f1e388]:
+          - generic [ref=f1e389]:
+            - generic [ref=f1e390]:
+              - generic [ref=f1e392]:
+                - generic [ref=f1e393]: 角色
+                - textbox "角色" [ref=f1e913]:
+                  - /placeholder: 名字
+                  - text: Sprite1
+              - generic [ref=f1e397]:
+                - generic [ref=f1e398]: x
+                - spinbutton "x" [ref=f1e914]: "0"
+              - generic [ref=f1e402]:
+                - generic [ref=f1e403]: "y"
+                - spinbutton "y" [ref=f1e915]: "0"
+            - generic [ref=f1e405]:
+              - generic [ref=f1e406]:
+                - generic [ref=f1e407]: 显示
+                - generic [ref=f1e409]:
+                  - button "Show sprite" [pressed] [ref=f1e916] [cursor=pointer]
+                  - button "Hide sprite" [ref=f1e917] [cursor=pointer]
+              - generic [ref=f1e415]:
+                - generic [ref=f1e416]: 大小
+                - spinbutton "大小" [ref=f1e918]: "100"
+              - generic [ref=f1e419]:
+                - generic [ref=f1e420]: 方向
+                - spinbutton "方向" [ref=f1e919]: "90"
+          - generic [ref=f1e921] [cursor=pointer]:
+            - generic [ref=f1e924]: Sprite1
+            - button "Delete" [ref=f1e926]
+            - menu:
+              - menuitem "复制"
+              - menuitem "导出"
+              - menuitem "删除"
+          - generic [ref=f1e424]:
+            - button "选择一个角色" [ref=f1e929] [cursor=pointer]
+            - generic [ref=f1e427]:
+              - generic:
+                - button "上传角色" [ref=f1e930] [cursor=pointer]
+                - button "随机" [ref=f1e931] [cursor=pointer]
+                - button "绘制" [ref=f1e932] [cursor=pointer]
+                - button "选择一个角色" [ref=f1e933] [cursor=pointer]
+        - generic [ref=f1e934] [cursor=pointer]:
+          - generic [ref=f1e935]: 舞台
+          - generic [ref=f1e938]: 背景
+          - generic [ref=f1e939]: "1"
+          - generic [ref=f1e940]:
+            - button "选择一个背景" [ref=f1e941]
+            - generic [ref=f1e943]:
+              - generic:
+                - button "上传背景" [ref=f1e945]
+                - button "随机" [ref=f1e948]
+                - button "绘制" [ref=f1e951]
+                - button "选择一个背景" [ref=f1e954]

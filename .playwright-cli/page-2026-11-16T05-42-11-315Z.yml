@@ -1,0 +1,137 @@
+- generic [ref=f1e3]:
+  - generic [ref=f1e5]:
+    - generic [ref=f1e10]: 载入作品
+    - generic [ref=f1e11]: 加载作品中……
+  - generic [ref=f1e14]:
+    - generic [ref=f1e19]: 新建作品
+    - generic [ref=f1e20]: 加载作品中……
+  - generic [ref=f1e23]:
+    - generic [ref=f1e24]:
+      - generic [ref=f1e25] [cursor=pointer]: Settings
+      - generic [ref=f1e29] [cursor=pointer]: 文件
+      - generic [ref=f1e33] [cursor=pointer]: 编辑
+      - generic [ref=f1e37] [cursor=pointer]: 插件
+      - generic [ref=f1e40] [cursor=pointer]: 高级
+    - textbox "在此填写作品标题" [ref=f1e45]: 作品
+    - link [ref=f1e47] [cursor=pointer]:
+      - /url: https://scratch.mit.edu/users/GarboMuffin/#comments
+      - button "TurboWarp 反馈" [ref=f1e48]
+  - generic [ref=f1e51]:
+    - generic [ref=f1e52]:
+      - generic [ref=f1e53]:
+        - tablist [ref=f1e54]:
+          - tab "代码" [selected] [ref=f1e55] [cursor=pointer]
+          - tab "造型" [ref=f1e58] [cursor=pointer]
+          - tab "声音" [ref=f1e61] [cursor=pointer]
+          - searchbox [ref=f1e67]
+        - tabpanel "代码" [ref=f1e68]:
+          - generic [ref=f1e71]:
+            - generic [ref=f1e73]:
+              - generic [ref=f1e74]: 运动
+              - generic [ref=f1e78]: 外观
+              - generic [ref=f1e82]: 声音
+              - generic [ref=f1e86]: 事件
+              - generic [ref=f1e90]: 控制
+              - generic [ref=f1e94]: 侦测
+              - generic [ref=f1e98]: 运算
+              - generic [ref=f1e102]: 变量
+              - generic [ref=f1e106]: 自制积木
+            - img [ref=f1e126]:
+              - generic [ref=f1e129]:
+                - generic [ref=f1e131]:
+                  - generic [ref=f1e138]: 换成
+                  - generic [ref=f1e139]: 背景
+                - generic [ref=f1e141]:
+                  - generic [ref=f1e148]: 换成
+                  - generic [ref=f1e149]: 背景并等待
+                - generic [ref=f1e151]: 下一个背景
+                - generic [ref=f1e155]:
+                  - generic [ref=f1e157]: "25"
+                  - generic [ref=f1e161]: 将
+                  - generic [ref=f1e162]: 颜色
+                  - generic [ref=f1e166]: 特效增加
+                - generic [ref=f1e168]:
+                  - generic [ref=f1e170]: "0"
+                  - generic [ref=f1e174]: 将
+                  - generic [ref=f1e175]: 颜色
+                  - generic [ref=f1e179]: 特效设定为
+                - generic [ref=f1e181]: 清除图形特效
+                - generic [ref=f1e187] [cursor=pointer]
+                - generic [ref=f1e189]:
+                  - generic [ref=f1e191]: 背景
+                  - generic [ref=f1e192]: 编号
+                - generic [ref=f1e197]:
+                  - generic [ref=f1e204]: 播放声音
+                  - generic [ref=f1e205]: 等待播完
+                - generic [ref=f1e207]: 播放声音
+                - generic [ref=f1e224] [cursor=pointer]
+                - generic [ref=f1e247] [cursor=pointer]
+                - generic [ref=f1e253] [cursor=pointer]
+                - generic [ref=f1e258] [cursor=pointer]
+                - generic [ref=f1e263] [cursor=pointer]
+                - generic [ref=f1e268] [cursor=pointer]
+                - generic [ref=f1e273] [cursor=pointer]
+                - generic [ref=f1e280] [cursor=pointer]
+                - generic [ref=f1e285] [cursor=pointer]
+                - generic [ref=f1e290] [cursor=pointer]
+                - generic [ref=f1e295] [cursor=pointer]
+                - generic [ref=f1e311]: 运动
+                - generic [ref=f1e314]: "Stage selected: no motion blocks"
+                - generic [ref=f1e317]: 外观
+                - generic [ref=f1e320]: 声音
+                - generic [ref=f1e323]: 事件
+                - generic [ref=f1e326]: 控制
+                - generic [ref=f1e329]: 侦测
+                - generic [ref=f1e332]: 运算
+                - generic [ref=f1e335]: 变量
+                - generic [ref=f1e338]: 建立一个变量
+                - generic [ref=f1e342]: 建立一个列表
+                - generic [ref=f1e346]: 自制积木
+                - generic [ref=f1e349]: 制作新的积木
+          - button "添加扩展" [ref=f1e358] [cursor=pointer]
+      - generic [ref=f1e360]: 书包
+    - generic [ref=f1e362]:
+      - generic [ref=f1e365]:
+        - generic [ref=f1e366]:
+          - img "运行" [ref=f1e367] [cursor=pointer]
+          - img "暂停" [ref=f1e368] [cursor=pointer]
+          - img "停止" [ref=f1e369] [cursor=pointer]
+        - generic [ref=f1e370]:
+          - generic [ref=f1e372]:
+            - button "缩小舞台" [ref=f1e373] [cursor=pointer]
+            - button "完整大小" [pressed] [ref=f1e375] [cursor=pointer]
+          - button [ref=f1e378] [cursor=pointer]:
+            - img "完整大小" [ref=f1e380]
+      - generic [ref=f1e388]:
+        - generic [ref=f1e389]:
+          - generic [ref=f1e390]:
+            - generic [ref=f1e392]:
+              - generic [ref=f1e393]: 角色
+              - textbox "角色" [disabled] [ref=f1e394]:
+                - /placeholder: 名字
+            - generic [ref=f1e397]:
+              - generic [ref=f1e398]: x
+              - spinbutton "x" [disabled] [ref=f1e399]
+            - generic [ref=f1e402]:
+              - generic [ref=f1e403]: "y"
+              - spinbutton "y" [disabled] [ref=f1e404]
+          - generic [ref=f1e405]:
+            - generic [ref=f1e406]:
+              - generic [ref=f1e407]: 显示
+              - generic [ref=f1e409]:
+                - button "Show sprite" [disabled] [ref=f1e410]
+                - button "Hide sprite" [disabled] [ref=f1e412]
+            - generic [ref=f1e415]:
+              - generic [ref=f1e416]: 大小
+              - spinbutton "大小" [disabled] [ref=f1e417]
+            - generic [ref=f1e419]:
+              - generic [ref=f1e420]: 方向
+              - spinbutton "方向" [disabled] [ref=f1e421]
+        - generic [ref=f1e424]:
+          - button "选择一个角色" [ref=f1e425] [cursor=pointer]
+          - generic [ref=f1e427]:
+            - generic:
+              - button "上传角色" [ref=f1e429] [cursor=pointer]
+              - button "随机" [ref=f1e432] [cursor=pointer]
+              - button "绘制" [ref=f1e435] [cursor=pointer]
+              - button "选择一个角色" [ref=f1e438] [cursor=pointer]
