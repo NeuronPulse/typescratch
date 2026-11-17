@@ -932,6 +932,7 @@ class Lowerer {
         return {
           k: "abstractEq", l: left, r: right,
           negate: kind === ts.SyntaxKind.ExclamationEqualsToken,
+          strictStrings: left.type === "string" && right.type === "string",
           type: "boolean",
           span: this.span(node),
         };

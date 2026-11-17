@@ -1,6 +1,8 @@
 import { CODES, type DiagnosticBag, type SourceSpan } from "@typescratch/diagnostics";
 import {
   GraphBuilder,
+  defaultCostume,
+  type BlockId,
   type Field,
   type InputRef,
   type Primitive,
@@ -11,6 +13,12 @@ import type { BinOp, Expr, FunctionDecl, FunctionId, Hat, ListOp, Module, Stmt, 
 import { getIntrinsic } from "@typescratch/language";
 import { type FrameLayout } from "./frame-blocks.ts";
 import { nativeFrameStore, type FrameStore } from "./frame-store.ts";
+import {
+  declareStringEqTemps,
+  emitStringEqInline,
+  resetStringEqCounter,
+  stringEqHelperRole,
+} from "./string-equality.ts";
 import {
   declareHeapLayout,
   emitHeapAllocate,
@@ -111,19 +119,90 @@ export * from "./frame-blocks.ts";
 export * from "./frame-store.ts";
 export * from "./extension-frame-store.ts";
 
+function usesStrictStringEq(modules: readonly Module[]): boolean {
+  const visitExpr = (expr: Expr): boolean => {
+    switch (expr.k) {
+      case "abstractEq": return expr.strictStrings === true || visitExpr(expr.l) || visitExpr(expr.r);
+      case "binary": return visitExpr(expr.l) || visitExpr(expr.r);
+      case "unary":
+      case "convert": return visitExpr(expr.value);
+      case "join": return expr.parts.some(visitExpr);
+      case "intrinsic": return expr.args.some(visitExpr);
+      case "listRead": return expr.index ? visitExpr(expr.index) : false;
+      case "call": return expr.args.some(visitExpr);
+      case "arrayNew": return visitExpr(expr.size);
+      case "fieldRead": return visitExpr(expr.object);
+      case "arrayRead": return visitExpr(expr.array) || visitExpr(expr.index);
+      case "arrayLength": return visitExpr(expr.array);
+      case "methodCall": return visitExpr(expr.object) || expr.args.some(visitExpr);
+      default: return false;
+    }
+  };
+  const visitStmts = (stmts: readonly Stmt[]): boolean => stmts.some((stmt) => {
+    switch (stmt.k) {
+      case "declare": return stmt.init ? visitExpr(stmt.init) : false;
+      case "assign":
+      case "frameReturn":
+      case "raise": return visitExpr(stmt.value);
+      case "expr":
+      case "list":
+      case "invoke": return stmt.args.some(visitExpr);
+      case "virtualInvoke": return visitExpr(stmt.object) || stmt.args.some(visitExpr);
+      case "heapArrayAllocate": return visitExpr(stmt.size);
+      case "heapFree": return stmt.object ? visitExpr(stmt.object) : false;
+      case "fieldWrite": return visitExpr(stmt.object) || visitExpr(stmt.value);
+      case "arrayWrite": return visitExpr(stmt.array) || visitExpr(stmt.index) || visitExpr(stmt.value);
+      case "return": return stmt.value ? visitExpr(stmt.value) : false;
+      case "if": return visitExpr(stmt.cond) || visitStmts(stmt.then) || (stmt.else ? visitStmts(stmt.else) : false);
+      case "while": return visitExpr(stmt.cond) || visitStmts(stmt.body);
+      case "sequence": return visitStmts(stmt.body);
+      case "tryCall": return visitStmts(stmt.body) || visitStmts(stmt.handler);
+      default: return false;
+    }
+  });
+  return modules.some((module) =>
+    module.scripts.some((script) => visitStmts(script.body))
+    || (module.functions ?? []).some((fn) => visitStmts(fn.body)));
+}
+
 export function lowerNative(
   input: Module | Module[],
   bag: DiagnosticBag,
   options: NativeLoweringOptions = {},
 ): NativeLoweringResult {
   const modules = Array.isArray(input) ? input : [input];
-  const builder = new GraphBuilder(options.roles ?? []);
+  resetStringEqCounter();
+  const needsStringEq = usesStrictStringEq(modules);
+  const roles: RoleDecl[] = [...(options.roles ?? [])].map((role) => ({ ...role }));
+  // createProject() only synthesizes a default sprite when no non-stage role
+  // exists. Ensure the default "Sprite1" that user code emits into exists.
+  if (!roles.some((role) => !role.isStage)) {
+    roles.push({ name: "Sprite1", isStage: false });
+  }
+  // Scratch custom procedures are sprite-local: the helper procedure and its
+  // 53 probe costumes must live on the sprite that CALLS them. Attach them to
+  // the first non-stage role (single-sprite projects — the common case).
+  if (needsStringEq) {
+    const host = roles.find((role) => !role.isStage)!;
+    const helper = stringEqHelperRole();
+    host.costumes = [...(host.costumes ?? [defaultCostume(false)]), ...helper.costumes!];
+  }
+  const builder = new GraphBuilder(roles);
   const variables = new Map(modules.flatMap((module) => module.vars).map((decl) => [decl.id, decl]));
   const functions = new Map<FunctionId, FunctionDecl>();
   const procedureInfo = new Map<FunctionId, ProcedureInfo>();
   const paramNames = new Map<VarId, { name: string; boolean: boolean }>();
   /** Function state lives in frame slots, not in persistent Scratch variables: recursion needs this. */
   const frameStateVars = new Map<VarId, { list: string; callId: VarId }>();
+
+  const firstTarget = builder.project.targets.find((target) => !target.isStage)?.name
+    ?? builder.project.targets[0]!.name;
+  if (needsStringEq) {
+    // Shared probe temporaries live on the calling sprite (costumes are there).
+    builder.setActiveTarget(firstTarget);
+    declareStringEqTemps(builder, "string-eq-inline");
+  }
+  builder.setActiveTarget(firstTarget);
 
   for (const module of modules) {
     for (const fn of module.functions ?? []) {
@@ -211,6 +290,11 @@ export function lowerNative(
     ? declareHeapLayout(builder, heapFieldNames, heapInitials)
     : undefined;
 
+  // Statements required by expression lowering (Scratch calls are statements,
+  // so a strict string equality cannot be a reporter). Drained by
+  // emitStatements before each statement.
+  const stringEqPreludeStack: BlockId[][] = [];
+
   const emitValue = (expr: Expr, owner: string, scope: string, fallback?: SourceSpan): InputRef => {
     const span = expr.span ?? fallback;
     switch (expr.k) {
@@ -276,6 +360,17 @@ export function lowerNative(
         return accumulated;
       }
       case "abstractEq": {
+        if (expr.strictStrings) {
+          // Both operands are statically strings: use the case-sensitive
+          // helper (gate + length + ASCII-case costume probe) via a warp
+          // procedure. The call is a statement, queued for the enclosing
+          // emitStatements; here we return a reporter reading the result.
+          const left = emitValue(expr.l, owner, scope, span);
+          const right = emitValue(expr.r, owner, scope, span);
+          return emitStringEqInline(
+            builder, stringEqPreludeStack[stringEqPreludeStack.length - 1] ?? [], left, right, expr.negate,
+          );
+        }
         // Native Scratch has no JS ToNumber/strict-string primitive: Cast.compare
         // is case-insensitive and coerces numeric-looking strings. This is the
         // closest native approximation; TSCR2003 keeps the limitation visible.
@@ -435,6 +530,8 @@ export function lowerNative(
 
   const emitStatements = (stmts: Stmt[], scope: string, callerCallId?: VarId): string[] => {
     const ids: string[] = [];
+    const layer: BlockId[] = [];
+    stringEqPreludeStack.push(layer);
     const store = (value: Expr, decl: VarDecl, span?: SourceSpan): void => {
       if (value.type === "boolean") {
         bag.error(
@@ -453,6 +550,8 @@ export function lowerNative(
     };
     for (const stmt of stmts) {
       const span = stmt.span;
+      const idsStart = ids.length;
+      layer.length = 0;
       switch (stmt.k) {
         case "declare": {
           if (!stmt.init) continue;
@@ -847,7 +946,12 @@ export function lowerNative(
           break;
         }
       }
+      // Strict-string calls are statements that must run immediately before
+      // the statement whose expression reads their result — not before the
+      // whole block (earlier statements may initialize the operands).
+      if (layer.length > 0) ids.splice(idsStart, 0, ...layer);
     }
+    stringEqPreludeStack.pop();
     return ids;
   };
 

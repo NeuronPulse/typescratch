@@ -1,6 +1,11 @@
 # Runtime String Equality Spike — Report (2026-11-17)
 
-**Verdict: NO-GO. Do not wire into formal `==` lowering.**
+> **SUPERSEDED (same day).** This spike tested costume identity as a *total*
+> equality mechanism and correctly found false positives. The revised design
+> uses `operator_equals` as a gate so costumes only discriminate ASCII letter
+> case; that spike passed and is now wired in. See `runtime-equality-fix-design.md`.
+
+**Verdict (for the design tested here): NO-GO. Do not wire this mechanism into formal `==` lowering.**
 
 This spike asked one question: can a helper sprite with case-sensitive costume
 names implement ECMAScript string equality for an *arbitrary TypeScript

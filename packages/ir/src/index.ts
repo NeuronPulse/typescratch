@@ -43,7 +43,7 @@ export type Expr =
   | { k: "read"; var: VarId; type: IrType; span?: SourceSpan }
   | { k: "binary"; op: BinOp; l: Expr; r: Expr; type: IrType; span?: SourceSpan }
   /** §4.2 ECMAScript abstract equality (`==` / `!=`), never Scratch loose equality. */
-  | { k: "abstractEq"; l: Expr; r: Expr; negate: boolean; type: "boolean"; span?: SourceSpan }
+  | { k: "abstractEq"; l: Expr; r: Expr; negate: boolean; type: "boolean"; strictStrings?: boolean; span?: SourceSpan }
   | { k: "unary"; op: "not" | "neg"; value: Expr; type: IrType; span?: SourceSpan }
   | { k: "join"; parts: Expr[]; type: "string"; span?: SourceSpan }
   | { k: "convert"; to: "number" | "boolean"; value: Expr; type: IrType; span?: SourceSpan }
