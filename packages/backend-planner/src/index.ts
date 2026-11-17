@@ -371,6 +371,22 @@ export function planBackends(
       ],
     );
   }
+  // Warp changes Scratch VM scheduling: a warped procedure never yields to
+  // the scheduler. Under the Extension profile frame storage is an async
+  // handler; whether a warp procedure can safely await an extension reporter
+  // is not established. Refuse at plan time instead of emitting a project
+  // whose scheduling behavior differs silently from the Native profile.
+  if (lowering === "extension" && list.some((m) => (m.functions ?? []).some((fn) => fn.warp === true))) {
+    bag.error(
+      CODES.WARP_ABI,
+      "@warp is not supported by the extension ABI profile",
+      undefined,
+      [
+        "A warped Scratch procedure does not yield; the interaction between warp and an async Extension frame handler is not verified.",
+        "Use --abi-profile native for @warp functions, or remove the decorator.",
+      ],
+    );
+  }
   const entries: PlanEntry[] = [];
   const regions = new Map<string, ExtensionRegion>();
   const extensionIntrinsics: string[] = [];

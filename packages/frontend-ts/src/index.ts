@@ -156,7 +156,11 @@ class Lowerer {
   lower(): Module {
     for (const statement of this.source.statements) {
       if (ts.isFunctionDeclaration(statement)) this.declareFunction(statement);
-      if (ts.isClassDeclaration(statement)) this.declareClass(statement);
+      if (ts.isClassDeclaration(statement)) {
+        this.parseWarpDecorator(statement, "other");
+        this.declareClass(statement);
+      }
+      if (ts.isVariableStatement(statement)) this.parseWarpDecorator(statement, "other");
     }
     for (const statement of this.source.statements) {
       if (ts.isFunctionDeclaration(statement) || ts.isClassDeclaration(statement)) continue;
@@ -172,6 +176,18 @@ class Lowerer {
     }
     for (const [node, fn] of this.functionNodes) this.lowerFunction(node, fn);
     for (const [node, fn] of this.methodNodes) this.lowerMethod(node, fn);
+    // A warped procedure never yields; warp + recursion changes the VM's
+    // scheduling/stack behavior in ways this compiler cannot guarantee.
+    for (const fn of this.functions) {
+      if (fn.warp !== true) continue;
+      const id = fn.id;
+      const targets = this.callEdges.get(id);
+      if (targets?.has(id)) {
+        this.bag.error(CODES.WARP_DECORATOR, `@warp cannot be used on recursive function ${fn.name}`, fn.span, [
+          "Warped procedures never yield to the Scratch scheduler; recursion under warp has undefined stack behavior.",
+        ]);
+      }
+    }
     const module: Module = {
       entry: relative(this.root, this.source.fileName),
       scripts: this.scripts,
@@ -212,6 +228,7 @@ class Lowerer {
   }
 
   private declareMethod(node: ts.MethodDeclaration, cls: ClassDecl): FunctionDecl {
+    const warp = this.parseWarpDecorator(node, "function");
     const name = ts.isIdentifier(node.name) ? node.name.text : `anonymous${++this.functionCounter}`;
     const id = `fn_${cls.name}_${name}_${++this.functionCounter}`;
     const returnType = node.type
@@ -244,6 +261,7 @@ class Lowerer {
       id, name, params, returnType, body: [],
       callId: callId.id, returnValue: returnValue.id, returning: returning.id,
       thisVar: thisDecl.id, classId: cls.id, span,
+      ...(warp !== undefined ? { warp } : {}),
     };
     this.functions.push(fn);
     this.callEdges.set(id, new Set());
@@ -329,6 +347,7 @@ class Lowerer {
   }
 
   private declareFunction(node: ts.FunctionDeclaration): void {
+    const warp = this.parseWarpDecorator(node, "function");
     const name = node.name?.text ?? `anonymous${++this.functionCounter}`;
     const id = `fn_${name}_${++this.functionCounter}`;
     const returnType = node.type ? this.irTypeOf(this.checker.getTypeFromTypeNode(node.type)) : "number";
@@ -356,6 +375,7 @@ class Lowerer {
     const fn: FunctionDecl = {
       id, name, params, returnType, body: [],
       callId: callId.id, returnValue: returnValue.id, returning: returning.id, span,
+      ...(warp !== undefined ? { warp } : {}),
     };
     this.functions.push(fn);
     this.functionNodes.set(node, fn);
@@ -435,6 +455,47 @@ class Lowerer {
       line: position.line + 1,
       column: position.character + 1,
     };
+  }
+
+  /**
+   * Parse @warp / @noWarp on a top-level function. Undefined means no warp
+   * decorator is present (default behavior). Unknown decorators, duplicates,
+   * conflicts and warp on non-function declarations are hard errors — a
+   * decorator must never be silently ignored.
+   */
+  private parseWarpDecorator(node: ts.Node, context: "function" | "other"): boolean | undefined {
+    const decorators = ts.canHaveDecorators(node) ? ts.getDecorators(node) : undefined;
+    if (!decorators || decorators.length === 0) return undefined;
+    let result: boolean | undefined;
+    let count = 0;
+    for (const decorator of decorators) {
+      const expr = decorator.expression;
+      const name = ts.isIdentifier(expr) ? expr.text : undefined;
+      if (name !== "warp" && name !== "noWarp") {
+        if (name === undefined || ts.isCallExpression(expr)) {
+          this.bag.error(CODES.WARP_DECORATOR, "only @warp and @noWarp decorators are supported", this.span(decorator));
+        } else {
+          this.bag.error(CODES.WARP_DECORATOR, `unsupported decorator @${name}; only @warp and @noWarp are supported`, this.span(decorator));
+        }
+        continue;
+      }
+      count++;
+      const value = name === "warp";
+      if (context !== "function") {
+        this.bag.error(CODES.WARP_DECORATOR, `@${name} is only valid on top-level function declarations`, this.span(decorator));
+        continue;
+      }
+      if (count > 1 && value !== result) {
+        this.bag.error(CODES.WARP_DECORATOR, "@warp and @noWarp cannot both be applied to the same function", this.span(decorator));
+        continue;
+      }
+      if (count > 1 && value === result) {
+        this.bag.error(CODES.WARP_DECORATOR, `duplicate @${name} decorator`, this.span(decorator));
+        continue;
+      }
+      result = value;
+    }
+    return result;
   }
 
   private unsupported(node: ts.Node, message: string): void {
@@ -917,6 +978,9 @@ class Lowerer {
         const targets = this.dispatchTargets(method);
         const classHint = this.objectClassOf(node.expression.expression);
         if (targets.length > 0 && classHint) {
+          if (this.currentFunction) {
+            for (const target of targets) this.callEdges.get(this.currentFunction.id)?.add(target.function);
+          }
           return {
             k: "methodCall",
             object: this.lowerExpr(node.expression.expression),

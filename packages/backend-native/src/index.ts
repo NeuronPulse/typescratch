@@ -83,6 +83,7 @@ interface ProcedureInfo {
   argNames: string[];
   defaults: string[];
   callIdArg: string;
+  warp: boolean;
 }
 
 function initialValue(decl: VarDecl): string | number | boolean {
@@ -137,6 +138,7 @@ export function lowerNative(
         argNames,
         defaults: argIds.map(() => ""),
         callIdArg: "inputCallId",
+        warp: fn.warp === true,
       });
       for (const param of fn.params) {
         paramNames.set(param.id, { name: param.name, boolean: param.type === "boolean" });
@@ -882,7 +884,7 @@ export function lowerNative(
           argumentnames: JSON.stringify(info.argNames),
           argumentids: JSON.stringify(info.argIds),
           argumentdefaults: JSON.stringify(info.defaults),
-          warp: "false",
+          warp: info.warp ? "true" : "false",
           children: [],
         },
       });

@@ -43,11 +43,17 @@ interface VmList {
   value: unknown[];
 }
 
+interface VmBlock {
+  opcode?: string;
+  mutation?: { warp?: string; proccode?: string };
+}
+
 interface VmTarget {
   name?: string;
   getName?: () => string;
   variables: Record<string, VmVariable> | Map<string, VmVariable>;
   lists?: Record<string, VmList> | Map<string, VmList>;
+  blocks?: Record<string, VmBlock> | { _blocks?: Record<string, VmBlock> };
 }
 
 interface VmRuntime {
@@ -266,6 +272,7 @@ export interface StepSession {
   activeThreads(): number;
   variables(): Record<string, TraceValue>;
   lists(): Record<string, TraceValue[]>;
+  procedures(): { proccode: string; warp: string }[];
   close(): void;
 }
 
@@ -282,6 +289,19 @@ export async function createStepSession(sb3: Uint8Array): Promise<StepSession> {
     activeThreads: () => (vm.runtime.threads ?? []).filter((thread) => thread.stack.length > 0).length,
     variables: () => collect(vm.runtime).variables,
     lists: () => collect(vm.runtime).lists,
+    procedures: () => {
+      const found: { proccode: string; warp: string }[] = [];
+      for (const target of vm.runtime.targets ?? []) {
+        const raw = target.blocks;
+        const blocks = raw && "_blocks" in raw ? raw._blocks : raw;
+        for (const block of Object.values(blocks ?? {})) {
+          if (block?.opcode === "procedures_prototype" && block.mutation) {
+            found.push({ proccode: block.mutation.proccode ?? "", warp: block.mutation.warp ?? "missing" });
+          }
+        }
+      }
+      return found;
+    },
     close: () => {
       vm.runtime.stopAll();
       vm.runtime.quit?.();

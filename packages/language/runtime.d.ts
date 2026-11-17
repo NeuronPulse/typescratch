@@ -34,6 +34,14 @@ export type KeyName =
   | "any" | "space" | "up arrow" | "down arrow" | "left arrow" | "right arrow"
   | Letter | Digit;
 
+/**
+ * Compile-time-only method decorators. They mark a method's generated Scratch
+ * procedure as warp / non-warp; there is no runtime behavior. TypeScratch
+ * rejects @warp under --abi-profile extension and on recursive methods.
+ */
+export declare function warp(value: unknown, context: unknown): void;
+export declare function noWarp(value: unknown, context: unknown): void;
+
 export declare const Scratch: {
   onFlag(handler: () => void): void;
   onKey(key: KeyName, handler: () => void): void;

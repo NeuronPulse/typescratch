@@ -119,6 +119,8 @@ export interface FunctionDecl {
   returning: VarId;
   thisVar?: VarId;
   classId?: ClassId;
+  /** Compile-time Scratch procedure warp flag. Undefined means the default (false). */
+  warp?: boolean;
   span?: SourceSpan;
 }
 
