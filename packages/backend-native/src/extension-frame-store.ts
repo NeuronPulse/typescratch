@@ -1,3 +1,4 @@
+import type { SourceSpan } from "@typescratch/diagnostics";
 import { FRAME_EXTENSION_OPS, fullOpcode } from "@typescratch/runtime-abi";
 import type { BlockId, GraphBuilder, InputRef } from "@typescratch/graph";
 import type { FrameLayout, FrameRef } from "./frame-blocks.ts";
@@ -33,6 +34,15 @@ export class ExtensionFrameStore implements FrameStore {
 
   declareLayout(): FrameLayout {
     return emptyLayout();
+  }
+
+  keyOf(
+    _builder: GraphBuilder, _scope: string, _span: SourceSpan | undefined,
+    callId: FrameInput,
+  ): InputRef {
+    // Extension frames are keyed by the raw callId (0-based Map key), unlike
+    // Native's 1-based parallel lists. No offset block is needed.
+    return callId("");
   }
 
   allocate(builder: GraphBuilder, scope: string, _layout: FrameLayout, token: FrameRef): BlockId[] {

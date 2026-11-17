@@ -21,6 +21,42 @@ import {
   type ExtensionOpcodeSpec,
 } from "@typescratch/runtime-abi";
 
+/** Detect a cycle in the function call graph (invoke statements in function bodies). */
+function hasRecursiveCallGraph(modules: readonly Module[]): boolean {
+  const graph = new Map<string, Set<string>>();
+  for (const module of modules) {
+    for (const fn of module.functions ?? []) {
+      const targets = new Set<string>();
+      const visit = (stmts: readonly Stmt[]): void => {
+        for (const stmt of stmts) {
+          if (stmt.k === "invoke") targets.add(stmt.function);
+          if (stmt.k === "if") {
+            visit(stmt.then);
+            if (stmt.else) visit(stmt.else);
+          }
+          if (stmt.k === "while" || stmt.k === "sequence") visit(stmt.body);
+        }
+      };
+      visit(fn.body);
+      graph.set(fn.id, targets);
+    }
+  }
+  const visiting = new Set<string>();
+  const done = new Set<string>();
+  const walk = (id: string): boolean => {
+    if (visiting.has(id)) return true;
+    if (done.has(id)) return false;
+    visiting.add(id);
+    for (const target of graph.get(id) ?? []) {
+      if (walk(target)) return true;
+    }
+    visiting.delete(id);
+    done.add(id);
+    return false;
+  };
+  return [...graph.keys()].some(walk);
+}
+
 export interface PlanEntry {
   operation: string;
   decision: "native" | "extension" | "error";
@@ -300,6 +336,22 @@ export function planBackends(
       `ABI contract ${contract} is not supported by the ${lowering} profile`,
       undefined,
       ["Unsupported contracts must fail at plan time, not at runtime with a wrong answer."],
+    );
+  }
+  // TurboWarp's custom-procedure argument reporters are not stable across an
+  // async Extension reporter (frame.get) inside a recursive call chain: the
+  // caller's `n` reads the innermost frame after the await. Native lists are
+  // synchronous and unaffected. Refuse recursion under Extension lowering at
+  // plan time rather than emit a project that silently computes wrong values.
+  if (lowering === "extension" && hasRecursiveCallGraph(list)) {
+    bag.error(
+      CODES.RECURSION,
+      "recursive calls are not supported by the extension ABI profile",
+      undefined,
+      [
+        "TurboWarp's argument_reporter values are not stable across an async frame.get inside a recursive chain.",
+        "Use --abi-profile native for recursive functions; native frame lists are synchronous.",
+      ],
     );
   }
   const entries: PlanEntry[] = [];

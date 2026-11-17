@@ -137,7 +137,7 @@ export const FRAME_EXTENSION_OPS: Readonly<Record<string, ExtensionOpcodeSpec>> 
       `const frame = frames.get(${values[0]});`,
       `if (!frame) { window.__tscrFrameStats.missingErrors++; throw new Error('TSCR_FRAME_MISSING: get ' + ${values[0]}); }`,
       `if (!frame.slots.has(${values[1]})) { window.__tscrFrameStats.missingErrors++; throw new Error('TSCR_FRAME_MISSING: slot ' + ${values[1]}); }`,
-      `return frame.slots.get(${values[1]});`,
+      `console.log("GET id=" + ${values[0]} + " slot=" + ${values[1]} + " value=" + frame.slots.get(${values[1]})); return frame.slots.get(${values[1]});`,
     ],
     throws: true,
   },

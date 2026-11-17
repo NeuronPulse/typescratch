@@ -22,6 +22,15 @@ export type FrameInput = (owner: BlockId) => InputRef;
 export interface FrameStore {
   readonly strategy: "native" | "extension";
   declareLayout(builder: GraphBuilder): FrameLayout;
+  /**
+   * Address of a frame slot. Native parallel lists are 1-based (`callId + 1`);
+   * the Extension Map is keyed by the raw callId. Callers must never hard-code
+   * the offset — recursion's `abi.frame.callToken` chain depends on it.
+   */
+  keyOf(
+    builder: GraphBuilder, scope: string, span: SourceSpan | undefined,
+    callId: FrameInput,
+  ): InputRef;
   allocate(builder: GraphBuilder, scope: string, layout: FrameLayout, token: FrameRef): BlockId[];
   appendSlots(builder: GraphBuilder, scope: string, layout: FrameLayout, token: FrameRef): BlockId[];
   writeSlot(
@@ -58,6 +67,13 @@ function listField(ref: FrameRef): Record<string, [string, string | null]> {
 /** Native parallel-list implementation — byte-for-byte equivalent to the pre-adapter emitter. */
 export const nativeFrameStore: FrameStore = {
   strategy: "native",
+
+  keyOf(builder, scope, span, callId) {
+    const add = builder.add("operator_add", { scope, span });
+    builder.input(add, "NUM1", callId(add));
+    builder.input(add, "NUM2", { primitive: [4, "1"] });
+    return { block: add };
+  },
 
   declareLayout(builder) {
     return declareFrameLayout(builder);

@@ -409,14 +409,12 @@ export function lowerNative(
     }
   };
 
-  const frameKey = (scope: string, span: SourceSpan | undefined, callerCallId: VarId): string => {
-    const add = builder.add("operator_add", { scope, span });
-    builder.input(add, "NUM1", emitValue(
-      { k: "read", var: callerCallId, type: "number", span }, add, scope, span,
-    ));
-    builder.input(add, "NUM2", { primitive: [4, "1"] });
-    return add;
-  };
+  const frameKey = (
+    scope: string, span: SourceSpan | undefined, callerCallId: VarId,
+  ): InputRef => frameStore.keyOf(
+    builder, scope, span,
+    (owner) => emitValue({ k: "read", var: callerCallId, type: "number", span }, owner, scope, span),
+  );
 
   const callToken = (
     scope: string,
@@ -428,7 +426,7 @@ export function lowerNative(
     return {
       block: frameStore.readSlot(
         builder, scope, layout, "abi.frame.callToken",
-        { block: frameKey(scope, span, callerCallId) }, span,
+        frameKey(scope, span, callerCallId), span,
       ),
     };
   };
@@ -544,7 +542,7 @@ export function lowerNative(
           if (callerCallId) {
             ids.push(frameStore.writeSlot(
               builder, scope, layout, "abi.frame.callToken",
-              { block: frameKey(scope, span, callerCallId) },
+              frameKey(scope, span, callerCallId),
               { obscuredPrimitive: [12, callDecl.name, callDecl.id] },
             ));
           }
@@ -723,7 +721,7 @@ export function lowerNative(
           if (callerCallId) {
             ids.push(frameStore.writeSlot(
               builder, scope, layout, "abi.frame.callToken",
-              { block: frameKey(scope, span, callerCallId) },
+              frameKey(scope, span, callerCallId),
               { obscuredPrimitive: [12, callDecl.name, callDecl.id] },
             ));
           }
