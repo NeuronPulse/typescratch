@@ -2,6 +2,7 @@ import { test } from "vitest";
 import assert from "node:assert/strict";
 import { FRAME_EXTENSION_OPS, FRAME_EXTENSION_PREAMBLE } from "@typescratch/runtime-abi";
 import { ExtensionFrameStore } from "@typescratch/backend-native";
+import { frameExtensionPreamble } from "@typescratch/runtime-abi";
 
 test("frame primitives declare a worker Map and a monotonic callId allocator", () => {
   assert.ok(FRAME_EXTENSION_PREAMBLE.includes("const frames = new Map()"));
@@ -11,6 +12,16 @@ test("frame primitives declare a worker Map and a monotonic callId allocator", (
   const alloc = FRAME_EXTENSION_OPS["abi.frame.alloc"]!;
   assert.ok(alloc.body!([""]).some((line) => line.includes("frames.set")));
   assert.ok(alloc.body!([""]).some((line) => line.includes("MAX_FRAME_DEPTH")));
+});
+
+test("orphan soft cap is injected and orphanCount excludes recycled ids", () => {
+  assert.ok(frameExtensionPreamble(8).includes("const MAX_ORPHANS = 8"));
+  assert.ok(frameExtensionPreamble().includes("const MAX_ORPHANS = Infinity"));
+  assert.ok(frameExtensionPreamble(8).includes("frames.size - freeIds.length"));
+  const alloc = FRAME_EXTENSION_OPS["abi.frame.alloc"]!;
+  const body = alloc.body!([""]).join("\n");
+  assert.ok(body.includes("MAX_ORPHANS"));
+  assert.ok(body.includes("TSCR_FRAME_ORPHAN_LIMIT"));
 });
 
 test("frameFree is a tombstone, not a delete — returnValue survives for the caller", () => {

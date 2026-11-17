@@ -15,6 +15,7 @@ const { values, positionals } = parseArgs({
     target: { type: "string" },
     out: { type: "string" },
     "abi-profile": { type: "string" },
+    "abi-frame-orphan-limit": { type: "string" },
     explain: { type: "boolean" },
     help: { type: "boolean", short: "h" },
   },
@@ -24,7 +25,7 @@ if (values.help) {
   console.log("usage:");
   console.log("  typescratch init [path]                     scaffold the default Sprite1 workspace");
   console.log("  typescratch <build|check|explain> [--entry <file> | --config <tscr.config.json>] [--target <scratch|turbowarp>] [--abi-profile <native|extension|auto>] [--out <file>]");
-  console.log("  note: --abi-profile extension is not implemented yet; use auto or native.");
+  console.log("  note: --abi-profile extension lowers Frame storage to a TurboWarp extension; Call/CFG stay native.");
   process.exit(0);
 }
 
@@ -61,12 +62,21 @@ const projectRoot = process.cwd();
 const out = values.out ?? "dist/project.sb3";
 const explain = command === "explain" || values.explain === true;
 
+const orphanLimitRaw = values["abi-frame-orphan-limit"];
+const frameOrphanLimit = orphanLimitRaw === undefined
+  ? undefined
+  : Number(orphanLimitRaw);
+if (frameOrphanLimit !== undefined && (!Number.isFinite(frameOrphanLimit) || frameOrphanLimit < 0)) {
+  console.error("--abi-frame-orphan-limit must be a non-negative number");
+  process.exit(1);
+}
 const result = compile({
   entry: values.entry,
   configPath: values.config,
   projectRoot,
   target,
   abiProfile,
+  frameOrphanLimit,
   explain,
   outputName: basename(out),
 });

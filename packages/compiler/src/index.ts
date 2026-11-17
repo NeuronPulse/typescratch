@@ -61,6 +61,7 @@ export interface CompileOptions {
   maxBoundaryCalls?: number;
   optimize?: boolean;
   abiProfile?: string;
+  frameOrphanLimit?: number;
 }
 
 export interface BuildReport {
@@ -238,7 +239,7 @@ export function compile(options: CompileOptions): CompileResult {
   validateGraph(graph, bag);
   if (bag.hasErrors) return failure(target, entryLabel, bag, abiProfile, plan.entries, activeModules, graph);
 
-  const bundle = generateExtension(plan, outputName);
+  const bundle = generateExtension(plan, outputName, options.frameOrphanLimit);
   if (bundle) {
     graph.extensions = [bundle.id];
     graph.extensionURLs = { [bundle.id]: bundle.dataUrl };

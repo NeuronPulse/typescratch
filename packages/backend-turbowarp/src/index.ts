@@ -1,5 +1,5 @@
 import type { BackendPlan, ExtensionRegion } from "@typescratch/backend-planner";
-import { FRAME_EXTENSION_OPS, FRAME_EXTENSION_PREAMBLE } from "@typescratch/runtime-abi";
+import { FRAME_EXTENSION_OPS, frameExtensionPreamble } from "@typescratch/runtime-abi";
 
 export interface ExtensionManifest {
   schema: 1;
@@ -93,6 +93,7 @@ function handlerSource(region: ExtensionRegion): string {
 export function generateExtension(
   plan: BackendPlan,
   sb3Filename: string,
+  orphanLimit?: number,
 ): ExtensionBundle | undefined {
   if (!plan.extensionId || plan.regions.length === 0) return undefined;
   const id = plan.extensionId;
@@ -101,7 +102,7 @@ export function generateExtension(
   const code = [
     "(function (Scratch) {",
     "  'use strict';",
-    ...(hasFrameOps ? [`  ${FRAME_EXTENSION_PREAMBLE}`] : []),
+    ...(hasFrameOps ? [`  ${frameExtensionPreamble(orphanLimit)}`] : []),
     "  class TypeScratchGenerated {",
     "    getInfo() {",
     "      return {",

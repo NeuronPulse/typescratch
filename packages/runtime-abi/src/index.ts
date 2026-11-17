@@ -92,6 +92,7 @@ export const FRAME_EXTENSION_OPS: Readonly<Record<string, ExtensionOpcodeSpec>> 
     returns: "number", guard: "number",
     build: () => "0",
     body: () => [
+      "if (frames.size - freeIds.length >= MAX_ORPHANS) throw new Error('TSCR_FRAME_ORPHAN_LIMIT');",
       "const id = freeIds.length > 0 ? freeIds.pop() : nextId++;",
       "if (id >= 200000) throw new Error('MAX_FRAME_DEPTH');",
       "frames.set(id, { slots: new Map() });",
@@ -144,12 +145,20 @@ export const FRAME_EXTENSION_OPS: Readonly<Record<string, ExtensionOpcodeSpec>> 
 };
 
 /** Boilerplate injected once into the generated extension for stateful frame ops. */
-export const FRAME_EXTENSION_PREAMBLE = [
-  "const frames = new Map();",
-  "let nextId = 0;",
-  "const freeIds = [];",
-  "window.__tscrFrameStats = { orphanCount: () => frames.size, missingErrors: 0 };",
-].join("\n");
+export function frameExtensionPreamble(orphanLimit?: number): string {
+  return [
+    "const frames = new Map();",
+    "let nextId = 0;",
+    "const freeIds = [];",
+    orphanLimit === undefined
+      ? "const MAX_ORPHANS = Infinity;"
+      : `const MAX_ORPHANS = ${JSON.stringify(Math.max(0, Math.trunc(orphanLimit)))};`,
+    "window.__tscrFrameStats = { orphanCount: () => frames.size - freeIds.length, missingErrors: 0 };",
+  ].join("\n");
+}
+
+/** @deprecated use frameExtensionPreamble(limit) for the soft-cap contract */
+export const FRAME_EXTENSION_PREAMBLE = frameExtensionPreamble();
 
 export const ABI_VALUE_TYPES: ReadonlySet<AbiValueType> = new Set([
   "number", "string", "boolean", "void",
