@@ -1111,6 +1111,34 @@ class Lowerer {
       this.lowerExpressionStatement(node);
       return;
     }
+    if (ts.isTryStatement(node)) {
+      if (!node.catchClause) {
+        this.unsupported(node, "try requires a catch clause; there is no finally in v0.1");
+        return;
+      }
+      const span = this.span(node);
+      const catchName = node.catchClause.variableDeclaration?.name;
+      if (!catchName || !ts.isIdentifier(catchName)) {
+        this.unsupported(node, "catch must bind an identifier (catch (e) { ... })");
+        return;
+      }
+      const errorDecl = this.newVar("error", "string", "temp", span, "");
+      const symbol = this.checker.getSymbolAtLocation(catchName);
+      if (symbol) this.symbolVars.set(symbol, errorDecl);
+      const body = this.withBlock(() => this.lowerStatement(node.tryBlock));
+      const handler = this.withBlock(() => this.lowerStatement(node.catchClause!.block));
+      this.emit({ k: "tryCall", body, handler, errorVar: errorDecl.id, span });
+      return;
+    }
+    if (ts.isThrowStatement(node)) {
+      const value = this.lowerExpr(node.expression);
+      if (value.type !== "string") {
+        this.unsupported(node, "throw only supports string expressions in v0.1");
+        return;
+      }
+      this.emit({ k: "raise", value, span: this.span(node) });
+      return;
+    }
     if (ts.isBreakStatement(node) || ts.isContinueStatement(node)) {
       const keyword = ts.isBreakStatement(node) ? "break" : "continue";
       if (this.loopDepth === 0) {

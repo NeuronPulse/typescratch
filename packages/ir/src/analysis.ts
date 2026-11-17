@@ -135,6 +135,13 @@ function statementEvents(stmts: Stmt[]): YieldEvent[] {
         case "sequence":
           visit(stmt.body);
           break;
+        case "tryCall":
+          visit(stmt.body);
+          visit(stmt.handler);
+          break;
+        case "raise":
+          events.push(...expressionEvents(stmt.value));
+          break;
       }
     }
   };

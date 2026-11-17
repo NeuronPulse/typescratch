@@ -31,6 +31,7 @@ function containsControlFlow(stmts: Stmt[]): boolean {
       if (stmt.else && containsControlFlow(stmt.else)) return true;
     }
     if (stmt.k === "sequence" && containsControlFlow(stmt.body)) return true;
+    if (stmt.k === "tryCall" && (containsControlFlow(stmt.body) || containsControlFlow(stmt.handler))) return true;
   }
   return false;
 }
@@ -130,6 +131,12 @@ class Rewriter {
       }
       case "sequence":
         return { ...stmt, body: this.rewriteStatements(stmt.body) };
+      case "tryCall":
+        return {
+          ...stmt,
+          body: this.rewriteStatements(stmt.body),
+          handler: this.rewriteStatements(stmt.handler),
+        };
       default:
         return stmt;
     }
@@ -165,6 +172,12 @@ class Rewriter {
         result.push(node);
       } else if (stmt.k === "sequence") {
         result.push({ ...stmt, body: this.rewriteStatements(stmt.body) });
+      } else if (stmt.k === "tryCall") {
+        result.push({
+          ...stmt,
+          body: this.rewriteStatements(stmt.body),
+          handler: this.rewriteStatements(stmt.handler),
+        });
       } else {
         result.push(stmt);
       }
@@ -178,6 +191,7 @@ function hasReturn(stmts: Stmt[]): boolean {
     if (stmt.k === "return") return true;
     if (stmt.k === "if") return hasReturn(stmt.then) || (stmt.else ? hasReturn(stmt.else) : false);
     if (stmt.k === "while" || stmt.k === "sequence") return hasReturn(stmt.body);
+    if (stmt.k === "tryCall") return hasReturn(stmt.body) || hasReturn(stmt.handler);
     return false;
   });
 }
@@ -207,6 +221,13 @@ function rewriteReturns(fn: FunctionDecl, body: Stmt[]): Stmt[] {
     }
     if (stmt.k === "while") return { ...stmt, body: rewriteStmts(stmt.body) };
     if (stmt.k === "sequence") return { ...stmt, body: rewriteStmts(stmt.body) };
+    if (stmt.k === "tryCall") {
+      return {
+        ...stmt,
+        body: rewriteStmts(stmt.body),
+        handler: rewriteStmts(stmt.handler),
+      };
+    }
     return stmt;
   }
   function rewriteStmts(stmts: Stmt[]): Stmt[] {
@@ -385,6 +406,16 @@ export function lowerControlFlow(modules: Module[]): ControlFlowResult {
             break;
           case "sequence":
             next = { ...stmt, body: liftStmts(stmt.body, scriptIndex) };
+            break;
+          case "tryCall":
+            next = {
+              ...stmt,
+              body: liftStmts(stmt.body, scriptIndex),
+              handler: liftStmts(stmt.handler, scriptIndex),
+            };
+            break;
+          case "raise":
+            next = { ...stmt, value: lift(stmt.value) };
             break;
           default:
             next = stmt;

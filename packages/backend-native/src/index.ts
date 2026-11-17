@@ -794,6 +794,21 @@ export function lowerNative(
             span,
           );
           break;
+        case "tryCall":
+          bag.error(
+            CODES.NATIVE_LOWERING,
+            "try/catch has no native Scratch primitive; run this project with the IR interpreter",
+            span,
+            ["tryCall is preserved in IR and executed correctly by interpretModules."],
+          );
+          break;
+        case "raise":
+          bag.error(
+            CODES.NATIVE_LOWERING,
+            "throw has no native Scratch primitive; run this project with the IR interpreter",
+            span,
+          );
+          break;
         case "if": {
           const id = builder.add(stmt.else ? "control_if_else" : "control_if", { scope, span });
           builder.input(id, "CONDITION", emitValue(stmt.cond, id, scope, span));

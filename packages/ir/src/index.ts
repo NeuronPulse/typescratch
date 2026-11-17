@@ -85,7 +85,13 @@ export type Stmt =
   }
   | { k: "if"; cond: Expr; then: Stmt[]; else?: Stmt[]; span?: SourceSpan }
   | { k: "while"; cond: Expr; body: Stmt[]; span?: SourceSpan }
-  | { k: "sequence"; body: Stmt[]; span?: SourceSpan };
+  | { k: "sequence"; body: Stmt[]; span?: SourceSpan }
+  /** Recoverable typed failure: run `body`, on failure bind the error to
+   * `errorVar` and run `handler`. Interpreter-only in this milestone; native
+   * lowering emits an explicit unsupported diagnostic (Scratch has no
+   * try/catch primitive). */
+  | { k: "tryCall"; body: Stmt[]; handler: Stmt[]; errorVar: VarId; span?: SourceSpan }
+  | { k: "raise"; value: Expr; span?: SourceSpan };
 
 export type Hat =
   | { kind: "flag" }
@@ -246,6 +252,13 @@ function* stmtTree(stmts: Stmt[]): Generator<Expr> {
       case "sequence":
         yield* stmtTree(stmt.body);
         break;
+      case "tryCall":
+        yield* stmtTree(stmt.body);
+        yield* stmtTree(stmt.handler);
+        break;
+      case "raise":
+        yield* exprTree(stmt.value);
+        break;
     }
   }
 }
@@ -259,6 +272,10 @@ function* statementTree(stmts: Stmt[]): Generator<Stmt> {
     }
     if (stmt.k === "while") yield* statementTree(stmt.body);
     if (stmt.k === "sequence") yield* statementTree(stmt.body);
+    if (stmt.k === "tryCall") {
+      yield* statementTree(stmt.body);
+      yield* statementTree(stmt.handler);
+    }
   }
 }
 
@@ -277,6 +294,10 @@ export function* allCommands(module: Module): Generator<{ name: string; span?: S
       }
       if (stmt.k === "while") yield* visit(stmt.body);
       if (stmt.k === "sequence") yield* visit(stmt.body);
+      if (stmt.k === "tryCall") {
+        yield* visit(stmt.body);
+        yield* visit(stmt.handler);
+      }
     }
   };
   for (const script of module.scripts) yield* visit(script.body);
@@ -424,6 +445,16 @@ export function validateModule(module: Module, bag: DiagnosticBag): void {
           break;
         case "sequence":
           checkStmts(stmt.body, loopDepth);
+          break;
+        case "tryCall":
+          if (!declared.has(stmt.errorVar)) {
+            bag.error(CODES.UNSUPPORTED, `tryCall reads undeclared error variable ${stmt.errorVar}`, stmt.span);
+          }
+          checkStmts(stmt.body, loopDepth);
+          checkStmts(stmt.handler, loopDepth);
+          break;
+        case "raise":
+          checkExpr(stmt.value);
           break;
       }
     }

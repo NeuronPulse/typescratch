@@ -35,6 +35,10 @@ function hasRecursiveCallGraph(modules: readonly Module[]): boolean {
             if (stmt.else) visit(stmt.else);
           }
           if (stmt.k === "while" || stmt.k === "sequence") visit(stmt.body);
+          if (stmt.k === "tryCall") {
+            visit(stmt.body);
+            visit(stmt.handler);
+          }
         }
       };
       visit(fn.body);
@@ -144,6 +148,12 @@ export function collectAbiUsage(modules: readonly Module[]): AbiUsage {
         case "while":
         case "sequence":
           visitStatements(stmt.body);
+          break;
+        case "tryCall":
+          visitStatements(stmt.body);
+          visitStatements(stmt.handler);
+          break;
+        case "raise":
           break;
         default:
           break;
@@ -299,6 +309,13 @@ export function collectAbiOperations(modules: readonly Module[]): AbiOperation[]
         case "sequence":
           visitStatements(stmt.body, scope);
           break;
+        case "tryCall":
+          visitStatements(stmt.body, scope);
+          visitStatements(stmt.handler, scope);
+          break;
+        case "raise":
+          visitExpr(stmt.value, scope);
+          break;
         default:
           break;
       }
@@ -433,6 +450,10 @@ export function planBackends(
         if (stmt.else) visitCalls(stmt.else);
       }
       if (stmt.k === "while" || stmt.k === "sequence") visitCalls(stmt.body);
+      if (stmt.k === "tryCall") {
+        visitCalls(stmt.body);
+        visitCalls(stmt.handler);
+      }
     }
   };
 

@@ -235,6 +235,16 @@ class Optimizer {
         case "sequence":
           result.push({ ...stmt, body: this.statements(stmt.body) });
           break;
+        case "tryCall":
+          result.push({
+            ...stmt,
+            body: this.statements(stmt.body),
+            handler: this.statements(stmt.handler),
+          });
+          break;
+        case "raise":
+          result.push({ ...stmt, value: this.expr(stmt.value) });
+          break;
         case "declare":
           result.push(stmt.init ? { ...stmt, init: this.expr(stmt.init) } : stmt);
           break;

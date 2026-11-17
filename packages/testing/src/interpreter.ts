@@ -2,6 +2,19 @@ import type { BinOp, Expr, FunctionDecl, IrType, Module, Stmt, VarDecl } from "@
 import { castToBoolean, castToNumber, castToString } from "@typescratch/language";
 import { abstractEquals, tag } from "@typescratch/runtime-abi";
 
+/** Recoverable typed failure raised by `raise`, caught by `tryCall`. */
+class TypedFailure extends Error {
+  readonly failureValue: TraceValue;
+  constructor(value: TraceValue) {
+    super(`typed failure: ${String(value)}`);
+    this.failureValue = value;
+  }
+}
+
+export function raisedFailureValue(error: unknown): TraceValue | undefined {
+  return error instanceof TypedFailure ? error.failureValue : undefined;
+}
+
 export type TraceValue = string | number | boolean;
 export type ValueProfile = "scratch" | "javascript";
 
@@ -362,6 +375,18 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
           break;
         case "sequence":
           exec(stmt.body);
+          break;
+        case "raise":
+          throw new TypedFailure(evalExpr(stmt.value));
+        case "tryCall":
+          try {
+            exec(stmt.body);
+          } catch (error) {
+            const value = raisedFailureValue(error);
+            if (value === undefined) throw error;
+            values.set(stmt.errorVar, value);
+            exec(stmt.handler);
+          }
           break;
       }
     }
