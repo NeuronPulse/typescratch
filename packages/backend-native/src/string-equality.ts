@@ -65,7 +65,7 @@ export function resetStringEqCounter(): void {
 }
 
 /** Declare the shared temporaries on the calling sprite (once). */
-export function declareStringEqTemps(builder: GraphBuilder, scope: string): void {
+export function declareStringEqTemps(builder: GraphBuilder): void {
   builder.declareVariable(IDX_ID, IDX_NAME, 0, "local");
   builder.declareVariable(IDA_ID, IDA_NAME, 0, "local");
   builder.declareVariable(IDB_ID, IDB_NAME, 0, "local");

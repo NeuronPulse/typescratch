@@ -200,7 +200,7 @@ export function lowerNative(
   if (needsStringEq) {
     // Shared probe temporaries live on the calling sprite (costumes are there).
     builder.setActiveTarget(firstTarget);
-    declareStringEqTemps(builder, "string-eq-inline");
+    declareStringEqTemps(builder);
   }
   builder.setActiveTarget(firstTarget);
 
