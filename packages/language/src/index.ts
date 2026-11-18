@@ -67,12 +67,16 @@ export const RESOURCE_INTRINSICS: ReadonlySet<string> = new Set([
 ]);
 
 export const YIELDING_COMMANDS: ReadonlySet<string> = new Set([
-  "wait", "broadcast", "broadcastAndWait",
+  "wait", "waitUntil", "broadcast", "broadcastAndWait",
 ]);
 
 export const INTRINSICS: Readonly<Record<string, IntrinsicSpec>> = {
   say: command("say", "looks_say", ["string"], ["MESSAGE"]),
   wait: command("wait", "control_wait", ["number"], ["DURATION"], "yields"),
+  // Language-level suspend: the VM re-evaluates CONDITION every step and
+  // util.yield()s while it is false. The thread's stack IS the continuation —
+  // no frame slot, no broadcast, no host hook (resumption spike 2026-11-18).
+  waitUntil: command("waitUntil", "control_wait_until", ["boolean"], ["CONDITION"], "yields"),
   move: command("move", "motion_movesteps", ["number"], ["STEPS"]),
   hide: command("hide", "looks_hide", [], []),
   show: command("show", "looks_show", [], []),

@@ -52,6 +52,13 @@ export declare const Scratch: {
   onGreaterThan(sensor: "timer" | "loudness", value: number, handler: () => void): void;
   say(message: string | number | boolean): void;
   wait(seconds: number): void;
+  /**
+   * Suspend this script until `condition` becomes true. The condition is
+   * re-evaluated once per VM step; while false the script is suspended and
+   * other scripts may run. The continuation is the VM thread's own stack.
+   * Not allowed inside a @warp method (warp procedures never yield).
+   */
+  waitUntil(condition: boolean): void;
   move(steps: number): void;
   hide(): void;
   show(): void;

@@ -5,7 +5,7 @@ import type {
   BinOp, ClassDecl, DispatchTarget, Expr, FieldDecl, FunctionDecl, Hat, IrType, ListDecl, ListOp,
   Module, RoleRef, Script, Stmt, VarDecl,
 } from "@typescratch/ir";
-import { MATH_INTRINSICS } from "@typescratch/language";
+import { MATH_INTRINSICS, YIELDING_COMMANDS } from "@typescratch/language";
 
 const HAT_NAMES: ReadonlySet<string> = new Set([
   "onFlag", "onKey", "onSpriteClicked", "onClone", "onBackdrop", "onBroadcast", "onGreaterThan",
@@ -1084,6 +1084,14 @@ class Lowerer {
         if (HAT_NAMES.has(runtimeName)) {
           this.unsupported(node, `${runtimeName}() is only valid as a top-level statement`);
           return this.voidConst(node);
+        }
+        if (YIELDING_COMMANDS.has(runtimeName) && this.currentFunction?.warp === true) {
+          this.bag.error(
+            CODES.WARP_YIELD,
+            `${runtimeName}() suspends the thread and cannot be used inside a @warp method`,
+            this.span(node),
+            ["Warp procedures never yield to the Scratch scheduler; a suspension would be silently ignored."],
+          );
         }
         this.emit({
           k: "expr", name: runtimeName,

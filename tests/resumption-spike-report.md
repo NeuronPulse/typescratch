@@ -1,6 +1,6 @@
 # Spike B — Thread resumption for Phase C (2026-11-18)
 
-**Verdict: GO for the gate. Phase C implementation is NOT started — it needs an ABI change and is out of this completion plan.**
+**Verdict: GO for the gate.** A minimal Phase C primitive (`Scratch.waitUntil`) was subsequently implemented using the VM stack as continuation — no ABI change needed. See `yield-until-design.md`. Full JS generators / `await` are still not implemented.
 
 Plan reference: `ABI_COMPLETION_PLAN.md` Problem 3 Phase C ("yield / async /
 generators"). Gate: "do not start until a spike proves a suspended Scratch
@@ -41,11 +41,13 @@ The gate proves the *host* can suspend/resume. It does not make language-level
   the calling ABI and frame lifetime**, which is outside this completion plan
   and requires explicit authorization.
 
-So: spike result documented (GO), no IR/ABI work started, no pretence that
-`async`/generators exist. Existing `Scratch.wait` / `broadcastAndWait` already
-yield at the VM level and are unchanged.
+After the GO, a minimal primitive was landed without IR/ABI changes:
+`Scratch.waitUntil(condition)` uses `control_wait_until`, whose yield IS this
+STATUS_YIELD mechanism, and the VM thread stack is the continuation. See
+`yield-until-design.md`. That section below describes the FULL generator/await
+scope, which is still not implemented and is not claimed.
 
-## What a Phase C milestone would need
+## What a full generator/await milestone would still need
 
 1. IR `suspend { resumeAt }` + `resume` semantics; all walkers synchronised.
 2. Continuation encoding in frame slots; `ExecutionContext` wired into the
