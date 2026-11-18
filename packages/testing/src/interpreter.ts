@@ -254,12 +254,20 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
     values.set(fn.returning, 0);
     values.set(fn.returnValue, 0);
     values.set(fn.callId, 0);
-    exec(fn.body);
-    const result = values.get(fn.returnValue) ?? 0;
-    fn.params.forEach((param, index) => values.set(param.id, saved[index] ?? defaultValue(param)));
-    values.set(fn.returning, savedReturning ?? 0);
-    values.set(fn.returnValue, savedReturnValue ?? 0);
-    values.set(fn.callId, savedCallId ?? 0);
+    let result: TraceValue = 0;
+    try {
+      exec(fn.body);
+      result = values.get(fn.returnValue) ?? 0;
+    } finally {
+      // A typed failure from a nested call propagates as a JS exception and is
+      // caught by an outer tryCall. Restore this frame's temps even then, or
+      // the caller resumes with the callee's parameters (recursion makes the
+      // two share the same VarIds).
+      fn.params.forEach((param, index) => values.set(param.id, saved[index] ?? defaultValue(param)));
+      values.set(fn.returning, savedReturning ?? 0);
+      values.set(fn.returnValue, savedReturnValue ?? 0);
+      values.set(fn.callId, savedCallId ?? 0);
+    }
     return result;
   };
 
