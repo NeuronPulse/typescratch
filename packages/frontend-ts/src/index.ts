@@ -394,6 +394,55 @@ class Lowerer {
     this.scriptIndex = -1;
   }
 
+  /**
+   * Scratch.do(opcode, inputs?, fields?) / Scratch.get(opcode, inputs?, fields?)
+   * lowers any Scratch block — including extension blocks — to generic IR.
+   */
+  private lowerRawBlock(node: ts.CallExpression, command: boolean): Expr {
+    const opcodeArg = node.arguments[0];
+    if (!opcodeArg || !ts.isStringLiteralLike(opcodeArg)) {
+      this.unsupported(node, `${command ? "do" : "get"}() requires a literal opcode string`);
+      return this.voidConst(node);
+    }
+    const opcode = opcodeArg.text;
+    const inputsArg = node.arguments[1];
+    const fieldsArg = node.arguments[2];
+    const inputs: Record<string, Expr> = {};
+    const fields: Record<string, string> = {};
+    if (inputsArg) {
+      if (!ts.isObjectLiteralExpression(inputsArg)) {
+        this.unsupported(inputsArg, `${command ? "do" : "get"}() inputs must be an object literal`);
+      } else {
+        for (const property of inputsArg.properties) {
+          if (!ts.isPropertyAssignment(property) || !ts.isIdentifier(property.name)) {
+            this.unsupported(property, "block inputs must be simple name: value properties");
+            continue;
+          }
+          inputs[property.name.text] = this.lowerExpr(property.initializer);
+        }
+      }
+    }
+    if (fieldsArg) {
+      if (!ts.isObjectLiteralExpression(fieldsArg)) {
+        this.unsupported(fieldsArg, `${command ? "do" : "get"}() fields must be an object literal`);
+      } else {
+        for (const property of fieldsArg.properties) {
+          if (!ts.isPropertyAssignment(property) || !ts.isIdentifier(property.name)
+            || !ts.isStringLiteralLike(property.initializer)) {
+            this.unsupported(property, "block fields must be simple name: 'value' string properties");
+            continue;
+          }
+          fields[property.name.text] = property.initializer.text;
+        }
+      }
+    }
+    if (command) {
+      this.emit({ k: "rawStmt", opcode, inputs, fields, span: this.span(node) });
+      return this.voidConst(node);
+    }
+    return { k: "raw", opcode, inputs, fields, type: "number", span: this.span(node) };
+  }
+
   private lowerHatStatement(statement: ts.ExpressionStatement): boolean {
     const call = statement.expression;
     if (!ts.isCallExpression(call)) return false;
@@ -1080,6 +1129,9 @@ class Lowerer {
         if (runtimeName === "global" || runtimeName === "local" || runtimeName === "list") {
           this.unsupported(node, `${runtimeName}() must be bound to a top-level const`);
           return this.voidConst(node);
+        }
+        if (runtimeName === "do" || runtimeName === "get") {
+          return this.lowerRawBlock(node, runtimeName === "do");
         }
         if (HAT_NAMES.has(runtimeName)) {
           this.unsupported(node, `${runtimeName}() is only valid as a top-level statement`);

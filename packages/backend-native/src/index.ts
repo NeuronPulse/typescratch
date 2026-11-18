@@ -128,6 +128,7 @@ function usesStrictStringEq(modules: readonly Module[]): boolean {
       case "convert": return visitExpr(expr.value);
       case "join": return expr.parts.some(visitExpr);
       case "intrinsic": return expr.args.some(visitExpr);
+      case "raw": return Object.values(expr.inputs).some(visitExpr);
       case "listRead": return expr.index ? visitExpr(expr.index) : false;
       case "call": return expr.args.some(visitExpr);
       case "arrayNew": return visitExpr(expr.size);
@@ -147,6 +148,7 @@ function usesStrictStringEq(modules: readonly Module[]): boolean {
       case "expr":
       case "list":
       case "invoke": return stmt.args.some(visitExpr);
+      case "rawStmt": return Object.values(stmt.inputs).some(visitExpr);
       case "virtualInvoke": return visitExpr(stmt.object) || stmt.args.some(visitExpr);
       case "heapArrayAllocate": return visitExpr(stmt.size);
       case "heapFree": return stmt.object ? visitExpr(stmt.object) : false;
@@ -447,9 +449,10 @@ export function lowerNative(
           bag.error(CODES.NATIVE_LOWERING, `intrinsic ${expr.name} has no native lowering`, span);
           return { primitive: [4, "0"] };
         }
-        const fields = spec.mathOperator
-          ? { OPERATOR: [spec.mathOperator, null] as [string, string | null] }
-          : undefined;
+        const fieldEntries: [string, [string, string | null]][] = Object.entries(spec.fields ?? {})
+          .map(([name, value]) => [name, [value, null]]);
+        if (spec.mathOperator) fieldEntries.push(["OPERATOR", [spec.mathOperator, null]]);
+        const fields = fieldEntries.length > 0 ? Object.fromEntries(fieldEntries) : undefined;
         const id = builder.add(spec.opcode, { scope, parent: owner, span, fields });
         const names = spec.inputs ?? [];
         for (let index = 0; index < names.length; index++) {
@@ -459,6 +462,15 @@ export function lowerNative(
             continue;
           }
           builder.input(id, names[index]!, emitValue(argument, id, scope, span));
+        }
+        return { block: id };
+      }
+      case "raw": {
+        const fieldEntries = Object.entries(expr.fields).map(([name, value]) => [name, [value, null] as [string, string | null]] as const);
+        const fields = fieldEntries.length > 0 ? Object.fromEntries(fieldEntries) : undefined;
+        const id = builder.add(expr.opcode, { scope, parent: owner, span, fields });
+        for (const [name, value] of Object.entries(expr.inputs)) {
+          builder.input(id, name, emitValue(value, id, scope, span));
         }
         return { block: id };
       }
@@ -588,13 +600,25 @@ export function lowerNative(
           store(stmt.value, decl, span);
           break;
         }
+        case "rawStmt": {
+          const fieldEntries = Object.entries(stmt.fields).map(([name, value]) => [name, [value, null] as [string, string | null]] as const);
+          const fields = fieldEntries.length > 0 ? Object.fromEntries(fieldEntries) : undefined;
+          const id = builder.add(stmt.opcode, { scope, span, fields });
+          for (const [name, value] of Object.entries(stmt.inputs)) {
+            builder.input(id, name, emitValue(value, id, scope, span));
+          }
+          ids.push(id);
+          break;
+        }
         case "expr": {
           const spec = getIntrinsic(stmt.name);
           if (!spec || spec.kind !== "command" || !spec.opcode) {
             bag.error(CODES.NATIVE_LOWERING, `unknown command intrinsic ${stmt.name}`, span);
             continue;
           }
-          const id = builder.add(spec.opcode, { scope, span });
+          const fieldEntries = Object.entries(spec.fields ?? {}).map(([name, value]) => [name, [value, null] as [string, string | null]] as const);
+          const fields = fieldEntries.length > 0 ? Object.fromEntries(fieldEntries) : undefined;
+          const id = builder.add(spec.opcode, { scope, span, fields });
           const names = spec.inputs ?? [];
           for (let index = 0; index < names.length; index++) {
             const argument = stmt.args[index];

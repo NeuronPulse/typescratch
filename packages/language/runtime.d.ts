@@ -67,4 +67,15 @@ export declare const Scratch: {
   list<T>(name: string): ListHandle<T>;
   array<T>(size: number): ArrayHandle<T>;
   free(ref: unknown): void;
+  /**
+   * Generic Scratch block escape hatch. Emits ANY original or extension block
+   * by opcode, with named inputs and static menu fields. `do` emits a command;
+   * `get` emits a reporter.
+   *
+   *   Scratch.do("motion_movesteps", { STEPS: 10 });
+   *   Scratch.do("motion_goto", {}, { TO: "_random_" });
+   *   const x = Scratch.get<number>("sensing_xposition");
+   */
+  do(opcode: string, inputs?: Record<string, unknown>, fields?: Record<string, string>): void;
+  get<T = number>(opcode: string, inputs?: Record<string, unknown>, fields?: Record<string, string>): T;
 };

@@ -48,6 +48,8 @@ export type Expr =
   | { k: "join"; parts: Expr[]; type: "string"; span?: SourceSpan }
   | { k: "convert"; to: "number" | "boolean"; value: Expr; type: IrType; span?: SourceSpan }
   | { k: "intrinsic"; name: string; args: Expr[]; type: IrType; span?: SourceSpan }
+  /** Generic Scratch block: any opcode with named inputs and static fields. */
+  | { k: "raw"; opcode: string; inputs: Record<string, Expr>; fields: Record<string, string>; type: IrType; span?: SourceSpan }
   | { k: "listRead"; op: ListReadOp; list: ListId; index?: Expr; type: IrType; span?: SourceSpan }
   | { k: "call"; function: FunctionId; args: Expr[]; type: IrType; span?: SourceSpan }
   | { k: "objectNew"; classId: ClassId; type: "number"; span?: SourceSpan }
@@ -61,6 +63,8 @@ export type Stmt =
   | { k: "declare"; var: VarId; init?: Expr; span?: SourceSpan }
   | { k: "assign"; var: VarId; value: Expr; span?: SourceSpan }
   | { k: "expr"; name: string; args: Expr[]; span?: SourceSpan }
+  /** Generic Scratch command block: any opcode with named inputs and fields. */
+  | { k: "rawStmt"; opcode: string; inputs: Record<string, Expr>; fields: Record<string, string>; span?: SourceSpan }
   | { k: "list"; op: ListOp; list: ListId; args: Expr[]; span?: SourceSpan }
   | { k: "break"; span?: SourceSpan }
   | { k: "continue"; span?: SourceSpan }
@@ -176,6 +180,9 @@ function* exprTree(expr: Expr): Generator<Expr> {
     case "call":
       for (const arg of expr.args) yield* exprTree(arg);
       break;
+    case "raw":
+      for (const value of Object.values(expr.inputs)) yield* exprTree(value);
+      break;
     case "listRead":
       if (expr.index) yield* exprTree(expr.index);
       break;
@@ -215,6 +222,9 @@ function* stmtTree(stmts: Stmt[]): Generator<Expr> {
       case "list":
       case "invoke":
         for (const arg of stmt.args) yield* exprTree(arg);
+        break;
+      case "rawStmt":
+        for (const value of Object.values(stmt.inputs)) yield* exprTree(value);
         break;
       case "heapArrayAllocate":
         yield* exprTree(stmt.size);
@@ -417,6 +427,9 @@ export function validateModule(module: Module, bag: DiagnosticBag): void {
           break;
         case "expr":
           for (const arg of stmt.args) checkExpr(arg);
+          break;
+        case "rawStmt":
+          for (const value of Object.values(stmt.inputs)) checkExpr(value);
           break;
         case "list":
           if (!declaredLists.has(stmt.list)) {

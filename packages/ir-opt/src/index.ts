@@ -183,6 +183,11 @@ class Optimizer {
       }
       case "intrinsic":
         return { ...expr, args: expr.args.map((argument) => this.expr(argument)) };
+      case "raw":
+        return {
+          ...expr,
+          inputs: Object.fromEntries(Object.entries(expr.inputs).map(([k, v]) => [k, this.expr(v)])),
+        };
       case "listRead":
         return expr.index ? { ...expr, index: this.expr(expr.index) } : expr;
       case "arrayNew":
@@ -255,6 +260,12 @@ class Optimizer {
         case "list":
         case "invoke":
           result.push({ ...stmt, args: stmt.args.map((argument) => this.expr(argument)) });
+          break;
+        case "rawStmt":
+          result.push({
+            ...stmt,
+            inputs: Object.fromEntries(Object.entries(stmt.inputs).map(([k, v]) => [k, this.expr(v)])),
+          });
           break;
         case "heapArrayAllocate":
           result.push({ ...stmt, size: this.expr(stmt.size) });

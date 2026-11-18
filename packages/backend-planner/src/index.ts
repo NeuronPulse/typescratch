@@ -236,6 +236,9 @@ export function collectAbiOperations(modules: readonly Module[]): AbiOperation[]
       case "methodCall":
         for (const argument of expr.args) visitExpr(argument, scope);
         break;
+      case "raw":
+        for (const value of Object.values(expr.inputs)) visitExpr(value, scope);
+        break;
       case "listRead":
         if (expr.index) visitExpr(expr.index, scope);
         break;
@@ -293,6 +296,9 @@ export function collectAbiOperations(modules: readonly Module[]): AbiOperation[]
         case "expr":
         case "list":
           for (const argument of stmt.args) visitExpr(argument, scope);
+          break;
+        case "rawStmt":
+          for (const value of Object.values(stmt.inputs)) visitExpr(value, scope);
           break;
         case "return":
           if (stmt.value) visitExpr(stmt.value, scope);

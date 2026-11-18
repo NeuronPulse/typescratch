@@ -36,6 +36,9 @@ function expressionEvents(expr: Expr): YieldEvent[] {
           events.push({ kind: "yield", span: node.span });
         }
         break;
+      case "raw":
+        for (const value of Object.values(node.inputs)) visit(value);
+        break;
       case "listRead":
         if (node.index) visit(node.index);
         break;
@@ -113,6 +116,9 @@ function statementEvents(stmts: Stmt[]): YieldEvent[] {
           if (getIntrinsic(stmt.name)?.effect === "yields") {
             events.push({ kind: "yield", span: stmt.span });
           }
+          break;
+        case "rawStmt":
+          for (const value of Object.values(stmt.inputs)) events.push(...expressionEvents(value));
           break;
         case "list":
           for (const arg of stmt.args) events.push(...expressionEvents(arg));

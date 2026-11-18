@@ -29,6 +29,8 @@ export interface IntrinsicSpec {
   backend: "native" | "extension";
   opcode?: string;
   inputs?: string[];
+  /** Static Scratch block fields (menu selections), e.g. {TO: "_random_"}. */
+  fields?: Record<string, string>;
   mathOperator?: string;
   effect?: "yields";
 }

@@ -107,6 +107,26 @@ const MATH_FUNCTIONS: Readonly<Record<string, (value: number) => number>> = {
   "math.log": Math.log10,
 };
 
+/**
+ * Interpreter fallback for generic Scratch reporter blocks. The interpreter
+ * has no VM/block execution engine, so only a small set of built-in reporters
+ * is evaluated; unknown opcodes return 0. Real block behavior is verified on
+ * scratch-vm via createStepSession, not here.
+ */
+export function evalRawReporter(opcode: string, inputs: Record<string, TraceValue>): TraceValue {
+  const number = (name: string): number => toNumber(inputs[name] ?? 0);
+  switch (opcode) {
+    case "operator_add": return number("NUM1") + number("NUM2");
+    case "operator_subtract": return number("NUM1") - number("NUM2");
+    case "operator_multiply": return number("NUM1") * number("NUM2");
+    case "operator_divide": return number("NUM1") / number("NUM2");
+    case "operator_mod": return number("NUM1") % number("NUM2");
+    case "operator_join": return toStringValue(inputs.STRING1 ?? "") + toStringValue(inputs.STRING2 ?? "");
+    case "operator_length": return toStringValue(inputs.STRING ?? "").length;
+    default: return 0;
+  }
+}
+
 export function evalIntrinsic(name: string, args: TraceValue[], profile: ValueProfile = "scratch"): TraceValue {
   const asNumber = (value: TraceValue): number => profile === "javascript" ? jsNumber(value) : toNumber(value);
   const mathFunction = MATH_FUNCTIONS[name];
@@ -216,6 +236,10 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
         return list[index] ?? "";
       }
       case "intrinsic": return evalIntrinsic(expr.name, expr.args.map(evalExpr), profile);
+      case "raw": {
+        const values = Object.fromEntries(Object.entries(expr.inputs).map(([k, v]) => [k, evalExpr(v)]));
+        return evalRawReporter(expr.opcode, values);
+      }
       case "call": {
         const fn = functionMap.get(expr.function);
         if (!fn) throw new Error(`IR interpreter cannot find function ${expr.function}`);
@@ -288,6 +312,14 @@ export function interpretModules(modules: Module[], options: InterpretOptions = 
           const args = stmt.args.map(evalExpr);
           trace.commands.push(stmt.name);
           if (stmt.name === "say") trace.says.push(toStringValue(args[0] ?? ""));
+          break;
+        }
+        case "rawStmt": {
+          const inputs = Object.fromEntries(Object.entries(stmt.inputs).map(([k, v]) => [k, evalExpr(v)]));
+          trace.commands.push(stmt.opcode);
+          if (stmt.opcode === "looks_say" || stmt.opcode === "looks_think") {
+            trace.says.push(toStringValue(inputs.MESSAGE ?? ""));
+          }
           break;
         }
         case "list": {

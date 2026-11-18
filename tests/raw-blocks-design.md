@@ -1,0 +1,78 @@
+# Generic Scratch blocks — `Scratch.do` / `Scratch.get` (2026-11-18)
+
+**Status: IMPLEMENTED.** Any original Scratch block and any extension block can
+now be written from TypeScratch by opcode, with named inputs and static menu
+fields. No per-block intrinsic registration is required.
+
+## Syntax
+
+```ts
+import { Scratch } from "@typescratch/runtime";
+
+// command (any opcode)
+Scratch.do("motion_movesteps", { STEPS: 10 });
+Scratch.do("looks_say", { MESSAGE: "hello" });
+
+// static menu field (3rd argument)
+Scratch.do("motion_goto", {}, { TO: "_random_" });
+
+// reporter (any opcode), generic return type
+const x = Scratch.get<number>("sensing_xposition");
+const sum = Scratch.get<number>("operator_add", { NUM1: 20, NUM2: 22 });
+
+// extension blocks — opcode emitted verbatim
+Scratch.do("my_extension_command", { VALUE: 7 }, { MODE: "x" });
+const v = Scratch.get<number>("my_extension_reporter", {});
+```
+
+`inputs` values are TypeScript expressions (lowered normally); `fields` values
+are string literals (menu selections / fixed text). Unknown reporter opcodes
+evaluate to `0` in the synchronous IR interpreter — real behavior is verified
+on scratch-vm.
+
+## Why this shape
+
+`runtimeNameOf()` resolves a call's symbol to `@typescratch/runtime`, so a
+single pair of explicitly-named functions is enough to expose the whole block
+universe. No per-opcode declaration table to maintain; new Scratch versions and
+third-party extensions work immediately.
+
+## Implementation
+
+- IR: new `raw` Expr and `rawStmt` Stmt carrying `opcode`, named `inputs`,
+  static `fields`. All exhaustive walkers were synchronised (ir, analysis,
+  ir-opt, planner, backend-native, interpreter) — the same fan-out as `tryCall`.
+- frontend: `Scratch.do/get` parse a literal opcode plus object literals for
+  inputs/fields into `rawStmt`/`raw`; non-literal opcodes and non-literal fields
+  are rejected with `TSCR2001`.
+- backend-native: emits the opcode directly via `GraphBuilder.add` with fields
+  and named inputs; no intrinsic lookup, so any opcode passes through.
+- `IntrinsicSpec.fields` was also added for the typed intrinsic path (used by
+  `operator_mathop`); raw blocks carry their own fields independently.
+- `allCommands()` deliberately does NOT treat `rawStmt` as an intrinsic command,
+  so the planner's "unknown command intrinsic" check does not reject raw blocks.
+
+## Verification (headless scratch-vm, no browser)
+
+`tests/raw-blocks.test.ts`, 5/5 passing:
+
+1. `Scratch.do("looks_say", ...)` emits the `looks_say` opcode.
+2. A raw command + raw reporter (`operator_add`) run in real scratch-vm and
+   produce SAY `["42", "from raw"]`.
+3. `Scratch.get` emits an arbitrary reporter with named inputs.
+4. Static field `TO: "_random_"` round-trips into the generated
+   `motion_goto` block's `fields`.
+5. Arbitrary non-Scratch extension opcodes are emitted verbatim.
+
+`pnpm verify` 6/6, typecheck/lint clean, golden unchanged.
+
+## Boundaries
+
+- This is a block escape hatch, not a typed wrapper per block: the compiler
+  emits the exact opcode/inputs/fields you give it. It does not validate that
+  the opcode exists in the target VM — a typo produces a block the VM ignores,
+  which is the same contract as writing an unknown extension opcode by hand.
+- `inputs` maps to Scratch substack inputs by block id, so a value expression
+  can be passed anywhere a Scratch input is expected.
+- Interpreter support for reporter semantics is intentionally partial (basic
+  `operator_*`); full fidelity lives in scratch-vm E2E.
