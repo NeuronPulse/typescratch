@@ -1,3 +1,5 @@
+export * from "./blocks.ts";
+
 export type Target = "scratch" | "turbowarp";
 export type ValueType = "number" | "string" | "boolean" | "void";
 export type RuntimeValue = string | number | boolean;

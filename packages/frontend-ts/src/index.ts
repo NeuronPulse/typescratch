@@ -5,7 +5,7 @@ import type {
   BinOp, ClassDecl, DispatchTarget, Expr, FieldDecl, FunctionDecl, Hat, IrType, ListDecl, ListOp,
   Module, RoleRef, Script, Stmt, VarDecl,
 } from "@typescratch/ir";
-import { MATH_INTRINSICS, YIELDING_COMMANDS } from "@typescratch/language";
+import { MATH_INTRINSICS, YIELDING_COMMANDS, getBlockSpec } from "@typescratch/language";
 
 const HAT_NAMES: ReadonlySet<string> = new Set([
   "onFlag", "onKey", "onSpriteClicked", "onClone", "onBackdrop", "onBroadcast", "onGreaterThan",
@@ -622,6 +622,60 @@ class Lowerer {
     return fromRuntime ? symbol.getName() : undefined;
   }
 
+  /**
+   * Resolve `Scratch.<category>.<method>(...)` to `<category>.<method>` when
+   * the method symbol is declared in the runtime d.ts. The block table then
+   * maps the path to a concrete opcode and positional inputs/fields.
+   */
+  private blockPathOf(call: ts.CallExpression): string | undefined {
+    const access = call.expression;
+    if (!ts.isPropertyAccessExpression(access)) return undefined;
+    const owner = access.expression;
+    if (!ts.isPropertyAccessExpression(owner)) return undefined;
+    if (!ts.isIdentifier(owner.expression) || owner.expression.text !== "Scratch") return undefined;
+    const symbol = this.checker.getSymbolAtLocation(access);
+    const fromRuntime = symbol?.getDeclarations()?.some(
+      (declaration) => resolve(declaration.getSourceFile().fileName) === this.runtimeDts,
+    );
+    if (!fromRuntime) return undefined;
+    return `${owner.name.text}.${access.name.text}`;
+  }
+
+  /**
+   * Lower a curated object-call block using its table spec. Positional args
+   * map to `inputs` first; the trailing `fieldCount` args are static fields.
+   */
+  private lowerObjectBlock(call: ts.CallExpression, path: string): Expr {
+    const entry = getBlockSpec(path);
+    if (!entry) {
+      this.unsupported(call, `unknown Scratch block ${path}`);
+      return this.voidConst(call);
+    }
+    const args = call.arguments;
+    const expected = entry.inputs.length + entry.fieldNames.length;
+    if (args.length < expected) {
+      this.unsupported(call, `${path} expects ${expected} argument(s)`);
+      return this.voidConst(call);
+    }
+    const inputs: Record<string, Expr> = {};
+    entry.inputs.forEach((name, index) => { inputs[name] = this.lowerExpr(args[index]!); });
+    const fields: Record<string, string> = {};
+    entry.fieldNames.forEach((name, i) => {
+      const value = args[entry.inputs.length + i]!;
+      if (!ts.isStringLiteralLike(value)) {
+        this.unsupported(value, "Scratch block field arguments must be string literals");
+        return;
+      }
+      fields[name] = value.text;
+    });
+    const span = this.span(call);
+    if (entry.kind === "command") {
+      this.emit({ k: "rawStmt", opcode: entry.opcode, inputs, fields, span });
+      return this.voidConst(call);
+    }
+    return { k: "raw", opcode: entry.opcode, inputs, fields, type: entry.returns ?? "boolean", span };
+  }
+
   private mathNameOf(call: ts.CallExpression): string | undefined {
     const expression = call.expression;
     if (!ts.isPropertyAccessExpression(expression)) return undefined;
@@ -1055,6 +1109,10 @@ class Lowerer {
           args: node.arguments.map((argument) => this.lowerExpr(argument)),
           type: fn.returnType, span: this.span(node),
         };
+      }
+      const blockPath = this.blockPathOf(node);
+      if (blockPath) {
+        return this.lowerObjectBlock(node, blockPath);
       }
       const runtimeName = this.runtimeNameOf(node);
       if (runtimeName) {

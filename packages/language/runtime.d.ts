@@ -78,4 +78,83 @@ export declare const Scratch: {
    */
   do(opcode: string, inputs?: Record<string, unknown>, fields?: Record<string, string>): void;
   get<T = number>(opcode: string, inputs?: Record<string, unknown>, fields?: Record<string, string>): T;
+  /** Object-call syntax for curated Scratch blocks (category.method). */
+  readonly motion: {
+    moveSteps(a0: number): void;
+    turnRight(a0: number): void;
+    turnLeft(a0: number): void;
+    goToXY(a0: number, a1: number): void;
+    glideSecsToXY(a0: number, a1: number, a2: number): void;
+    setX(a0: number): void;
+    setY(a0: number): void;
+    changeXBy(a0: number): void;
+    changeYBy(a0: number): void;
+    pointInDirection(a0: number): void;
+    setRotationStyle(a0: string): void;
+    ifOnEdgeBounce(): void;
+    xPosition(): number;
+    yPosition(): number;
+    direction(): number;
+  };
+  readonly looks: {
+    say(a0: string): void;
+    sayForSecs(a0: string, a1: number): void;
+    think(a0: string): void;
+    thinkForSecs(a0: string, a1: number): void;
+    show(): void;
+    hide(): void;
+    nextCostume(): void;
+    nextBackdrop(): void;
+    setSizeTo(a0: number): void;
+    changeSizeBy(a0: number): void;
+    clearGraphicEffects(): void;
+    goToFrontBack(a0: string): void;
+    goForwardBackwardLayers(a0: number, a1: string): void;
+    switchCostumeTo(a0: string): void;
+    switchBackdropTo(a0: string): void;
+    size(): number;
+    costumeNumberName(a0: string): string;
+    backdropNumberName(a0: string): string;
+  };
+  readonly sound: {
+    play(a0: string): void;
+    playUntilDone(a0: string): void;
+    stopAllSounds(): void;
+    clearSoundEffects(): void;
+    setVolumeTo(a0: number): void;
+    changeVolumeBy(a0: number): void;
+    volume(): number;
+  };
+  readonly sensing: {
+    resetTimer(): void;
+    setDragMode(a0: string): void;
+    askAndWait(a0: string): void;
+    touchingObject(a0: string): boolean;
+    mouseDown(): boolean;
+    keyPressed(a0: string): boolean;
+    timer(): number;
+    mouseX(): number;
+    mouseY(): number;
+    answer(): string;
+    username(): string;
+  };
+  readonly operators: {
+    add(a0: number, a1: number): number;
+    subtract(a0: number, a1: number): number;
+    multiply(a0: number, a1: number): number;
+    divide(a0: number, a1: number): number;
+    mod(a0: number, a1: number): number;
+    random(a0: number, a1: number): number;
+    round(a0: number): number;
+    join(a0: string, a1: string): string;
+    letterOf(a0: number, a1: string): string;
+    length(a0: string): number;
+    lt(a0: number, a1: number): boolean;
+    gt(a0: number, a1: number): boolean;
+    equals(a0: string, a1: string): boolean;
+    and(a0: boolean, a1: boolean): boolean;
+    or(a0: boolean, a1: boolean): boolean;
+    not(a0: boolean): boolean;
+    contains(a0: string, a1: string): boolean;
+  };
 };

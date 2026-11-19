@@ -1,8 +1,28 @@
-# Generic Scratch blocks — `Scratch.do` / `Scratch.get` (2026-11-18)
+# Generic Scratch blocks — object calls + `Scratch.do` / `Scratch.get` (2026-11-18)
 
-**Status: IMPLEMENTED.** Any original Scratch block and any extension block can
-now be written from TypeScratch by opcode, with named inputs and static menu
-fields. No per-block intrinsic registration is required.
+**Status: IMPLEMENTED.** Original Scratch blocks are written with an object
+call (`Scratch.motion.moveSteps(10)`), no string opcodes. Any block not in the
+curated object table — including third-party extension blocks — is available
+through `Scratch.do` / `Scratch.get` with a literal opcode.
+
+## Object-call syntax (preferred)
+
+```ts
+Scratch.motion.moveSteps(10);
+Scratch.looks.say("hello");
+const sum = Scratch.operators.add(20, 22);
+Scratch.motion.setRotationStyle("left-right"); // static menu field argument
+const x = Scratch.motion.xPosition();
+```
+
+`packages/language/src/blocks.ts` is a curated, verified table of 68 blocks
+(motion/looks/sound/sensing/operators) mapping `<category>.<method>` to an
+opcode, positional input names, static field names, and kind/return type.
+`runtime.d.ts` declares the matching typed namespaces, so the object calls are
+fully typed. The frontend resolves `Scratch.<category>.<method>` via the TS
+symbol (runtime d.ts origin) and lowers it to the generic `raw` / `rawStmt` IR
+with named inputs and fields. Blocks outside the table still use `do`/`get`.
+
 
 ## Syntax
 
