@@ -51,6 +51,11 @@ const mathop = (name: string, operator: string): IntrinsicSpec => ({
   backend: "native", opcode: "operator_mathop", inputs: ["NUM"], mathOperator: operator,
 });
 
+/**
+ * JS Math functions backed by native Scratch blocks. `sin`/`cos`/`tan` and
+ * their inverses need a radian↔degree conversion — see the frontend lowering;
+ * the intrinsic itself stays a plain `operator_mathop` mapping.
+ */
 export const MATH_INTRINSICS: Readonly<Record<string, string>> = {
   sqrt: "math.sqrt",
   abs: "math.abs",
@@ -60,9 +65,17 @@ export const MATH_INTRINSICS: Readonly<Record<string, string>> = {
   sin: "math.sin",
   cos: "math.cos",
   tan: "math.tan",
+  asin: "math.asin",
+  acos: "math.acos",
+  atan: "math.atan",
   log: "math.ln",
   log10: "math.log",
+  exp: "math.exp",
 };
+
+/** Which Math functions take/return radians and need conversion. */
+export const MATH_RADIAN_IN: ReadonlySet<string> = new Set(["sin", "cos", "tan"]);
+export const MATH_RADIAN_OUT: ReadonlySet<string> = new Set(["asin", "acos", "atan"]);
 
 export const RESOURCE_INTRINSICS: ReadonlySet<string> = new Set([
   "global", "local", "get", "set", "change",
@@ -89,8 +102,26 @@ export const INTRINSICS: Readonly<Record<string, IntrinsicSpec>> = {
   "math.sin": mathop("math.sin", "sin"),
   "math.cos": mathop("math.cos", "cos"),
   "math.tan": mathop("math.tan", "tan"),
+  "math.asin": mathop("math.asin", "asin"),
+  "math.acos": mathop("math.acos", "acos"),
+  "math.atan": mathop("math.atan", "atan"),
   "math.ln": mathop("math.ln", "ln"),
   "math.log": mathop("math.log", "log"),
+  "math.exp": mathop("math.exp", "e ^"),
+  // Native string operations. charAt needs a 0-based→1-based index adjustment
+  // in the frontend; includes/length map directly.
+  "string.charAt": {
+    name: "string.charAt", kind: "reporter", params: ["number"], returns: "string",
+    backend: "native", opcode: "operator_letter_of", inputs: ["LETTER", "STRING"],
+  },
+  "string.includes": {
+    name: "string.includes", kind: "reporter", params: ["string"], returns: "boolean",
+    backend: "native", opcode: "operator_contains", inputs: ["STRING1", "STRING2"],
+  },
+  "string.length": {
+    name: "string.length", kind: "reporter", params: [], returns: "number",
+    backend: "native", opcode: "operator_length", inputs: ["STRING"],
+  },
   "math.round": {
     name: "math.round", kind: "reporter", params: ["number"], returns: "number",
     backend: "native", opcode: "operator_round", inputs: ["NUM"],

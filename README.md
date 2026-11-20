@@ -45,7 +45,7 @@ Scratch.onFlag(() => {
 });
 ```
 
-`Math.sqrt` becomes `operator_mathop`; `Math.hypot` needs an extension reporter. Short-circuit operators lower to control flow because Scratch evaluates both sides of `operator_and` and TypeScript does not. TypeScript won that argument.
+Native standard library: `Math.PI`/`E`, `abs`/`floor`/`ceil`/`round`/`sqrt`/`ln`/`log10`/`exp`, and `sin`/`cos`/`tan`/`asin`/`acos`/`atan` (radian↔degree conversion at the block boundary — Scratch counts degrees, JavaScript does not). Strings have `charAt`/`includes`/`length`; `toUpperCase`/`toLowerCase` need an extension reporter because Scratch has no native case blocks. Everything else (`pow`, `min`/`max`, `sign`, `indexOf`, `slice`, …) is deliberately absent — no native block expresses it without a loop or a conditional expression the IR doesn't have. Short-circuit operators are control flow because Scratch evaluates both sides of `operator_and` and TypeScript does not. TypeScript won that argument.
 
 ## Language
 
@@ -103,7 +103,7 @@ pnpm trace:showcase   # per-frame VM state changes for 3 green flags
 pnpm snapshots:update # refresh five golden artifacts per case
 ```
 
-183 Vitest tests plus 23 headless VM conformance runs compare SAY/variable/list traces against an independent IR interpreter. Five golden artifacts are pinned for ten cases; CI runs the gate on Node 24 and 26. `pnpm verify:e2e` is a separate browser-and-network gate that loads `dist/hybrid.sb3` in the real TurboWarp editor and asserts the embedded extension actually executes.
+188 Vitest tests plus 23 headless VM conformance runs compare SAY/variable/list traces against an independent IR interpreter. Five golden artifacts are pinned for ten cases; CI runs the gate on Node 24 and 26. `pnpm verify:e2e` is a separate browser-and-network gate that loads `dist/hybrid.sb3` in the real TurboWarp editor and asserts the embedded extension actually executes.
 
 ## License
 

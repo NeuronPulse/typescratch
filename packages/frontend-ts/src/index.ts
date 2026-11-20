@@ -5,7 +5,7 @@ import type {
   BinOp, ClassDecl, DispatchTarget, Expr, FieldDecl, FunctionDecl, Hat, IrType, ListDecl, ListOp,
   Module, RoleRef, Script, Stmt, VarDecl,
 } from "@typescratch/ir";
-import { MATH_INTRINSICS, YIELDING_COMMANDS } from "@typescratch/language";
+import { MATH_INTRINSICS, MATH_RADIAN_IN, MATH_RADIAN_OUT, YIELDING_COMMANDS } from "@typescratch/language";
 
 const HAT_NAMES: ReadonlySet<string> = new Set([
   "onFlag", "onKey", "onSpriteClicked", "onClone", "onBackdrop", "onBroadcast", "onGreaterThan",
@@ -722,14 +722,17 @@ class Lowerer {
     const expression = call.expression;
     if (!ts.isPropertyAccessExpression(expression)) return undefined;
     const method = expression.name.text;
-    if (method !== "toUpperCase" && method !== "toLowerCase") return undefined;
+    const nativeMethods: Record<string, string> = { charAt: "string.charAt", includes: "string.includes" };
+    const isNative = method in nativeMethods;
+    if (!isNative && method !== "toUpperCase" && method !== "toLowerCase") return undefined;
     if (this.typeOf(expression.expression) !== "string") return undefined;
     const symbol = this.checker.getSymbolAtLocation(expression);
     const declarations = symbol?.getDeclarations() ?? [];
     const fromLib = declarations.some((declaration) =>
       /[\\/]lib\.[^\\/]*\.d\.ts$/.test(declaration.getSourceFile().fileName),
     );
-    return fromLib ? `ext.String.${method}` : undefined;
+    if (!fromLib) return undefined;
+    return isNative ? nativeMethods[method]! : `ext.String.${method}`;
   }
 
   private handleOf(call: ts.CallExpression): VarDecl | undefined {
@@ -754,7 +757,10 @@ class Lowerer {
   }
 
   private literalValue(node: ts.Expression): string | number | boolean | undefined {
-    if (ts.isNumericLiteral(node)) return Number(node.text);
+    if (ts.isNumericLiteral(node)) {
+      const value = Number(node.text);
+      return Number.isFinite(value) ? value : undefined;
+    }
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
     if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
     if (node.kind === ts.SyntaxKind.FalseKeyword) return false;
@@ -965,7 +971,17 @@ class Lowerer {
       return this.voidConst(node);
     }
     if (ts.isNumericLiteral(node)) {
-      return { k: "const", value: Number(node.text), type: "number", span: this.span(node) };
+      const value = Number(node.text);
+      if (!Number.isFinite(value)) {
+        this.bag.error(
+          CODES.NUMERIC_PROFILE,
+          `numeric literal ${node.text} is not finite in JavaScript`,
+          this.span(node),
+          ["Scratch cannot represent Infinity or NaN as a stable variable value."],
+        );
+        return this.voidConst(node);
+      }
+      return { k: "const", value, type: "number", span: this.span(node) };
     }
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
       return { k: "const", value: node.text, type: "string", span: this.span(node) };
@@ -1001,6 +1017,23 @@ class Lowerer {
           span: this.span(node),
         };
       }
+      if (node.name.text === "length" && this.typeOf(node.expression) === "string") {
+        return {
+          k: "intrinsic", name: "string.length",
+          args: [this.lowerExpr(node.expression)], type: "number", span: this.span(node),
+        };
+      }
+      if (ts.isIdentifier(node.expression) && node.expression.text === "Math"
+        && (node.name.text === "PI" || node.name.text === "E")) {
+        const symbol = this.checker.getSymbolAtLocation(node);
+        const fromLib = symbol?.getDeclarations()?.some((d) => /[\\/]lib\.[^\\/]*\.d\.ts$/.test(d.getSourceFile().fileName));
+        if (fromLib) {
+          return {
+            k: "const", value: node.name.text === "PI" ? Math.PI : Math.E,
+            type: "number", span: this.span(node),
+          };
+        }
+      }
       this.unsupported(node, `unsupported property access ${node.name.text}`);
       return this.voidConst(node);
     }
@@ -1013,6 +1046,10 @@ class Lowerer {
       }
       const decl = symbol ? this.symbolVars.get(symbol) : undefined;
       if (decl) return { k: "read", var: decl.id, type: decl.type, span: this.span(node) };
+      if (node.text === "undefined") {
+        this.unsupported(node, "undefined has no Scratch representation; use a finite sentinel (e.g. -1 or \"\")");
+        return this.voidConst(node);
+      }
       if (node.text === "NaN" || node.text === "Infinity") {
         this.bag.error(
           CODES.NUMERIC_PROFILE,
@@ -1243,25 +1280,60 @@ class Lowerer {
       const stringMethod = this.stringMethodOf(node);
       if (stringMethod) {
         const propertyAccess = node.expression as ts.PropertyAccessExpression;
-        return {
-          k: "intrinsic", name: stringMethod,
-          args: [this.lowerExpr(propertyAccess.expression)],
-          type: "string", span: this.span(node),
-        };
+        const span = this.span(node);
+        const receiver = this.lowerExpr(propertyAccess.expression);
+        let args: Expr[];
+        let type: IrType = "string";
+        if (stringMethod === "string.charAt") {
+          // Scratch operator_letter_of is 1-based; JS charAt is 0-based.
+          const index = node.arguments[0] ? this.lowerExpr(node.arguments[0]) : { k: "const" as const, value: 0, type: "number" as const, span };
+          args = [{
+            k: "binary", op: "add", l: index, r: { k: "const", value: 1, type: "number", span },
+            type: "number", span,
+          }, receiver];
+        } else if (stringMethod === "string.includes") {
+          const needle = node.arguments[0] ? this.lowerExpr(node.arguments[0]) : { k: "const" as const, value: "", type: "string" as const, span };
+          args = [receiver, needle];
+          type = "boolean";
+        } else {
+          args = [receiver]; // toUpperCase / toLowerCase extension reporters
+        }
+        return { k: "intrinsic", name: stringMethod, args, type, span };
       }
       const mathName = this.mathNameOf(node);
       if (mathName) {
+        const span = this.span(node);
         const intrinsic = MATH_INTRINSICS[mathName] ?? `ext.Math.${mathName}`;
-        return {
-          k: "intrinsic", name: intrinsic,
-          args: node.arguments.map((argument) => this.lowerExpr(argument)),
-          type: "number", span: this.span(node),
-        };
+        const num = (value: number): Expr => ({ k: "const", value, type: "number", span });
+        const arg0 = node.arguments[0];
+        const loweredArg0 = arg0 ? this.lowerExpr(arg0) : num(0);
+        // Scratch's trig blocks use degrees; JS Math uses radians. Convert at
+        // the boundary so `Math.sin(Math.PI / 2)` really equals 1.
+        const arg = MATH_RADIAN_IN.has(mathName)
+          ? { k: "binary" as const, op: "mul" as const, l: loweredArg0, r: num(180 / Math.PI), type: "number" as const, span }
+          : loweredArg0;
+        const args = [arg, ...node.arguments.slice(1).map((argument) => this.lowerExpr(argument))];
+        const call: Expr = { k: "intrinsic", name: intrinsic, args, type: "number", span };
+        return MATH_RADIAN_OUT.has(mathName)
+          ? { k: "binary", op: "mul", l: call, r: num(Math.PI / 180), type: "number", span }
+          : call;
       }
       this.unknown(node, "call target is not a TypeScratch intrinsic");
       return this.voidConst(node);
     }
-    this.unsupported(node, `unsupported expression ${ts.SyntaxKind[node.kind]}`);
+    const isUndefined = ts.isIdentifier(node) && node.text === "undefined";
+    if (node.kind === ts.SyntaxKind.NullKeyword || isUndefined) {
+      this.unsupported(
+        node,
+        `${isUndefined ? "undefined" : "null"} has no Scratch representation; use a finite sentinel (e.g. -1 or "")`,
+      );
+    } else if (ts.isArrayLiteralExpression(node)) {
+      this.unsupported(node, "array literals are not supported; use Scratch.array<T>(size) with set()/get()");
+    } else if (ts.isObjectLiteralExpression(node)) {
+      this.unsupported(node, "object literals are not supported; use a class instance (new) or Scratch.global/local");
+    } else {
+      this.unsupported(node, `unsupported expression ${ts.SyntaxKind[node.kind]}`);
+    }
     return this.voidConst(node);
   }
 
