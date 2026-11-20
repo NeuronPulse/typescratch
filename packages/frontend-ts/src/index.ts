@@ -5,7 +5,7 @@ import type {
   BinOp, ClassDecl, DispatchTarget, Expr, FieldDecl, FunctionDecl, Hat, IrType, ListDecl, ListOp,
   Module, RoleRef, Script, Stmt, VarDecl,
 } from "@typescratch/ir";
-import { MATH_INTRINSICS, YIELDING_COMMANDS, getBlockSpec } from "@typescratch/language";
+import { MATH_INTRINSICS, YIELDING_COMMANDS } from "@typescratch/language";
 
 const HAT_NAMES: ReadonlySet<string> = new Set([
   "onFlag", "onKey", "onSpriteClicked", "onClone", "onBackdrop", "onBroadcast", "onGreaterThan",
@@ -623,45 +623,64 @@ class Lowerer {
   }
 
   /**
-   * Resolve `Scratch.<category>.<method>(...)` to `<category>.<method>` when
-   * the method symbol is declared in the runtime d.ts. The block table then
-   * maps the path to a concrete opcode and positional inputs/fields.
+   * Object-call Scratch block metadata, read entirely from the runtime d.ts —
+   * no separate block table. The method's `@tscr opcode X` JSDoc gives the
+   * opcode, parameter names give Scratch input names, `@tscr field` marks a
+   * static menu parameter, and the declared return type decides command
+   * (void) vs reporter (number/string/boolean).
    */
-  private blockPathOf(call: ts.CallExpression): string | undefined {
-    const access = call.expression;
-    if (!ts.isPropertyAccessExpression(access)) return undefined;
-    const owner = access.expression;
-    if (!ts.isPropertyAccessExpression(owner)) return undefined;
-    if (!ts.isIdentifier(owner.expression) || owner.expression.text !== "Scratch") return undefined;
-    const symbol = this.checker.getSymbolAtLocation(access);
-    const fromRuntime = symbol?.getDeclarations()?.some(
-      (declaration) => resolve(declaration.getSourceFile().fileName) === this.runtimeDts,
-    );
-    if (!fromRuntime) return undefined;
-    return `${owner.name.text}.${access.name.text}`;
+  private jsDocOf(node: ts.Node): readonly ts.JSDoc[] {
+    return (node as ts.Node & { jsDoc?: readonly ts.JSDoc[] }).jsDoc ?? [];
   }
 
-  /**
-   * Lower a curated object-call block using its table spec. Positional args
-   * map to `inputs` first; the trailing `fieldCount` args are static fields.
-   */
-  private lowerObjectBlock(call: ts.CallExpression, path: string): Expr {
-    const entry = getBlockSpec(path);
-    if (!entry) {
-      this.unsupported(call, `unknown Scratch block ${path}`);
-      return this.voidConst(call);
+  private blockMetaOf(call: ts.CallExpression): {
+    opcode: string;
+    inputs: string[];
+    fields: string[];
+    returns: IrType;
+    command: boolean;
+  } | undefined {
+    const access = call.expression;
+    if (!ts.isPropertyAccessExpression(access) || !ts.isPropertyAccessExpression(access.expression)) return undefined;
+    const owner = access.expression;
+    if (!ts.isIdentifier(owner.expression) || owner.expression.text !== "Scratch") return undefined;
+    const symbol = this.checker.getSymbolAtLocation(access);
+    const declaration = symbol?.getDeclarations()?.[0];
+    if (!declaration || !ts.isMethodSignature(declaration)) return undefined;
+    if (resolve(declaration.getSourceFile().fileName) !== this.runtimeDts) return undefined;
+
+    const tag = this.jsDocOf(declaration).flatMap((doc) => doc.tags ?? [])
+      .find((t) => t.tagName.getText() === "tscr" && /opcode\s+/.test(String(t.comment ?? "")));
+    const opcode = tag ? String(tag.comment).match(/opcode\s+(\S+)/)?.[1] : undefined;
+    if (!opcode) return undefined;
+
+    const inputs: string[] = [];
+    const fields: string[] = [];
+    for (const parameter of declaration.parameters) {
+      const name = parameter.name.getText();
+      const isField = this.jsDocOf(parameter).some((doc) => doc.tags?.some((t) => t.tagName.getText() === "tscr" && /field/.test(String(t.comment ?? ""))));
+      (isField ? fields : inputs).push(name);
     }
+    const signature = this.checker.getSignatureFromDeclaration(declaration);
+    const returnType = signature ? this.checker.typeToString(signature.getReturnType()) : "void";
+    const command = returnType === "void";
+    const returns: IrType = command ? "number" : (returnType === "string" || returnType === "boolean" ? returnType : "number");
+    return { opcode, inputs, fields, returns, command };
+  }
+
+  /** Lower an object-call block whose metadata came from the runtime d.ts. */
+  private lowerObjectBlock(call: ts.CallExpression, meta: NonNullable<ReturnType<Lowerer["blockMetaOf"]>>): Expr {
     const args = call.arguments;
-    const expected = entry.inputs.length + entry.fieldNames.length;
+    const expected = meta.inputs.length + meta.fields.length;
     if (args.length < expected) {
-      this.unsupported(call, `${path} expects ${expected} argument(s)`);
+      this.unsupported(call, `${meta.opcode} expects ${expected} argument(s)`);
       return this.voidConst(call);
     }
     const inputs: Record<string, Expr> = {};
-    entry.inputs.forEach((name, index) => { inputs[name] = this.lowerExpr(args[index]!); });
+    meta.inputs.forEach((name, index) => { inputs[name] = this.lowerExpr(args[index]!); });
     const fields: Record<string, string> = {};
-    entry.fieldNames.forEach((name, i) => {
-      const value = args[entry.inputs.length + i]!;
+    meta.fields.forEach((name, i) => {
+      const value = args[meta.inputs.length + i]!;
       if (!ts.isStringLiteralLike(value)) {
         this.unsupported(value, "Scratch block field arguments must be string literals");
         return;
@@ -669,11 +688,22 @@ class Lowerer {
       fields[name] = value.text;
     });
     const span = this.span(call);
-    if (entry.kind === "command") {
-      this.emit({ k: "rawStmt", opcode: entry.opcode, inputs, fields, span });
+    if (meta.command) {
+      // A command emits a statement and has no value. Using it where a value
+      // is expected (`const x = Scratch.looks.say(...)`) is a semantic error,
+      // reported here rather than silently yielding a `void` value.
+      if (!ts.isExpressionStatement(call.parent)) {
+        this.bag.error(
+          CODES.UNSUPPORTED,
+          `${meta.opcode} is a Scratch command and cannot be used as a value`,
+          span,
+          ["Commands emit a statement; only reporters return a value."],
+        );
+      }
+      this.emit({ k: "rawStmt", opcode: meta.opcode, inputs, fields, span });
       return this.voidConst(call);
     }
-    return { k: "raw", opcode: entry.opcode, inputs, fields, type: entry.returns ?? "boolean", span };
+    return { k: "raw", opcode: meta.opcode, inputs, fields, type: meta.returns, span };
   }
 
   private mathNameOf(call: ts.CallExpression): string | undefined {
@@ -1110,9 +1140,9 @@ class Lowerer {
           type: fn.returnType, span: this.span(node),
         };
       }
-      const blockPath = this.blockPathOf(node);
-      if (blockPath) {
-        return this.lowerObjectBlock(node, blockPath);
+      const blockMeta = this.blockMetaOf(node);
+      if (blockMeta) {
+        return this.lowerObjectBlock(node, blockMeta);
       }
       const runtimeName = this.runtimeNameOf(node);
       if (runtimeName) {

@@ -15,13 +15,30 @@ Scratch.motion.setRotationStyle("left-right"); // static menu field argument
 const x = Scratch.motion.xPosition();
 ```
 
-`packages/language/src/blocks.ts` is a curated, verified table of 68 blocks
-(motion/looks/sound/sensing/operators) mapping `<category>.<method>` to an
-opcode, positional input names, static field names, and kind/return type.
-`runtime.d.ts` declares the matching typed namespaces, so the object calls are
-fully typed. The frontend resolves `Scratch.<category>.<method>` via the TS
-symbol (runtime d.ts origin) and lowers it to the generic `raw` / `rawStmt` IR
-with named inputs and fields. Blocks outside the table still use `do`/`get`.
+**`runtime.d.ts` is the single source of truth** — there is no separate block
+table. Each method declaration carries all metadata the compiler needs:
+
+```ts
+/** @tscr opcode motion_movesteps */
+moveSteps(STEPS: number): void;              // param name = Scratch input;
+                                             // void = command (statement)
+/** @tscr opcode motion_xposition */
+xPosition(): number;                         // non-void = reporter
+/** @tscr opcode motion_setrotationstyle */
+setRotationStyle(/** @tscr field */ STYLE: string): void;  // @tscr field = static menu
+```
+
+The frontend reads this from the TS symbol (verified to originate in
+`runtime.d.ts`): `@tscr opcode` gives the opcode, parameter names give Scratch
+input names, `@tscr field` marks static menu arguments, and the declared return
+type distinguishes command from reporter. Adding a block is one d.ts line —
+no table, no generator, no second place to keep in sync. Blocks outside the
+declared namespaces still use `do`/`get`.
+
+**Commands cannot be used as values.** `const x = Scratch.looks.say("hi")`
+is rejected with `TSCR2001`: a command emits a statement and has no value.
+This fixes the awkward "command that looks like a reporter" problem at the
+semantic level (TS types already show `void`; the compiler now enforces it).
 
 
 ## Syntax

@@ -78,83 +78,151 @@ export declare const Scratch: {
    */
   do(opcode: string, inputs?: Record<string, unknown>, fields?: Record<string, string>): void;
   get<T = number>(opcode: string, inputs?: Record<string, unknown>, fields?: Record<string, string>): T;
-  /** Object-call syntax for curated Scratch blocks (category.method). */
+  /** Object-call Scratch blocks. Metadata lives here (param names = Scratch inputs, JSDoc = opcode/field, return type = command vs reporter). */
+  readonly looks: {
+    /** @tscr opcode looks_say */
+    say(MESSAGE: string): void;
+    /** @tscr opcode looks_sayforsecs */
+    sayForSecs(MESSAGE: string, SECS: number): void;
+    /** @tscr opcode looks_think */
+    think(MESSAGE: string): void;
+    /** @tscr opcode looks_thinkforsecs */
+    thinkForSecs(MESSAGE: string, SECS: number): void;
+    /** @tscr opcode looks_show */
+    show(): void;
+    /** @tscr opcode looks_hide */
+    hide(): void;
+    /** @tscr opcode looks_nextcostume */
+    nextCostume(): void;
+    /** @tscr opcode looks_nextbackdrop */
+    nextBackdrop(): void;
+    /** @tscr opcode looks_setsizeto */
+    setSizeTo(SIZE: number): void;
+    /** @tscr opcode looks_changesizeby */
+    changeSizeBy(CHANGE: number): void;
+    /** @tscr opcode looks_cleargraphiceffects */
+    clearGraphicEffects(): void;
+    /** @tscr opcode looks_gotofrontback */
+    goToFrontBack(/** @tscr field */ FRONT_BACK: string): void;
+    /** @tscr opcode looks_goforwardbackwardlayers */
+    goForwardBackwardLayers(NUM: number, /** @tscr field */ FORWARD_BACKWARD: string): void;
+    /** @tscr opcode looks_switchcostumeto */
+    switchCostumeTo(COSTUME: string): void;
+    /** @tscr opcode looks_switchbackdropto */
+    switchBackdropTo(BACKDROP: string): void;
+    /** @tscr opcode looks_size */
+    size(): number;
+    /** @tscr opcode looks_costumenumbername */
+    costumeNumberName(/** @tscr field */ NUMBER_NAME: string): string;
+    /** @tscr opcode looks_backdropnumbername */
+    backdropNumberName(/** @tscr field */ NUMBER_NAME: string): string;
+  };
   readonly motion: {
-    moveSteps(a0: number): void;
-    turnRight(a0: number): void;
-    turnLeft(a0: number): void;
-    goToXY(a0: number, a1: number): void;
-    glideSecsToXY(a0: number, a1: number, a2: number): void;
-    setX(a0: number): void;
-    setY(a0: number): void;
-    changeXBy(a0: number): void;
-    changeYBy(a0: number): void;
-    pointInDirection(a0: number): void;
-    setRotationStyle(a0: string): void;
+    /** @tscr opcode motion_movesteps */
+    moveSteps(STEPS: number): void;
+    /** @tscr opcode motion_turnright */
+    turnRight(DEGREES: number): void;
+    /** @tscr opcode motion_turnleft */
+    turnLeft(DEGREES: number): void;
+    /** @tscr opcode motion_gotoxy */
+    goToXY(X: number, Y: number): void;
+    /** @tscr opcode motion_glidesecstoxy */
+    glideSecsToXY(SECS: number, X: number, Y: number): void;
+    /** @tscr opcode motion_setx */
+    setX(X: number): void;
+    /** @tscr opcode motion_sety */
+    setY(Y: number): void;
+    /** @tscr opcode motion_changexby */
+    changeXBy(DX: number): void;
+    /** @tscr opcode motion_changeyby */
+    changeYBy(DY: number): void;
+    /** @tscr opcode motion_pointindirection */
+    pointInDirection(DIRECTION: number): void;
+    /** @tscr opcode motion_setrotationstyle */
+    setRotationStyle(/** @tscr field */ STYLE: string): void;
+    /** @tscr opcode motion_ifonedgebounce */
     ifOnEdgeBounce(): void;
+    /** @tscr opcode motion_xposition */
     xPosition(): number;
+    /** @tscr opcode motion_yposition */
     yPosition(): number;
+    /** @tscr opcode motion_direction */
     direction(): number;
   };
-  readonly looks: {
-    say(a0: string): void;
-    sayForSecs(a0: string, a1: number): void;
-    think(a0: string): void;
-    thinkForSecs(a0: string, a1: number): void;
-    show(): void;
-    hide(): void;
-    nextCostume(): void;
-    nextBackdrop(): void;
-    setSizeTo(a0: number): void;
-    changeSizeBy(a0: number): void;
-    clearGraphicEffects(): void;
-    goToFrontBack(a0: string): void;
-    goForwardBackwardLayers(a0: number, a1: string): void;
-    switchCostumeTo(a0: string): void;
-    switchBackdropTo(a0: string): void;
-    size(): number;
-    costumeNumberName(a0: string): string;
-    backdropNumberName(a0: string): string;
-  };
-  readonly sound: {
-    play(a0: string): void;
-    playUntilDone(a0: string): void;
-    stopAllSounds(): void;
-    clearSoundEffects(): void;
-    setVolumeTo(a0: number): void;
-    changeVolumeBy(a0: number): void;
-    volume(): number;
+  readonly operators: {
+    /** @tscr opcode operator_add */
+    add(NUM1: number, NUM2: number): number;
+    /** @tscr opcode operator_subtract */
+    subtract(NUM1: number, NUM2: number): number;
+    /** @tscr opcode operator_multiply */
+    multiply(NUM1: number, NUM2: number): number;
+    /** @tscr opcode operator_divide */
+    divide(NUM1: number, NUM2: number): number;
+    /** @tscr opcode operator_mod */
+    mod(NUM1: number, NUM2: number): number;
+    /** @tscr opcode operator_random */
+    random(FROM: number, TO: number): number;
+    /** @tscr opcode operator_round */
+    round(NUM: number): number;
+    /** @tscr opcode operator_join */
+    join(STRING1: string, STRING2: string): string;
+    /** @tscr opcode operator_letter_of */
+    letterOf(LETTER: number, STRING: string): string;
+    /** @tscr opcode operator_length */
+    length(STRING: string): number;
+    /** @tscr opcode operator_lt */
+    lt(OPERAND1: number, OPERAND2: number): boolean;
+    /** @tscr opcode operator_gt */
+    gt(OPERAND1: number, OPERAND2: number): boolean;
+    /** @tscr opcode operator_equals */
+    equals(OPERAND1: string, OPERAND2: string): boolean;
+    /** @tscr opcode operator_and */
+    and(OPERAND1: boolean, OPERAND2: boolean): boolean;
+    /** @tscr opcode operator_or */
+    or(OPERAND1: boolean, OPERAND2: boolean): boolean;
+    /** @tscr opcode operator_not */
+    not(OPERAND: boolean): boolean;
+    /** @tscr opcode operator_contains */
+    contains(STRING1: string, STRING2: string): boolean;
   };
   readonly sensing: {
+    /** @tscr opcode sensing_resettimer */
     resetTimer(): void;
-    setDragMode(a0: string): void;
-    askAndWait(a0: string): void;
-    touchingObject(a0: string): boolean;
+    /** @tscr opcode sensing_setdragmode */
+    setDragMode(/** @tscr field */ DRAG_MODE: string): void;
+    /** @tscr opcode sensing_askandwait */
+    askAndWait(QUESTION: string): void;
+    /** @tscr opcode sensing_touchingobject */
+    touchingObject(/** @tscr field */ TOUCHINGOBJECTMENU: string): boolean;
+    /** @tscr opcode sensing_mousedown */
     mouseDown(): boolean;
-    keyPressed(a0: string): boolean;
+    /** @tscr opcode sensing_keypressed */
+    keyPressed(/** @tscr field */ KEY_OPTION: string): boolean;
+    /** @tscr opcode sensing_timer */
     timer(): number;
+    /** @tscr opcode sensing_mousex */
     mouseX(): number;
+    /** @tscr opcode sensing_mousey */
     mouseY(): number;
+    /** @tscr opcode sensing_answer */
     answer(): string;
+    /** @tscr opcode sensing_username */
     username(): string;
   };
-  readonly operators: {
-    add(a0: number, a1: number): number;
-    subtract(a0: number, a1: number): number;
-    multiply(a0: number, a1: number): number;
-    divide(a0: number, a1: number): number;
-    mod(a0: number, a1: number): number;
-    random(a0: number, a1: number): number;
-    round(a0: number): number;
-    join(a0: string, a1: string): string;
-    letterOf(a0: number, a1: string): string;
-    length(a0: string): number;
-    lt(a0: number, a1: number): boolean;
-    gt(a0: number, a1: number): boolean;
-    equals(a0: string, a1: string): boolean;
-    and(a0: boolean, a1: boolean): boolean;
-    or(a0: boolean, a1: boolean): boolean;
-    not(a0: boolean): boolean;
-    contains(a0: string, a1: string): boolean;
+  readonly sound: {
+    /** @tscr opcode sound_play */
+    play(/** @tscr field */ SOUND_MENU: string): void;
+    /** @tscr opcode sound_playuntildone */
+    playUntilDone(/** @tscr field */ SOUND_MENU: string): void;
+    /** @tscr opcode sound_stopallsounds */
+    stopAllSounds(): void;
+    /** @tscr opcode sound_cleareffects */
+    clearSoundEffects(): void;
+    /** @tscr opcode sound_setvolumeto */
+    setVolumeTo(VOLUME: number): void;
+    /** @tscr opcode sound_changevolumeby */
+    changeVolumeBy(VOLUME: number): void;
+    /** @tscr opcode sound_volume */
+    volume(): number;
   };
 };
