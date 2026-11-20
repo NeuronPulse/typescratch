@@ -49,6 +49,7 @@ test("temporaries are partitioned per hat script", () => {
   assert.deepEqual(new Set(temps.map((decl) => decl.name)).size, 2);
   assert.deepEqual(temps.map((decl) => decl.script).sort(), [0, 1]);
   assert.ok(temps.every((decl) => decl.type === "number"));
-  assert.ok(temps.every((decl) => decl.name.startsWith("_tscr_s")));
+  // Emitted names carry role + script scope so they are readable, not UUIDs.
+  assert.ok(temps.every((decl) => /^Sprite1_s\d+_/.test(decl.name)), JSON.stringify(temps.map((d) => d.name)));
   assert.equal(result.report.diagnostics.filter((item) => item.code === "TSCR4004").length, 0);
 });

@@ -576,10 +576,16 @@ class Lowerer {
 
   private newVar(name: string, type: IrType, storage: VarDecl["storage"], span: SourceSpan, initial?: string | number | boolean): VarDecl {
     const index = Math.max(this.scriptIndex, 0);
-    const id = `v${storage === "temp" ? `s${index}` : "g"}_${++this.counter}`;
+    // IDs must be unique across workspace modules: the counter resets per
+    // Lowerer (one per source file), so include the role. Names stay readable
+    // and carry scope/role so the emitted .sb3 is inspectable, not UUID soup.
+    const role = this.roleName.replace(/[^A-Za-z0-9_]/g, "_");
+    const seq = ++this.counter;
+    const prefix = storage === "temp" ? `t_${role}_s${index}` : storage === "local" ? `l_${role}` : `g_${role}`;
+    const id = `${prefix}_${seq}`;
     const decl: VarDecl = {
       id,
-      name: storage === "temp" ? `_tscr_s${index}_${name}` : name,
+      name: storage === "temp" ? `${role}_s${index}_${name}` : storage === "local" ? `${role}.${name}` : name,
       type,
       storage,
       span,
@@ -869,7 +875,17 @@ class Lowerer {
     }
 
     if (topLevel) {
-      this.unsupported(declaration, "top-level let/var declarations are not supported in v0.1");
+      // Top-level `let` IS a Scratch global variable — no wrapper, no .get().
+      // `const` with a literal was already folded above; `const` with a
+      // non-literal initializer is treated as a named global too.
+      const decl = this.newVar(
+        declaration.name.text,
+        initializer ? this.typeOf(declaration.name) : "number",
+        "global",
+        this.span(declaration),
+        this.readInitial(initializer ?? undefined),
+      );
+      if (symbol) this.symbolVars.set(symbol, decl);
       return;
     }
 

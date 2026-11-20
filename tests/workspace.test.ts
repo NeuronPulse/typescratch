@@ -48,7 +48,8 @@ test("scripts, variables and assets are attached to the owning role", () => {
   const stageVariables = Object.values(targets.get("Stage")!.variables);
   assert.ok(stageVariables.some(([name, value]) => name === "hp" && value === 10));
   const heroVariables = Object.values(targets.get("Hero")!.variables);
-  assert.ok(heroVariables.some(([name]) => name.startsWith("_tscr_")));
+  // Private temps are named with their owning role so the .sb3 is readable.
+  assert.ok(heroVariables.some(([name]) => name.startsWith("Hero_s")), JSON.stringify(heroVariables.map(([n]) => n)));
 
   const heroCostume = targets.get("Hero")!.costumes[0];
   assert.ok(heroCostume);

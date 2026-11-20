@@ -103,7 +103,7 @@ pnpm trace:showcase   # per-frame VM state changes for 3 green flags
 pnpm snapshots:update # refresh five golden artifacts per case
 ```
 
-191 Vitest tests plus 23 headless VM conformance runs compare SAY/variable/list traces against an independent IR interpreter. Five golden artifacts are pinned for ten cases; CI runs the gate on Node 24 and 26. `pnpm verify:e2e` is a separate browser-and-network gate that loads `dist/hybrid.sb3` in the real TurboWarp editor and asserts the embedded extension actually executes.
+193 Vitest tests plus 23 headless VM conformance runs compare SAY/variable/list traces against an independent IR interpreter. Five golden artifacts are pinned for ten cases; CI runs the gate on Node 24 and 26. `pnpm verify:e2e` is a separate browser-and-network gate that loads `dist/hybrid.sb3` in the real TurboWarp editor and asserts the embedded extension actually executes.
 
 ## License
 

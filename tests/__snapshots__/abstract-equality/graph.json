@@ -32,16 +32,16 @@
       "isStage": false,
       "name": "Sprite1",
       "variables": {
-        "vs0_1": [
-          "_tscr_s0_asNumber",
+        "t_Sprite1_s0_1": [
+          "Sprite1_s0_asNumber",
           0
         ],
-        "vs0_2": [
-          "_tscr_s0_two",
+        "t_Sprite1_s0_2": [
+          "Sprite1_s0_two",
           0
         ],
-        "vs0_3": [
-          "_tscr_s0_three",
+        "t_Sprite1_s0_3": [
+          "Sprite1_s0_three",
           0
         ]
       },
@@ -74,8 +74,8 @@
           },
           "fields": {
             "VARIABLE": [
-              "_tscr_s0_asNumber",
-              "vs0_1"
+              "Sprite1_s0_asNumber",
+              "t_Sprite1_s0_1"
             ]
           },
           "shadow": false,
@@ -98,8 +98,8 @@
           },
           "fields": {
             "VARIABLE": [
-              "_tscr_s0_two",
-              "vs0_2"
+              "Sprite1_s0_two",
+              "t_Sprite1_s0_2"
             ]
           },
           "shadow": false,
@@ -122,8 +122,8 @@
           },
           "fields": {
             "VARIABLE": [
-              "_tscr_s0_three",
-              "vs0_3"
+              "Sprite1_s0_three",
+              "t_Sprite1_s0_3"
             ]
           },
           "shadow": false,
@@ -187,8 +187,8 @@
               3,
               [
                 12,
-                "_tscr_s0_asNumber",
-                "vs0_1"
+                "Sprite1_s0_asNumber",
+                "t_Sprite1_s0_1"
               ],
               [
                 4,
@@ -265,8 +265,8 @@
               3,
               [
                 12,
-                "_tscr_s0_asNumber",
-                "vs0_1"
+                "Sprite1_s0_asNumber",
+                "t_Sprite1_s0_1"
               ],
               [
                 4,
@@ -370,8 +370,8 @@
               3,
               [
                 12,
-                "_tscr_s0_two",
-                "vs0_2"
+                "Sprite1_s0_two",
+                "t_Sprite1_s0_2"
               ],
               [
                 4,
@@ -448,8 +448,8 @@
               3,
               [
                 12,
-                "_tscr_s0_three",
-                "vs0_3"
+                "Sprite1_s0_three",
+                "t_Sprite1_s0_3"
               ],
               [
                 4,

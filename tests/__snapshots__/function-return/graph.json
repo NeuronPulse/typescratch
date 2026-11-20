@@ -74,20 +74,20 @@
       "isStage": false,
       "name": "Sprite1",
       "variables": {
-        "vs0_1": [
-          "_tscr_s0_double_callId",
+        "t_Sprite1_s0_1": [
+          "Sprite1_s0_double_callId",
           0
         ],
-        "vs0_2": [
-          "_tscr_s0_double_ret",
+        "t_Sprite1_s0_2": [
+          "Sprite1_s0_double_ret",
           0
         ],
-        "vs0_3": [
-          "_tscr_s0_double_returning",
+        "t_Sprite1_s0_3": [
+          "Sprite1_s0_double_returning",
           0
         ],
-        "vs0_4": [
-          "_tscr_s0_x",
+        "t_Sprite1_s0_4": [
+          "Sprite1_s0_x",
           0
         ],
         "vcall_0_0_1_id": [
@@ -1338,7 +1338,7 @@
           "mutation": {
             "tagName": "mutation",
             "proccode": "double %s %s",
-            "argumentnames": "[\"_tscr_s0_x\",\"_tscr_s0_double_callId\"]",
+            "argumentnames": "[\"Sprite1_s0_x\",\"Sprite1_s0_double_callId\"]",
             "argumentids": "[\"input0\",\"inputCallId\"]",
             "argumentdefaults": "[\"\",\"\"]",
             "warp": "false",
@@ -1411,7 +1411,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_double_callId",
+              "Sprite1_s0_double_callId",
               null
             ]
           },
@@ -1486,7 +1486,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_double_callId",
+              "Sprite1_s0_double_callId",
               null
             ]
           },
@@ -1605,7 +1605,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_double_callId",
+              "Sprite1_s0_double_callId",
               null
             ]
           },
@@ -1680,7 +1680,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_double_callId",
+              "Sprite1_s0_double_callId",
               null
             ]
           },
@@ -1756,7 +1756,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_double_callId",
+              "Sprite1_s0_double_callId",
               null
             ]
           },
@@ -1799,7 +1799,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_x",
+              "Sprite1_s0_x",
               null
             ]
           },
@@ -1875,7 +1875,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_double_callId",
+              "Sprite1_s0_double_callId",
               null
             ]
           },
@@ -1943,7 +1943,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_double_callId",
+              "Sprite1_s0_double_callId",
               null
             ]
           },
@@ -2018,7 +2018,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_double_callId",
+              "Sprite1_s0_double_callId",
               null
             ]
           },
@@ -2093,7 +2093,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_double_callId",
+              "Sprite1_s0_double_callId",
               null
             ]
           },
@@ -2134,7 +2134,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_double_callId",
+              "Sprite1_s0_double_callId",
               null
             ]
           },

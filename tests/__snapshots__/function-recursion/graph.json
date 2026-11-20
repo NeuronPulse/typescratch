@@ -74,20 +74,20 @@
       "isStage": false,
       "name": "Sprite1",
       "variables": {
-        "vs0_1": [
-          "_tscr_s0_factorial_callId",
+        "t_Sprite1_s0_1": [
+          "Sprite1_s0_factorial_callId",
           0
         ],
-        "vs0_2": [
-          "_tscr_s0_factorial_ret",
+        "t_Sprite1_s0_2": [
+          "Sprite1_s0_factorial_ret",
           0
         ],
-        "vs0_3": [
-          "_tscr_s0_factorial_returning",
+        "t_Sprite1_s0_3": [
+          "Sprite1_s0_factorial_returning",
           0
         ],
-        "vs0_4": [
-          "_tscr_s0_n",
+        "t_Sprite1_s0_4": [
+          "Sprite1_s0_n",
           0
         ],
         "vcall_0_0_1_id": [
@@ -1350,7 +1350,7 @@
           "mutation": {
             "tagName": "mutation",
             "proccode": "factorial %s %s",
-            "argumentnames": "[\"_tscr_s0_n\",\"_tscr_s0_factorial_callId\"]",
+            "argumentnames": "[\"Sprite1_s0_n\",\"Sprite1_s0_factorial_callId\"]",
             "argumentids": "[\"input0\",\"inputCallId\"]",
             "argumentdefaults": "[\"\",\"\"]",
             "warp": "false",
@@ -1423,7 +1423,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -1498,7 +1498,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -1617,7 +1617,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -1684,7 +1684,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_n",
+              "Sprite1_s0_n",
               null
             ]
           },
@@ -1823,7 +1823,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -1898,7 +1898,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -1973,7 +1973,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -2092,7 +2092,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -3104,7 +3104,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -3249,7 +3249,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_n",
+              "Sprite1_s0_n",
               null
             ]
           },
@@ -3292,7 +3292,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -3516,7 +3516,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -3712,7 +3712,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -3787,7 +3787,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -3863,7 +3863,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -3911,7 +3911,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_n",
+              "Sprite1_s0_n",
               null
             ]
           },
@@ -3987,7 +3987,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -4055,7 +4055,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -4130,7 +4130,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -4205,7 +4205,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },
@@ -4246,7 +4246,7 @@
           "inputs": {},
           "fields": {
             "VALUE": [
-              "_tscr_s0_factorial_callId",
+              "Sprite1_s0_factorial_callId",
               null
             ]
           },

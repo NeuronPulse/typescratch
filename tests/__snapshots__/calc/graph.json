@@ -4,7 +4,7 @@
       "isStage": true,
       "name": "Stage",
       "variables": {
-        "vg_1": [
+        "g_Sprite1_1": [
           "score",
           9
         ]
@@ -37,8 +37,8 @@
       "isStage": false,
       "name": "Sprite1",
       "variables": {
-        "vs0_2": [
-          "_tscr_s0_i",
+        "t_Sprite1_s0_2": [
+          "Sprite1_s0_i",
           0
         ]
       },
@@ -71,8 +71,8 @@
           },
           "fields": {
             "VARIABLE": [
-              "_tscr_s0_i",
-              "vs0_2"
+              "Sprite1_s0_i",
+              "t_Sprite1_s0_2"
             ]
           },
           "shadow": false,
@@ -133,8 +133,8 @@
               3,
               [
                 12,
-                "_tscr_s0_i",
-                "vs0_2"
+                "Sprite1_s0_i",
+                "t_Sprite1_s0_2"
               ],
               [
                 4,
@@ -171,8 +171,8 @@
           },
           "fields": {
             "VARIABLE": [
-              "_tscr_s0_i",
-              "vs0_2"
+              "Sprite1_s0_i",
+              "t_Sprite1_s0_2"
             ]
           },
           "shadow": false,
@@ -189,8 +189,8 @@
               3,
               [
                 12,
-                "_tscr_s0_i",
-                "vs0_2"
+                "Sprite1_s0_i",
+                "t_Sprite1_s0_2"
               ],
               [
                 4,
@@ -275,8 +275,8 @@
               3,
               [
                 12,
-                "_tscr_s0_i",
-                "vs0_2"
+                "Sprite1_s0_i",
+                "t_Sprite1_s0_2"
               ],
               [
                 4,
@@ -333,8 +333,8 @@
               3,
               [
                 12,
-                "_tscr_s0_i",
-                "vs0_2"
+                "Sprite1_s0_i",
+                "t_Sprite1_s0_2"
               ],
               [
                 4,
@@ -411,8 +411,8 @@
               3,
               [
                 12,
-                "_tscr_s0_i",
-                "vs0_2"
+                "Sprite1_s0_i",
+                "t_Sprite1_s0_2"
               ],
               [
                 4,
@@ -470,7 +470,7 @@
           "fields": {
             "VARIABLE": [
               "score",
-              "vg_1"
+              "g_Sprite1_1"
             ]
           },
           "shadow": false,
@@ -488,7 +488,7 @@
               [
                 12,
                 "score",
-                "vg_1"
+                "g_Sprite1_1"
               ],
               [
                 4,

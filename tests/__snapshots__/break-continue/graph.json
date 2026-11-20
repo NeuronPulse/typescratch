@@ -32,8 +32,8 @@
       "isStage": false,
       "name": "Sprite1",
       "variables": {
-        "vs0_1": [
-          "_tscr_s0_i",
+        "t_Sprite1_s0_1": [
+          "Sprite1_s0_i",
           0
         ],
         "vcf_0_0_1": [
@@ -74,8 +74,8 @@
           },
           "fields": {
             "VARIABLE": [
-              "_tscr_s0_i",
-              "vs0_1"
+              "Sprite1_s0_i",
+              "t_Sprite1_s0_1"
             ]
           },
           "shadow": false,
@@ -290,8 +290,8 @@
               3,
               [
                 12,
-                "_tscr_s0_i",
-                "vs0_1"
+                "Sprite1_s0_i",
+                "t_Sprite1_s0_1"
               ],
               [
                 4,
@@ -439,8 +439,8 @@
           },
           "fields": {
             "VARIABLE": [
-              "_tscr_s0_i",
-              "vs0_1"
+              "Sprite1_s0_i",
+              "t_Sprite1_s0_1"
             ]
           },
           "shadow": false,
@@ -457,8 +457,8 @@
               3,
               [
                 12,
-                "_tscr_s0_i",
-                "vs0_1"
+                "Sprite1_s0_i",
+                "t_Sprite1_s0_1"
               ],
               [
                 4,
@@ -599,8 +599,8 @@
               3,
               [
                 12,
-                "_tscr_s0_i",
-                "vs0_1"
+                "Sprite1_s0_i",
+                "t_Sprite1_s0_1"
               ],
               [
                 4,
@@ -852,8 +852,8 @@
               3,
               [
                 12,
-                "_tscr_s0_i",
-                "vs0_1"
+                "Sprite1_s0_i",
+                "t_Sprite1_s0_1"
               ],
               [
                 4,
@@ -1081,8 +1081,8 @@
               3,
               [
                 12,
-                "_tscr_s0_i",
-                "vs0_1"
+                "Sprite1_s0_i",
+                "t_Sprite1_s0_1"
               ],
               [
                 4,
