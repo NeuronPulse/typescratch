@@ -14,6 +14,22 @@ export interface ListHandle<T> {
   length(): number;
 }
 
+/**
+ * A dictionary backed by parallel Scratch lists with a linear-scan lookup
+ * (O(n), not O(1)). `get(k)` returns the type's zero value when k is absent —
+ * call `has(k)` first if that matters. Keys are numbers in v1; string keys are
+ * rejected because Scratch's native `operator_equals` is case-insensitive and
+ * would silently conflate "A" and "a".
+ */
+export interface MapHandle<K, V> {
+  set(key: K, value: V): void;
+  get(key: K): V;
+  has(key: K): boolean;
+  delete(key: K): void;
+  size(): number;
+  clear(): void;
+}
+
 /** A heap-allocated array. Unlike ListHandle, two handles can alias the same ObjectRef. */
 export interface ArrayHandle<T> {
   get(index: number): T;
@@ -73,6 +89,8 @@ export declare const Scratch: {
   global<T>(name: string, options?: ResourceOptions<T>): Handle<T>;
   local<T>(name: string, options?: ResourceOptions<T>): Handle<T>;
   list<T>(name: string): ListHandle<T>;
+  /** Create a dictionary. Key type must be `number` in v1. */
+  map<K extends number, V>(): MapHandle<K, V>;
   array<T>(size: number): ArrayHandle<T>;
   free(ref: unknown): void;
   /**

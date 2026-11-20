@@ -53,6 +53,8 @@ Native standard library: `Math.PI`/`E`, `abs`/`floor`/`ceil`/`round`/`sqrt`/`ln`
 
 Variables are plain TypeScript. A top-level `let` is **private to its sprite**; `/** @global */` before it makes a Stage variable visible to every role in a workspace. There is no `score.get()` / `score.set()` and no `Scratch.global<number>(...)` in new code — those are a deprecation-window compatibility shim. `/** @local */` is explicit but redundant. `@warp`/`@noWarp` on methods and variable storage tags all go through one decorator parser; unknown or misplaced tags get `TSCR2010`.
 
+Dictionaries: `const m = Scratch.map<number, number>()`, then `m.set(k,v)` / `m.get(k)` / `m.has(k)` / `m.delete(k)` / `m.size()` / `m.clear()`. The compiler lowers them into two parallel Scratch lists plus a generated linear scan — **O(n), not O(1)** — so no runtime dependency is added. `get` returns the type's zero value when the key is absent; use `has` if that matters. String keys are rejected in v1: Scratch's native `operator_equals` is case-insensitive and would silently conflate `"A"` and `"a"`.
+
 Scratch blocks use object calls:
 
 ```ts
@@ -105,7 +107,7 @@ pnpm trace:showcase   # per-frame VM state changes for 3 green flags
 pnpm snapshots:update # refresh five golden artifacts per case
 ```
 
-199 Vitest tests plus 23 headless VM conformance runs compare SAY/variable/list traces against an independent IR interpreter. Five golden artifacts are pinned for ten cases; CI runs the gate on Node 24 and 26. `pnpm verify:e2e` is a separate browser-and-network gate that loads `dist/hybrid.sb3` in the real TurboWarp editor and asserts the embedded extension actually executes.
+204 Vitest tests plus 23 headless VM conformance runs compare SAY/variable/list traces against an independent IR interpreter. Five golden artifacts are pinned for ten cases; CI runs the gate on Node 24 and 26. `pnpm verify:e2e` is a separate browser-and-network gate that loads `dist/hybrid.sb3` in the real TurboWarp editor and asserts the embedded extension actually executes.
 
 ## License
 

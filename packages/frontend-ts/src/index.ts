@@ -128,6 +128,10 @@ class Lowerer {
   private functionCounter = 0;
   private readonly handleVars = new Map<ts.Symbol, VarDecl>();
   private readonly handleLists = new Map<ts.Symbol, ListDecl>();
+  /** A dictionary is two parallel lists (keys, values) plus its value type. */
+  private readonly mapHandles = new Map<ts.Symbol, {
+    keys: ListDecl; values: ListDecl; keyType: IrType; valueType: IrType;
+  }>();
   private readonly classes: ClassDecl[] = [];
   private readonly classByName = new Map<string, ClassDecl>();
   private readonly methodNodes = new Map<ts.MethodDeclaration, FunctionDecl>();
@@ -854,6 +858,22 @@ class Lowerer {
 
     if (initializer && ts.isCallExpression(initializer)) {
       const runtimeName = this.runtimeNameOf(initializer);
+      if (runtimeName === "map") {
+        const handleType = this.checker.getTypeAtLocation(initializer) as ts.TypeReference;
+        const typeArguments = this.checker.getTypeArguments(handleType);
+        const keyType = typeArguments[0] ? this.irTypeOf(typeArguments[0]) : "number";
+        const valueType = typeArguments[1] ? this.irTypeOf(typeArguments[1]) : "number";
+        if (keyType !== "number") {
+          this.unsupported(initializer, "dictionary keys must be number in v1 (Scratch string equality is case-insensitive)");
+          return;
+        }
+        const span = this.span(declaration);
+        const name = declaration.name.text;
+        const keys = this.newList(`${name}__keys`, keyType, span);
+        const values = this.newList(`${name}__values`, valueType, span);
+        if (symbol) this.mapHandles.set(symbol, { keys, values, keyType, valueType });
+        return;
+      }
       if (runtimeName === "global" || runtimeName === "local" || runtimeName === "list") {
         const nameArgument = initializer.arguments[0];
         if (!nameArgument || !ts.isStringLiteral(nameArgument)) {
@@ -1013,6 +1033,123 @@ class Lowerer {
       type: "boolean",
       span,
     };
+  }
+
+  /**
+   * Emit a linear scan over the dictionary's parallel lists. Temps are
+   * per-script so concurrent hats cannot clobber each other. O(n) by design —
+   * Scratch has no associative lookup block.
+   */
+  private emitMapLookup(
+    handle: { keys: ListDecl; values: ListDecl; keyType: IrType; valueType: IrType },
+    key: Expr, span: SourceSpan,
+  ): { found: VarDecl; result: VarDecl; index: VarDecl } {
+    const zero = handle.valueType === "string" ? "" : 0;
+    const index = this.newVar("mapIndex", "number", "temp", span, 0);
+    const matchIndex = this.newVar("mapMatchIndex", "number", "temp", span, 0);
+    const found = this.newVar("mapFound", "number", "temp", span, 0);
+    const result = this.newVar("mapResult", handle.valueType, "temp", span, zero);
+    const num = (value: number): Expr => ({ k: "const", value, type: "number", span });
+    const read = (decl: VarDecl, type: IrType = decl.type): Expr => ({ k: "read", var: decl.id, type, span });
+    for (const [decl, value] of [[index, 0], [matchIndex, 0], [found, 0], [result, zero]] as const) {
+      this.emit({ k: "declare", var: decl.id, init: { k: "const", value, type: decl.type, span }, span });
+    }
+    const length: Expr = { k: "listRead", op: "length", list: handle.keys.id, type: "number", span };
+    const inBounds: Expr = { k: "binary", op: "lt", l: read(index), r: length, type: "boolean", span };
+    const notFound: Expr = { k: "binary", op: "eq", l: read(found), r: num(0), type: "boolean", span };
+    const storedKey: Expr = { k: "listRead", op: "item", list: handle.keys.id, index: read(index), type: handle.keyType, span };
+    const matches: Expr = { k: "binary", op: "eq", l: storedKey, r: key, type: "boolean", span };
+    // No `binary and` — the backend has no such block. Guard the match with
+    // `notFound`, but ALWAYS advance the index so the loop terminates even
+    // after a hit.
+    const body: Stmt[] = this.withBlock(() => {
+      this.emit({ k: "if", cond: notFound, then: this.withBlock(() => {
+        this.emit({ k: "if", cond: matches, then: this.withBlock(() => {
+          this.emit({ k: "assign", var: found.id, value: num(1), span });
+          this.emit({ k: "assign", var: matchIndex.id, value: read(index), span });
+          this.emit({
+            k: "assign", var: result.id,
+            value: { k: "listRead", op: "item", list: handle.values.id, index: read(index), type: handle.valueType, span },
+            span,
+          });
+        }), span });
+      }), span });
+      this.emit({
+        k: "assign", var: index.id,
+        value: { k: "binary", op: "add", l: read(index), r: num(1), type: "number", span },
+        span,
+      });
+    });
+    this.emit({ k: "while", cond: inBounds, body, span });
+    return { found, result, index: matchIndex };
+  }
+
+  private mapHandleOf(call: ts.CallExpression): {
+    keys: ListDecl; values: ListDecl; keyType: IrType; valueType: IrType; method: string;
+  } | undefined {
+    const expression = call.expression;
+    if (!ts.isPropertyAccessExpression(expression)) return undefined;
+    const symbol = this.checker.getSymbolAtLocation(expression.expression);
+    const handle = symbol ? this.mapHandles.get(symbol) : undefined;
+    return handle ? { ...handle, method: expression.name.text } : undefined;
+  }
+
+  private lowerMapCall(node: ts.CallExpression): Expr | undefined {
+    const meta = this.mapHandleOf(node);
+    if (!meta) return undefined;
+    const span = this.span(node);
+    const args = node.arguments;
+    const num = (value: number): Expr => ({ k: "const", value, type: "number", span });
+    const read = (decl: VarDecl, type: IrType = decl.type): Expr => ({ k: "read", var: decl.id, type, span });
+    const zero = meta.valueType === "string" ? "" : 0;
+
+    if (meta.method === "size") {
+      const size = this.newVar("mapSize", "number", "temp", span, 0);
+      this.emit({ k: "declare", var: size.id, init: num(0), span });
+      this.emit({
+        k: "assign", var: size.id,
+        value: { k: "listRead", op: "length", list: meta.keys.id, type: "number", span },
+        span,
+      });
+      return read(size);
+    }
+    if (meta.method === "clear") {
+      this.emit({ k: "list", op: "clear", list: meta.keys.id, args: [], span });
+      this.emit({ k: "list", op: "clear", list: meta.values.id, args: [], span });
+      return this.voidConst(node);
+    }
+
+    const key = args[0] ? this.lowerExpr(args[0]) : num(0);
+    const lookup = this.emitMapLookup(meta, key, span);
+    const foundCond: Expr = {
+      k: "binary", op: "eq", l: read(lookup.found), r: num(1), type: "boolean", span,
+    };
+    if (meta.method === "get") return read(lookup.result);
+    if (meta.method === "has") {
+      return { k: "convert", to: "boolean", value: read(lookup.found), type: "boolean", span };
+    }
+    if (meta.method === "set") {
+      const value = args[1] ? this.lowerExpr(args[1]) : { k: "const" as const, value: zero, type: meta.valueType, span };
+      this.emit({ k: "if", cond: foundCond, then: this.withBlock(() => {
+        this.emit({
+          k: "list", op: "replace", list: meta.values.id,
+          args: [read(lookup.index), value], span,
+        });
+      }), else: this.withBlock(() => {
+        this.emit({ k: "list", op: "push", list: meta.keys.id, args: [key], span });
+        this.emit({ k: "list", op: "push", list: meta.values.id, args: [value], span });
+      }), span });
+      return this.voidConst(node);
+    }
+    if (meta.method === "delete") {
+      this.emit({ k: "if", cond: foundCond, then: this.withBlock(() => {
+        this.emit({ k: "list", op: "deleteAt", list: meta.keys.id, args: [read(lookup.index)], span });
+        this.emit({ k: "list", op: "deleteAt", list: meta.values.id, args: [read(lookup.index)], span });
+      }), span });
+      return this.voidConst(node);
+    }
+    this.unsupported(node, `unsupported dictionary method ${meta.method}`);
+    return this.voidConst(node);
   }
 
   private lowerExpr(node: ts.Expression): Expr {
@@ -1207,6 +1344,8 @@ class Lowerer {
     if (ts.isCallExpression(node)) {
       const arrayCall = this.lowerArrayCall(node);
       if (arrayCall) return arrayCall;
+      const mapCall = this.lowerMapCall(node);
+      if (mapCall) return mapCall;
       if (ts.isPropertyAccessExpression(node.expression)) {
         const method = node.expression.name.text;
         const targets = this.dispatchTargets(method);
