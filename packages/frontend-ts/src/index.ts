@@ -135,6 +135,8 @@ class Lowerer {
   private currentThisVar: VarDecl | undefined;
   private classCounter = 0;
   private readonly compileTime = new Map<ts.Symbol, string | number | boolean>();
+  /** Top-level variable storage chosen by @global / @local decorators. */
+  private readonly varStorage = new Map<ts.VariableStatement, "global" | "local">();
   private current: Stmt[] = [];
   private counter = 0;
   private listCounter = 0;
@@ -160,14 +162,32 @@ class Lowerer {
         this.parseWarpDecorator(statement, "other");
         this.declareClass(statement);
       }
-      if (ts.isVariableStatement(statement)) this.parseWarpDecorator(statement, "other");
+      if (ts.isVariableStatement(statement)) {
+        // TS6 decorators cannot be applied to variables — use JSDoc tags
+        // (`/** @global */`, `/** @local */`) as the compile-time annotation.
+        const tags = this.jsDocOf(statement).flatMap((doc) => doc.tags ?? [])
+          .map((tag) => tag.tagName.getText());
+        for (const tag of tags) {
+          if (tag === "global" || tag === "local") {
+            this.varStorage.set(statement, tag);
+          } else if (Lowerer.DECORATORS.has(tag) || tag === "tscr") {
+            this.bag.error(CODES.DECORATOR, `@${tag} is not valid on a variable declaration`, this.span(statement));
+          }
+        }
+        if (this.varStorage.has(statement) && tags.includes("global") && tags.includes("local")) {
+          this.bag.error(CODES.DECORATOR, "@global and @local cannot be combined", this.span(statement));
+        }
+      }
     }
     for (const statement of this.source.statements) {
       if (ts.isFunctionDeclaration(statement) || ts.isClassDeclaration(statement)) continue;
       if (ts.isImportDeclaration(statement) || ts.isEmptyStatement(statement)) continue;
       if (ts.isVariableStatement(statement)) {
         for (const declaration of statement.declarationList.declarations) {
-          this.lowerVariableDeclaration(declaration, statement.declarationList.flags, true);
+          this.lowerVariableDeclaration(
+            declaration, statement.declarationList.flags, true,
+            this.varStorage.get(statement) ?? "local",
+          );
         }
         continue;
       }
@@ -506,45 +526,70 @@ class Lowerer {
     };
   }
 
+  /** Decorators TypeScratch recognizes as compile-time annotations. */
+  private static readonly DECORATORS = new Set([
+    "warp", "noWarp", "global", "local", "public", "private", "protected",
+  ]);
+
   /**
-   * Parse @warp / @noWarp on a top-level function. Undefined means no warp
-   * decorator is present (default behavior). Unknown decorators, duplicates,
-   * conflicts and warp on non-function declarations are hard errors — a
-   * decorator must never be silently ignored.
+   * Parse all decorators on a declaration into a set of recognized names.
+   * Unknown decorators, duplicates and mutually exclusive pairs are hard
+   * errors (TSCR2010) — a decorator must never be silently ignored.
    */
-  private parseWarpDecorator(node: ts.Node, context: "function" | "other"): boolean | undefined {
+  private parseDecorators(node: ts.Node): Set<string> {
+    const found = new Set<string>();
     const decorators = ts.canHaveDecorators(node) ? ts.getDecorators(node) : undefined;
-    if (!decorators || decorators.length === 0) return undefined;
-    let result: boolean | undefined;
-    let count = 0;
+    if (!decorators || decorators.length === 0) return found;
     for (const decorator of decorators) {
       const expr = decorator.expression;
       const name = ts.isIdentifier(expr) ? expr.text : undefined;
-      if (name !== "warp" && name !== "noWarp") {
-        if (name === undefined || ts.isCallExpression(expr)) {
-          this.bag.error(CODES.WARP_DECORATOR, "only @warp and @noWarp decorators are supported", this.span(decorator));
-        } else {
-          this.bag.error(CODES.WARP_DECORATOR, `unsupported decorator @${name}; only @warp and @noWarp are supported`, this.span(decorator));
-        }
+      if (!name || !Lowerer.DECORATORS.has(name)) {
+        this.bag.error(
+          CODES.DECORATOR,
+          name ? `unsupported decorator @${name}` : "decorator expressions are not supported",
+          this.span(decorator),
+          [`Recognized: ${[...Lowerer.DECORATORS].map((d) => "@" + d).join(", ")}.`],
+        );
         continue;
       }
-      count++;
-      const value = name === "warp";
-      if (context !== "function") {
-        this.bag.error(CODES.WARP_DECORATOR, `@${name} is only valid on top-level function declarations`, this.span(decorator));
+      if (found.has(name)) {
+        this.bag.error(CODES.DECORATOR, `duplicate @${name} decorator`, this.span(decorator));
         continue;
       }
-      if (count > 1 && value !== result) {
-        this.bag.error(CODES.WARP_DECORATOR, "@warp and @noWarp cannot both be applied to the same function", this.span(decorator));
-        continue;
-      }
-      if (count > 1 && value === result) {
-        this.bag.error(CODES.WARP_DECORATOR, `duplicate @${name} decorator`, this.span(decorator));
-        continue;
-      }
-      result = value;
+      found.add(name);
     }
-    return result;
+    const conflict = (a: string, b: string): void => {
+      if (found.has(a) && found.has(b)) {
+        this.bag.error(CODES.DECORATOR, `@${a} and @${b} cannot be combined`, this.span(node));
+        found.delete(b);
+      }
+    };
+    conflict("warp", "noWarp");
+    conflict("global", "local");
+    conflict("public", "private");
+    conflict("public", "protected");
+    conflict("private", "protected");
+    return found;
+  }
+
+  /**
+   * Warp subset of parseDecorators, kept for the existing call sites.
+   */
+  private parseWarpDecorator(node: ts.Node, context: "function" | "other"): boolean | undefined {
+    const decorators = this.parseDecorators(node);
+    const warp = decorators.has("warp");
+    const noWarp = decorators.has("noWarp");
+    for (const name of ["global", "local", "public", "private", "protected"]) {
+      if (decorators.has(name)) {
+        this.bag.error(CODES.DECORATOR, `@${name} is not valid here`, this.span(node));
+      }
+    }
+    if (!warp && !noWarp) return undefined;
+    if (context !== "function") {
+      this.bag.error(CODES.DECORATOR, "@warp/@noWarp are only valid on methods", this.span(node));
+      return undefined;
+    }
+    return warp;
   }
 
   private unsupported(node: ts.Node, message: string): void {
@@ -762,7 +807,8 @@ class Lowerer {
     return decl;
   }
 
-  private literalValue(node: ts.Expression): string | number | boolean | undefined {
+  private literalValue(node: ts.Expression | undefined): string | number | boolean | undefined {
+    if (!node) return undefined;
     if (ts.isNumericLiteral(node)) {
       const value = Number(node.text);
       return Number.isFinite(value) ? value : undefined;
@@ -796,6 +842,7 @@ class Lowerer {
     declaration: ts.VariableDeclaration,
     flags: ts.NodeFlags,
     topLevel: boolean,
+    storage: "global" | "local" = "local",
   ): void {
     if (!ts.isIdentifier(declaration.name)) {
       this.unsupported(declaration, "destructuring declarations are not supported");
@@ -875,15 +922,15 @@ class Lowerer {
     }
 
     if (topLevel) {
-      // Top-level `let` IS a Scratch global variable — no wrapper, no .get().
-      // `const` with a literal was already folded above; `const` with a
-      // non-literal initializer is treated as a named global too.
+      // A top-level `let` is private to its sprite by default (Scratch local
+      // variable). `@global` opts into a Stage variable visible to every
+      // role — that is the only cross-sprite storage Scratch provides.
       const decl = this.newVar(
         declaration.name.text,
         initializer ? this.typeOf(declaration.name) : "number",
-        "global",
+        storage,
         this.span(declaration),
-        this.readInitial(initializer ?? undefined),
+        this.literalValue(initializer),
       );
       if (symbol) this.symbolVars.set(symbol, decl);
       return;

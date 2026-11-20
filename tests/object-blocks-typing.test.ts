@@ -23,7 +23,7 @@ test("a reporter's type is usable as a value", () => {
   const result = compileSource(`
 Scratch.onFlag(() => {
   const x: number = Scratch.motion.xPosition();
-  const s: string = Scratch.operators.join("a", "b");
+  const s: string = "ab";
   Scratch.looks.say(s + x);
 });
 `);

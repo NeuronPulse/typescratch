@@ -36,8 +36,8 @@ Scratch.onFlag(() => { counter = counter + 10; Scratch.say("" + counter); });
   assert.equal(result.ok, true, JSON.stringify(result.report.diagnostics));
   const hero = result.modules.find((m) => m.role?.name === "Hero")!;
   const enemy = result.modules.find((m) => m.role?.name === "Enemy")!;
-  const heroVar = hero.vars.find((v) => v.name === "counter")!;
-  const enemyVar = enemy.vars.find((v) => v.name === "counter")!;
+  const heroVar = hero.vars.find((v) => v.name.endsWith(".counter"))!;
+  const enemyVar = enemy.vars.find((v) => v.name.endsWith(".counter"))!;
   assert.ok(heroVar, "Hero has a variable named counter");
   assert.ok(enemyVar, "Enemy has a variable named counter");
   assert.notEqual(heroVar.id, enemyVar.id, "IDs must be unique across roles");
@@ -47,7 +47,7 @@ Scratch.onFlag(() => { counter = counter + 10; Scratch.say("" + counter); });
 
 test("a stage global exists, but another role cannot name it until M4 (cross-module)", () => {
   const stageOnly = compileWorkspace({
-    "Stage.ts": header + `let shared = 5;\n`,
+    "Stage.ts": header + `/** @global */\nlet shared = 5;\n`,
     "Hero.ts": header + `Scratch.onFlag(() => { Scratch.say("hero"); });\n`,
   });
   assert.equal(stageOnly.ok, true, JSON.stringify(stageOnly.report.diagnostics));
@@ -57,7 +57,7 @@ test("a stage global exists, but another role cannot name it until M4 (cross-mod
   // independent ts.Program (compiler/src/index.ts:182-183). M4 will add a
   // shared symbol table; until then this is an explicit, diagnosed boundary.
   const cross = compileWorkspace({
-    "Stage.ts": header + `let shared = 5;\n`,
+    "Stage.ts": header + `/** @global */\nlet shared = 5;\n`,
     "Hero.ts": header + `Scratch.onFlag(() => { Scratch.say("" + shared); });\n`,
   });
   assert.equal(cross.ok, false);

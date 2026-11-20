@@ -42,6 +42,14 @@ export type KeyName =
 export declare function warp(value: unknown, context: unknown): void;
 export declare function noWarp(value: unknown, context: unknown): void;
 
+/**
+ * Compile-time storage decorators for top-level variables. By default a
+ * top-level `let` is private to its sprite; @global makes it a Stage variable
+ * visible to every role in a workspace. No runtime behavior.
+ */
+export declare function global(target: object, propertyKey?: string | symbol): void;
+export declare function local(target: object, propertyKey?: string | symbol): void;
+
 export declare const Scratch: {
   onFlag(handler: () => void): void;
   onKey(key: KeyName, handler: () => void): void;
@@ -149,42 +157,7 @@ export declare const Scratch: {
     /** @tscr opcode motion_direction */
     direction(): number;
   };
-  readonly operators: {
-    /** @tscr opcode operator_add */
-    add(NUM1: number, NUM2: number): number;
-    /** @tscr opcode operator_subtract */
-    subtract(NUM1: number, NUM2: number): number;
-    /** @tscr opcode operator_multiply */
-    multiply(NUM1: number, NUM2: number): number;
-    /** @tscr opcode operator_divide */
-    divide(NUM1: number, NUM2: number): number;
-    /** @tscr opcode operator_mod */
-    mod(NUM1: number, NUM2: number): number;
-    /** @tscr opcode operator_random */
-    random(FROM: number, TO: number): number;
-    /** @tscr opcode operator_round */
-    round(NUM: number): number;
-    /** @tscr opcode operator_join */
-    join(STRING1: string, STRING2: string): string;
-    /** @tscr opcode operator_letter_of */
-    letterOf(LETTER: number, STRING: string): string;
-    /** @tscr opcode operator_length */
-    length(STRING: string): number;
-    /** @tscr opcode operator_lt */
-    lt(OPERAND1: number, OPERAND2: number): boolean;
-    /** @tscr opcode operator_gt */
-    gt(OPERAND1: number, OPERAND2: number): boolean;
-    /** @tscr opcode operator_equals */
-    equals(OPERAND1: string, OPERAND2: string): boolean;
-    /** @tscr opcode operator_and */
-    and(OPERAND1: boolean, OPERAND2: boolean): boolean;
-    /** @tscr opcode operator_or */
-    or(OPERAND1: boolean, OPERAND2: boolean): boolean;
-    /** @tscr opcode operator_not */
-    not(OPERAND: boolean): boolean;
-    /** @tscr opcode operator_contains */
-    contains(STRING1: string, STRING2: string): boolean;
-  };
+  // Operators are TypeScript syntax (+ - * / == etc.) — no object namespace.
   readonly sensing: {
     /** @tscr opcode sensing_resettimer */
     resetTimer(): void;

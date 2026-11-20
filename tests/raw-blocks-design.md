@@ -15,6 +15,11 @@ Scratch.motion.setRotationStyle("left-right"); // static menu field argument
 const x = Scratch.motion.xPosition();
 ```
 
+**Design reset (user directive):** operators are TypeScript syntax (`a + b`,
+`a == b`), not object calls — the former `Scratch.operators.*` namespace was
+removed. Variables are plain `let` (sprite-private by default, `@global` for
+cross-role Stage variables), not `Scratch.global(...)` handles with `.get()`.
+
 **`runtime.d.ts` is the single source of truth** — there is no separate block
 table. Each method declaration carries all metadata the compiler needs:
 

@@ -49,7 +49,9 @@ Native standard library: `Math.PI`/`E`, `abs`/`floor`/`ceil`/`round`/`sqrt`/`ln`
 
 ## Language
 
-`number`/`string`/`boolean`, `let`/`const`, operators, `if/else`, `while` (`break`/`continue` included), restricted `for`, template strings, top-level `function` with `return`, classes with fields/methods and `new`, recursive functions, `global`/`local`/`list`/`array`/`free`, event hats (`onFlag`, `onKey`, `onSpriteClicked`, `onClone`, `onBackdrop`, `onBroadcast`, `onGreaterThan`), and the native Math functions. APIs resolve by symbol, so `import { Scratch as S }` works.
+`number`/`string`/`boolean`, `let`/`const`, operators (`a + b`, `a == b`, `!x` — no wrapper calls), `if/else`, `while` (`break`/`continue` included), restricted `for`, template strings, top-level `function` with `return`, classes with fields/methods and `new`, recursive functions, `list`/`array`/`free`, event hats (`onFlag`, `onKey`, `onSpriteClicked`, `onClone`, `onBackdrop`, `onBroadcast`, `onGreaterThan`), and the native Math functions. APIs resolve by symbol, so `import { Scratch as S }` works.
+
+Variables are plain TypeScript. A top-level `let` is **private to its sprite**; `/** @global */` before it makes a Stage variable visible to every role in a workspace. There is no `score.get()` / `score.set()` and no `Scratch.global<number>(...)` in new code — those are a deprecation-window compatibility shim. `/** @local */` is explicit but redundant. `@warp`/`@noWarp` on methods and variable storage tags all go through one decorator parser; unknown or misplaced tags get `TSCR2010`.
 
 Scratch blocks use object calls:
 
@@ -103,7 +105,7 @@ pnpm trace:showcase   # per-frame VM state changes for 3 green flags
 pnpm snapshots:update # refresh five golden artifacts per case
 ```
 
-193 Vitest tests plus 23 headless VM conformance runs compare SAY/variable/list traces against an independent IR interpreter. Five golden artifacts are pinned for ten cases; CI runs the gate on Node 24 and 26. `pnpm verify:e2e` is a separate browser-and-network gate that loads `dist/hybrid.sb3` in the real TurboWarp editor and asserts the embedded extension actually executes.
+199 Vitest tests plus 23 headless VM conformance runs compare SAY/variable/list traces against an independent IR interpreter. Five golden artifacts are pinned for ten cases; CI runs the gate on Node 24 and 26. `pnpm verify:e2e` is a separate browser-and-network gate that loads `dist/hybrid.sb3` in the real TurboWarp editor and asserts the embedded extension actually executes.
 
 ## License
 

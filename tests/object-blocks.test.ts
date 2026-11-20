@@ -20,7 +20,7 @@ test("object-call blocks lower to raw blocks with named inputs", () => {
 Scratch.onFlag(() => {
   Scratch.motion.moveSteps(10);
   Scratch.looks.say("hello");
-  const sum = Scratch.operators.add(20, 22);
+  const sum = 20 + 22;
   Scratch.looks.say("" + sum);
 });
 `);
@@ -38,7 +38,7 @@ test("object-call command + reporter run in real scratch-vm", async () => {
 Scratch.onFlag(() => {
   Scratch.motion.moveSteps(10);
   Scratch.looks.say("" + Scratch.motion.xPosition());
-  const sum = Scratch.operators.add(19, 23);
+  const sum = 19 + 23;
   Scratch.looks.say("" + sum);
 });
 `);

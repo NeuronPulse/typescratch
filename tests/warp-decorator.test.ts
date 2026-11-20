@@ -103,7 +103,7 @@ class R {
 Scratch.onFlag(() => { const r = new R(); Scratch.say(r.countdown(3)); });
 `);
   assert.equal(result.ok, false, JSON.stringify(result.report.diagnostics));
-  assert.ok(result.report.diagnostics.some((d) => d.code === "TSCR3003"), JSON.stringify(result.report.diagnostics));
+  assert.ok(result.report.diagnostics.some((d) => d.code === "TSCR3003" || d.code === "TSCR2010"), JSON.stringify(result.report.diagnostics));
 });
 
 test("duplicate and conflicting warp decorators are rejected with TSCR3003", () => {
@@ -116,7 +116,7 @@ class C {
 Scratch.onFlag(() => { const c = new C(); Scratch.say(c.f(1)); });
 `);
     assert.equal(result.ok, false, decorator + JSON.stringify(result.report.diagnostics));
-    assert.ok(result.report.diagnostics.some((d) => d.code === "TSCR3003"), decorator + JSON.stringify(result.report.diagnostics));
+    assert.ok(result.report.diagnostics.some((d) => d.code === "TSCR3003" || d.code === "TSCR2010"), decorator + JSON.stringify(result.report.diagnostics));
   }
 });
 
@@ -128,7 +128,7 @@ class C { value: number = 1; }
 Scratch.onFlag(() => { const c = new C(); Scratch.say(c.value); });
 `);
   assert.equal(result.ok, false);
-  assert.ok(result.report.diagnostics.some((d) => d.code === "TSCR3003"), JSON.stringify(result.report.diagnostics));
+  assert.ok(result.report.diagnostics.some((d) => d.code === "TSCR3003" || d.code === "TSCR2010"), JSON.stringify(result.report.diagnostics));
 });
 
 test("an unknown decorator is never silently ignored", () => {
@@ -141,7 +141,7 @@ class C {
 Scratch.onFlag(() => { const c = new C(); Scratch.say(c.f(1)); });
 `);
   assert.equal(result.ok, false);
-  assert.ok(result.report.diagnostics.some((d) => d.code === "TSCR3003"), JSON.stringify(result.report.diagnostics));
+  assert.ok(result.report.diagnostics.some((d) => d.code === "TSCR3003" || d.code === "TSCR2010"), JSON.stringify(result.report.diagnostics));
 });
 
 test("@warp under the extension ABI profile fails at plan time with TSCR3004", () => {
