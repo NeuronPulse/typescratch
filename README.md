@@ -55,6 +55,8 @@ Variables are plain TypeScript. A top-level `let` is **private to its sprite**; 
 
 Dictionaries: `const m = Scratch.map<number, number>()`, then `m.set(k,v)` / `m.get(k)` / `m.has(k)` / `m.delete(k)` / `m.size()` / `m.clear()`. The compiler lowers them into two parallel Scratch lists plus a generated linear scan — **O(n), not O(1)** — so no runtime dependency is added. `get` returns the type's zero value when the key is absent; use `has` if that matters. String keys are rejected in v1: Scratch's native `operator_equals` is case-insensitive and would silently conflate `"A"` and `"a"`.
 
+OOP: classes may declare a `constructor(...)` whose arguments are applied after allocation; fields accept `number`, `string` and `boolean`. `static` fields are Stage globals (shared across instances and persistent across green flags — same lifecycle as other globals), and `static` methods are plain procedures with no `this`. `get`/`set` accessors lower to virtual methods (an extra dispatch per access). `private`/`protected` are compile-time checks only; TypeScript itself rejects external access first, with `TSCR2007` as a compiler-side backstop.
+
 Scratch blocks use object calls:
 
 ```ts
@@ -107,7 +109,7 @@ pnpm trace:showcase   # per-frame VM state changes for 3 green flags
 pnpm snapshots:update # refresh five golden artifacts per case
 ```
 
-204 Vitest tests plus 23 headless VM conformance runs compare SAY/variable/list traces against an independent IR interpreter. Five golden artifacts are pinned for ten cases; CI runs the gate on Node 24 and 26. `pnpm verify:e2e` is a separate browser-and-network gate that loads `dist/hybrid.sb3` in the real TurboWarp editor and asserts the embedded extension actually executes.
+212 Vitest tests plus 23 headless VM conformance runs compare SAY/variable/list traces against an independent IR interpreter. Five golden artifacts are pinned for ten cases; CI runs the gate on Node 24 and 26. `pnpm verify:e2e` is a separate browser-and-network gate that loads `dist/hybrid.sb3` in the real TurboWarp editor and asserts the embedded extension actually executes.
 
 ## License
 

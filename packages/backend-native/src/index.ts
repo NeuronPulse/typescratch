@@ -259,10 +259,17 @@ export function lowerNative(
     ),
   ].sort();
   const heapInitials: Record<string, string> = {};
+  const heapBooleanFields = new Set<string>();
   for (const module of modules) {
     for (const entry of module.classes ?? []) {
       for (const field of entry.fields) {
-        heapInitials[field.name] = String(field.initial ?? (field.type === "string" ? "" : 0));
+        // Boolean fields are stored as 1/0 numbers in the heap lists, matching
+        // what an `operator_equals` reporter writes. Reads wrap the item in
+        // another `operator_equals` to restore a boolean reporter.
+        if (field.type === "boolean") heapBooleanFields.add(field.name);
+        heapInitials[field.name] = field.type === "boolean"
+          ? (field.initial ? "1" : "0")
+          : String(field.initial ?? (field.type === "string" ? "" : 0));
       }
     }
   }
@@ -484,12 +491,15 @@ export function lowerNative(
           bag.error(CODES.NATIVE_LOWERING, `no heap list for field ${expr.field}`, span);
           return { primitive: [4, "0"] };
         }
-        return {
-          block: emitHeapFieldRead(
-            builder, scope, heapLayout,
-            emitValue(expr.object, owner, scope, span), expr.field,
-          ),
-        };
+        const item = emitHeapFieldRead(
+          builder, scope, heapLayout,
+          emitValue(expr.object, owner, scope, span), expr.field,
+        );
+        if (!heapBooleanFields.has(expr.field)) return { block: item };
+        const asBool = builder.add("operator_equals", { scope, span });
+        builder.input(asBool, "OPERAND1", { block: item });
+        builder.input(asBool, "OPERAND2", { primitive: [4, "1"] });
+        return { block: asBool };
       }
       case "arrayRead": {
         if (!heapLayout) {
@@ -734,7 +744,9 @@ export function lowerNative(
           const fieldValues: Record<string, InputRef> = {};
           for (const field of classById.get(stmt.classId)?.fields ?? []) {
             fieldValues[field.name] = {
-              primitive: [10, String(field.initial ?? (field.type === "string" ? "" : 0))],
+              primitive: field.type === "boolean"
+                ? [4, field.initial ? "1" : "0"]
+                : [10, String(field.initial ?? (field.type === "string" ? "" : 0))],
             };
           }
           ids.push(...emitHeapAllocate(

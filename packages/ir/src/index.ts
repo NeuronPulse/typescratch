@@ -52,7 +52,7 @@ export type Expr =
   | { k: "raw"; opcode: string; inputs: Record<string, Expr>; fields: Record<string, string>; type: IrType; span?: SourceSpan }
   | { k: "listRead"; op: ListReadOp; list: ListId; index?: Expr; type: IrType; span?: SourceSpan }
   | { k: "call"; function: FunctionId; args: Expr[]; type: IrType; span?: SourceSpan }
-  | { k: "objectNew"; classId: ClassId; type: "number"; span?: SourceSpan }
+  | { k: "objectNew"; classId: ClassId; args?: Expr[]; type: "number"; span?: SourceSpan }
   | { k: "arrayNew"; size: Expr; type: "number"; span?: SourceSpan }
   | { k: "fieldRead"; object: Expr; field: string; type: IrType; span?: SourceSpan }
   | { k: "arrayRead"; array: Expr; index: Expr; type: IrType; span?: SourceSpan }
@@ -139,6 +139,8 @@ export interface ClassDecl {
   name: string;
   fields: FieldDecl[];
   methodIds: FunctionId[];
+  /** Constructor function, lowered to an invoke after heapAllocate. */
+  ctorId?: FunctionId;
   span?: SourceSpan;
 }
 

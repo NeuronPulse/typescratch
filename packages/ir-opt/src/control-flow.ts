@@ -254,6 +254,7 @@ export function lowerControlFlow(modules: Module[]): ControlFlowResult {
     const vars = [...module.vars];
     const lists = [...module.lists];
     const functions = module.functions ?? [];
+    const classById = new Map((module.classes ?? []).map((cls) => [cls.id, cls] as const));
     let callCounter = 0;
 
     const makeVars = (
@@ -305,6 +306,16 @@ export function lowerControlFlow(modules: Module[]): ControlFlowResult {
           prelude.push({
             k: "heapAllocate", classId: expr.classId, result: result.id, span: expr.span,
           });
+          const ctorId = classById.get(expr.classId)?.ctorId;
+          if (ctorId) {
+            const { callId, result: callResult, resultTag } = makeVars(scriptIndex, "void");
+            prelude.push({
+              k: "invoke", function: ctorId,
+              args: [{ k: "read", var: result.id, type: "number", span: expr.span },
+                ...(expr.args ?? []).map((arg) => liftExpr(arg, prelude, scriptIndex))],
+              callId: callId.id, result: callResult.id, resultTag: resultTag.id, span: expr.span,
+            });
+          }
           return { k: "read", var: result.id, type: "number", span: expr.span };
         }
         case "arrayNew": {

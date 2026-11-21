@@ -129,12 +129,17 @@ class Lowerer {
   private readonly handleVars = new Map<ts.Symbol, VarDecl>();
   private readonly handleLists = new Map<ts.Symbol, ListDecl>();
   /** A dictionary is two parallel lists (keys, values) plus its value type. */
+  /** Static members are plain globals/functions; IR needs no "static" concept. */
+  private readonly staticFieldVars = new Map<ts.Symbol, VarDecl>();
+  private readonly staticMethodFns = new Map<ts.Symbol, FunctionDecl>();
+  /** get/set accessors lower to virtual methods named __get_x / __set_x. */
+  private readonly accessorSymbols = new Map<string, { classId: string; method: string }>();
   private readonly mapHandles = new Map<ts.Symbol, {
     keys: ListDecl; values: ListDecl; keyType: IrType; valueType: IrType;
   }>();
   private readonly classes: ClassDecl[] = [];
   private readonly classByName = new Map<string, ClassDecl>();
-  private readonly methodNodes = new Map<ts.MethodDeclaration, FunctionDecl>();
+  private readonly methodNodes = new Map<ts.MethodDeclaration | ts.ConstructorDeclaration | ts.AccessorDeclaration, FunctionDecl>();
   private readonly arrayVars = new Map<ts.Symbol, { type: IrType }>();
   private currentThisVar: VarDecl | undefined;
   private classCounter = 0;
@@ -231,12 +236,24 @@ class Lowerer {
       const type = member.type
         ? this.irTypeOf(this.checker.getTypeFromTypeNode(member.type))
         : "number";
-      if (type !== "number" && type !== "string") {
-        this.unsupported(member, `field ${member.name.text} must be number or string in v0.2`);
+      if (type !== "number" && type !== "string" && type !== "boolean") {
+        this.unsupported(member, `field ${member.name.text} must be number, string or boolean in v0.2`);
+        continue;
+      }
+      const isStatic = (member.modifiers ?? []).some((m) => m.kind === ts.SyntaxKind.StaticKeyword);
+      const initial = member.initializer ? this.literalValue(member.initializer) : undefined;
+      if (isStatic) {
+        if (initial === undefined) {
+          this.bag.error(CODES.UNSUPPORTED,
+            `static field ${name}.${member.name.text} needs a literal initializer`, this.span(member));
+          continue;
+        }
+        const decl = this.newVar(`${name}.${member.name.text}`, type, "global", this.span(member), initial);
+        const symbol = this.checker.getSymbolAtLocation(member.name);
+        if (symbol) this.staticFieldVars.set(symbol, decl);
         continue;
       }
       const field: FieldDecl = { name: member.name.text, type };
-      const initial = member.initializer ? this.literalValue(member.initializer) : undefined;
       if (initial !== undefined) field.initial = initial;
       fields.push(field);
     }
@@ -244,9 +261,34 @@ class Lowerer {
     this.classes.push(cls);
     this.classByName.set(name, cls);
     for (const member of node.members) {
+      if (!ts.isConstructorDeclaration(member)) continue;
+      if (cls.ctorId) {
+        this.bag.error(CODES.UNSUPPORTED, `class ${name} has more than one constructor`, this.span(member));
+        continue;
+      }
+      const ctor = this.declareConstructor(member, cls);
+      cls.ctorId = ctor.id;
+      this.methodNodes.set(member, ctor);
+    }
+    for (const member of node.members) {
+      if ((ts.isGetAccessorDeclaration(member) || ts.isSetAccessorDeclaration(member))
+        && ts.isIdentifier(member.name)) {
+        const isGet = ts.isGetAccessorDeclaration(member);
+        const method = `${isGet ? "__get_" : "__set_"}${member.name.text}`;
+        const returnType = isGet
+          ? this.irTypeOf(this.checker.getTypeAtLocation(member))
+          : "void";
+        const fn = this.declareFunctionLike(member, cls, method,
+          `fn_${cls.name}_${method}_${++this.functionCounter}`, returnType);
+        cls.methodIds.push(fn.id);
+        this.methodNodes.set(member, fn);
+        this.accessorSymbols.set(`${cls.id}.${isGet ? "get" : "set"}.${member.name.text}`, { classId: cls.id, method });
+        continue;
+      }
       if (!ts.isMethodDeclaration(member) || !ts.isIdentifier(member.name)) continue;
-      const fn = this.declareMethod(member, cls);
-      cls.methodIds.push(fn.id);
+      const isStatic = (member.modifiers ?? []).some((m) => m.kind === ts.SyntaxKind.StaticKeyword);
+      const fn = isStatic ? this.declareStaticMethod(member, cls) : this.declareMethod(member, cls);
+      if (!isStatic) cls.methodIds.push(fn.id);
       this.methodNodes.set(member, fn);
     }
   }
@@ -258,13 +300,42 @@ class Lowerer {
     const returnType = node.type
       ? this.irTypeOf(this.checker.getTypeFromTypeNode(node.type))
       : "number";
+    const fn = this.declareFunctionLike(node, cls, name, id, returnType);
+    if (warp !== undefined) fn.warp = warp;
+    return fn;
+  }
+
+  private declareConstructor(node: ts.ConstructorDeclaration, cls: ClassDecl): FunctionDecl {
+    for (const modifier of node.modifiers ?? []) {
+      if (modifier.kind === ts.SyntaxKind.PrivateKeyword || modifier.kind === ts.SyntaxKind.ProtectedKeyword) {
+        this.bag.error(CODES.UNSUPPORTED, "private/protected constructors are not supported", this.span(node));
+      }
+    }
+    return this.declareFunctionLike(node, cls, "__ctor", `fn_${cls.name}__ctor_${++this.functionCounter}`, "void");
+  }
+
+  private declareStaticMethod(node: ts.MethodDeclaration, cls: ClassDecl): FunctionDecl {
+    const name = ts.isIdentifier(node.name) ? node.name.text : `static${++this.functionCounter}`;
+    const fn = this.declareFunctionLike(node, cls, name,
+      `fn_${cls.name}_static_${name}_${++this.functionCounter}`,
+      node.type ? this.irTypeOf(this.checker.getTypeFromTypeNode(node.type)) : "number", false);
+    const symbol = this.checker.getSymbolAtLocation(node.name);
+    if (symbol) this.staticMethodFns.set(symbol, fn);
+    return fn;
+  }
+
+  private declareFunctionLike(
+    node: ts.MethodDeclaration | ts.ConstructorDeclaration | ts.AccessorDeclaration,
+    cls: ClassDecl, name: string, id: string, returnType: IrType,
+    withThis = true,
+  ): FunctionDecl {
     const span = this.span(node);
     const callId = this.newVar(`${name}_callId`, "number", "temp", span, 0);
     const returnValue = this.newVar(`${name}_ret`, returnType, "temp", span, 0);
     const returning = this.newVar(`${name}_returning`, "number", "temp", span, 0);
     const thisDecl = this.newVar("this", "number", "temp", span, 0);
     thisDecl.parameter = true;
-    const params: VarDecl[] = [thisDecl];
+    const params: VarDecl[] = withThis ? [thisDecl] : [];
     for (const parameter of node.parameters) {
       if (!ts.isIdentifier(parameter.name)) {
         this.unsupported(parameter, "destructured method parameters are not supported");
@@ -284,15 +355,14 @@ class Lowerer {
     const fn: FunctionDecl = {
       id, name, params, returnType, body: [],
       callId: callId.id, returnValue: returnValue.id, returning: returning.id,
-      thisVar: thisDecl.id, classId: cls.id, span,
-      ...(warp !== undefined ? { warp } : {}),
+      ...(withThis ? { thisVar: thisDecl.id, classId: cls.id } : {}), span,
     };
     this.functions.push(fn);
     this.callEdges.set(id, new Set());
     return fn;
   }
 
-  private lowerMethod(node: ts.MethodDeclaration, fn: FunctionDecl): void {
+  private lowerMethod(node: ts.MethodDeclaration | ts.ConstructorDeclaration | ts.AccessorDeclaration, fn: FunctionDecl): void {
     this.currentFunction = fn;
     this.currentThisVar = fn.thisVar
       ? this.vars.find((decl) => decl.id === fn.thisVar)
@@ -1094,6 +1164,35 @@ class Lowerer {
     return handle ? { ...handle, method: expression.name.text } : undefined;
   }
 
+  private accessorOf(
+    object: ts.Expression, name: string, kind: "get" | "set",
+  ): { classId: string; method: string } | undefined {
+    const classId = this.objectClassOf(object);
+    return classId ? this.accessorSymbols.get(`${classId}.${kind}.${name}`) : undefined;
+  }
+
+  /** private/protected members may only be accessed through `this`. */
+  private checkVisibility(symbol: ts.Symbol | undefined, object: ts.Expression, node: ts.Node): void {
+    if (!symbol || object.kind === ts.SyntaxKind.ThisKeyword) return;
+    const declaration = symbol.declarations?.[0];
+    if (!declaration || !ts.canHaveModifiers(declaration)) return;
+    const modifiers = ts.getModifiers(declaration) ?? [];
+    if (modifiers.some((m) => m.kind === ts.SyntaxKind.PrivateKeyword || m.kind === ts.SyntaxKind.ProtectedKeyword)) {
+      this.bag.error(CODES.VISIBILITY,
+        `${symbol.name} is private/protected and can only be accessed through this`,
+        this.span(node));
+    }
+  }
+
+  private emitGetterCall(node: ts.Node, object: ts.Expression, method: string): Expr {
+    const targets = this.dispatchTargets(method);
+    return {
+      k: "methodCall", object: this.lowerExpr(object), method, args: [], targets,
+      type: targets.length > 0 ? this.methodReturnType(targets[0]!.function) : "number",
+      span: this.span(node),
+    };
+  }
+
   private lowerMapCall(node: ts.CallExpression): Expr | undefined {
     const meta = this.mapHandleOf(node);
     if (!meta) return undefined;
@@ -1200,15 +1299,33 @@ class Lowerer {
       return { k: "read", var: this.currentThisVar.id, type: "number", span: this.span(node) };
     }
     if (ts.isNewExpression(node)) {
-      if (ts.isIdentifier(node.expression) && this.classByName.has(node.expression.text)) {
-        return { k: "objectNew", classId: node.expression.text, type: "number", span: this.span(node) };
+      if (ts.isIdentifier(node.expression)) {
+        const cls = this.classByName.get(node.expression.text);
+        if (cls) {
+          const args = node.arguments?.map((arg) => this.lowerExpr(arg)) ?? [];
+          if (args.length > 0 && !cls.ctorId) {
+            this.bag.error(CODES.UNSUPPORTED,
+              `class ${cls.name} has no constructor but new passes ${args.length} argument(s)`, this.span(node));
+          }
+          return { k: "objectNew", classId: cls.id, args, type: "number", span: this.span(node) };
+        }
       }
       this.unsupported(node, "new is only supported for TypeScratch class declarations");
       return this.voidConst(node);
     }
     if (ts.isPropertyAccessExpression(node)) {
+      const propertySymbol = this.checker.getSymbolAtLocation(node.name);
+      const staticField = propertySymbol ? this.staticFieldVars.get(propertySymbol) : undefined;
+      if (staticField) {
+        return { k: "read", var: staticField.id, type: staticField.type, span: this.span(node) };
+      }
+      const accessor = this.accessorOf(node.expression, node.name.text, "get");
+      if (accessor) {
+        return this.emitGetterCall(node, node.expression, accessor.method);
+      }
       const classHint = this.objectClassOf(node.expression);
       if (classHint) {
+        this.checkVisibility(propertySymbol, node.expression, node);
         return {
           k: "fieldRead",
           object: this.lowerExpr(node.expression),
@@ -1347,10 +1464,25 @@ class Lowerer {
       const mapCall = this.lowerMapCall(node);
       if (mapCall) return mapCall;
       if (ts.isPropertyAccessExpression(node.expression)) {
+        const methodSymbol = this.checker.getSymbolAtLocation(node.expression.name);
+        const staticFn = methodSymbol ? this.staticMethodFns.get(methodSymbol) : undefined;
+        if (staticFn) {
+          if (this.currentFunction) this.callEdges.get(this.currentFunction.id)?.add(staticFn.id);
+          if (node.arguments.length !== staticFn.params.length) {
+            this.unsupported(node, `static method ${staticFn.name}() expects ${staticFn.params.length} argument(s)`);
+            return this.voidConst(node);
+          }
+          return {
+            k: "call", function: staticFn.id,
+            args: node.arguments.map((argument) => this.lowerExpr(argument)),
+            type: staticFn.returnType, span: this.span(node),
+          };
+        }
         const method = node.expression.name.text;
         const targets = this.dispatchTargets(method);
         const classHint = this.objectClassOf(node.expression.expression);
         if (targets.length > 0 && classHint) {
+          this.checkVisibility(methodSymbol, node.expression.expression, node);
           if (this.currentFunction) {
             for (const target of targets) this.callEdges.get(this.currentFunction.id)?.add(target.function);
           }
@@ -1545,8 +1677,30 @@ class Lowerer {
       && expression.operatorToken.kind === ts.SyntaxKind.EqualsToken
       && ts.isPropertyAccessExpression(expression.left)) {
       const access = expression.left;
+      const propertySymbol = this.checker.getSymbolAtLocation(access.name);
+      const staticField = propertySymbol ? this.staticFieldVars.get(propertySymbol) : undefined;
+      if (staticField) {
+        this.emit({
+          k: "assign", var: staticField.id,
+          value: this.lowerExpr(expression.right), span: this.span(node),
+        });
+        return;
+      }
+      const accessor = this.accessorOf(access.expression, access.name.text, "set");
+      if (accessor) {
+        const targets = this.dispatchTargets(accessor.method);
+        const value = this.lowerExpr(expression.right);
+        const call: Expr = {
+          k: "methodCall", object: this.lowerExpr(access.expression),
+          method: accessor.method, args: [value], targets, type: "void", span: this.span(node),
+        };
+        const temp = this.newVar("discardAccessor", "number", "temp", this.span(node));
+        this.emit({ k: "declare", var: temp.id, init: call, span: this.span(node) });
+        return;
+      }
       const classHint = this.objectClassOf(access.expression);
       if (classHint) {
+        this.checkVisibility(propertySymbol, access.expression, node);
         this.emit({
           k: "fieldWrite",
           object: this.lowerExpr(access.expression),
