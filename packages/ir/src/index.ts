@@ -141,6 +141,8 @@ export interface ClassDecl {
   methodIds: FunctionId[];
   /** Constructor function, lowered to an invoke after heapAllocate. */
   ctorId?: FunctionId;
+  /** Direct base class; inherited fields/methodIds are flattened at compile time. */
+  extends?: ClassId;
   span?: SourceSpan;
 }
 

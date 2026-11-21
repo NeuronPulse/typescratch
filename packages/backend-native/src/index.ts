@@ -61,6 +61,8 @@ const BINARY_OPCODES: Partial<Record<BinOp, string>> = {
   lt: "operator_lt",
   gt: "operator_gt",
   eq: "operator_equals",
+  and: "operator_and",
+  or: "operator_or",
 };
 
 const LIST_OPCODES: Record<ListOp, string> = {
@@ -71,7 +73,7 @@ const LIST_OPCODES: Record<ListOp, string> = {
   clear: "data_deletealloflist",
 };
 
-const BOOLEAN_OPS: ReadonlySet<BinOp> = new Set(["lt", "gt", "eq"]);
+const BOOLEAN_OPS: ReadonlySet<BinOp> = new Set(["lt", "gt", "eq", "and", "or"]);
 
 export interface NativeLoweringOptions {
   extensionOpcodes?: Map<string, string>;

@@ -219,7 +219,20 @@ function rewriteReturns(fn: FunctionDecl, body: Stmt[]): Stmt[] {
         ...(stmt.else ? { else: rewriteStmts(stmt.else) } : {}),
       };
     }
-    if (stmt.k === "while") return { ...stmt, body: rewriteStmts(stmt.body) };
+    if (stmt.k === "while") {
+      // A `return` inside the loop sets `returning`; without an explicit exit
+      // the loop would keep iterating with every body statement guarded off
+      // (including the index increment), spinning forever.
+      const returned: Expr = {
+        k: "binary", op: "eq",
+        l: { k: "read", var: fn.returning, type: "number" },
+        r: number(1), type: "boolean",
+      };
+      return {
+        ...stmt,
+        body: [{ k: "if", cond: returned, then: [{ k: "break" }] }, ...rewriteStmts(stmt.body)],
+      };
+    }
     if (stmt.k === "sequence") return { ...stmt, body: rewriteStmts(stmt.body) };
     if (stmt.k === "tryCall") {
       return {
@@ -444,7 +457,16 @@ export function lowerControlFlow(modules: Module[]): ControlFlowResult {
       rewrites += rewriter.rewrites;
       return { ...script, body: lowered };
     });
-    const loweredFunctions = functions.map((fn) => ({ ...fn, body: rewriteReturns(fn, liftStmts(fn.body, -1)) }));
+    const loweredFunctions = functions.map((fn) => {
+      const withReturns = rewriteReturns(fn, liftStmts(fn.body, -1));
+      // Run the break/continue lowering after rewriteReturns so the `break`
+      // emitted above for an early return actually terminates the loop.
+      const rewriter = new Rewriter(moduleIndex, -1);
+      const body = rewriter.rewriteStatements(withReturns);
+      vars.push(...rewriter.vars);
+      rewrites += rewriter.rewrites;
+      return { ...fn, body };
+    });
     if (loweredFunctions.length > 0 && !lists.some((list) => list.id === FRAME_RETURN_LIST_ID)) {
       lists.push(FRAME_RETURN_LIST);
     }

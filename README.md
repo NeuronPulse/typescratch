@@ -59,6 +59,12 @@ OOP: classes may declare a `constructor(...)` whose arguments are applied after 
 
 Cross-module imports: `import { f, C, x } from "./lib"` merges all reachable sources into one flat IR module. Aliases and re-exports resolve through the TypeScript checker. Classes and top-level names are mangled per module; import cycles are rejected with `TSCR2008`. Single-file builds keep byte-identical output.
 
+Closures: arrow/function expressions become synthetic class instances whose `__call` method is dispatched through the existing `virtualInvoke` chain — no new IR or Scratch primitive. Captures are **by-value snapshots of const bindings**; capturing a mutable `let` is rejected rather than silently diverging from JavaScript. Both operands of `&&`/`||` are evaluated (no short-circuiting): Scratch's `operator_and`/`operator_or` reporters are used so conditions re-evaluate on every loop iteration.
+
+Standard library: `import { sum, sort, ... } from "@typescratch/stdlib"` provides linear/binary search, min/max/sum/average/count, fillRange/reverse/unique and stable insertion sort (`sortBy` accepts a comparator closure). Transforming routines write into a caller-owned `Scratch.array<number>(N)` because Scratch array sizes must be compile-time constants. `shuffle` uses the random block and breaks deterministic traces. All routines are ordinary TypeScript source — no compiler intrinsics — and their O(n)/O(n²) costs are real.
+
+Inheritance: `class D extends B` flattens base fields/methods into the subclass and reuses `virtualInvoke` for overrides; `super.m()` and `super()` statically dispatch to the base implementation. `implements` is checked by TypeScript and emits no runtime code.
+
 Scratch blocks use object calls:
 
 ```ts
@@ -111,7 +117,7 @@ pnpm trace:showcase   # per-frame VM state changes for 3 green flags
 pnpm snapshots:update # refresh five golden artifacts per case
 ```
 
-218 Vitest tests plus 23 headless VM conformance runs compare SAY/variable/list traces against an independent IR interpreter. Five golden artifacts are pinned for ten cases; CI runs the gate on Node 24 and 26. `pnpm verify:e2e` is a separate browser-and-network gate that loads `dist/hybrid.sb3` in the real TurboWarp editor and asserts the embedded extension actually executes.
+233 Vitest tests plus 23 headless VM conformance runs compare SAY/variable/list traces against an independent IR interpreter. Five golden artifacts are pinned for ten cases; CI runs the gate on Node 24 and 26. `pnpm verify:e2e` is a separate browser-and-network gate that loads `dist/hybrid.sb3` in the real TurboWarp editor and asserts the embedded extension actually executes.
 
 ## License
 

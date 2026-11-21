@@ -1,9 +1,9 @@
-import { basename, relative, resolve } from "node:path";
+import { basename, dirname, relative, resolve } from "node:path";
 import ts from "typescript";
 import { CODES, type DiagnosticBag, type SourceSpan } from "@typescratch/diagnostics";
 import type {
-  BinOp, ClassDecl, DispatchTarget, Expr, FieldDecl, FunctionDecl, Hat, IrType, ListDecl, ListOp,
-  Module, RoleRef, Script, Stmt, VarDecl,
+  BinOp, ClassDecl, DispatchTarget, Expr, FieldDecl, FunctionDecl, FunctionId, Hat, IrType, ListDecl, ListOp,
+  Module, RoleRef, Script, Stmt, VarDecl, VarId,
 } from "@typescratch/ir";
 import { MATH_INTRINSICS, MATH_RADIAN_IN, MATH_RADIAN_OUT, YIELDING_COMMANDS } from "@typescratch/language";
 
@@ -86,7 +86,10 @@ export function createTypedProgram(config: FrontendConfig): TypedProgram | undef
     noEmit: true,
     skipLibCheck: true,
     allowImportingTsExtensions: true,
-    paths: { "@typescratch/runtime": [resolve(config.runtimeDts)] },
+    paths: {
+      "@typescratch/runtime": [resolve(config.runtimeDts)],
+      "@typescratch/stdlib": [resolve(dirname(config.runtimeDts), "../stdlib/src/index.ts")],
+    },
     types: [],
   };
   const program = ts.createProgram([entry], options);
@@ -165,7 +168,9 @@ class Lowerer {
   private readonly scripts: Script[] = [];
   private readonly functions: FunctionDecl[] = [];
   private readonly functionSymbols = new Map<ts.Symbol, FunctionDecl>();
-  private readonly functionNodes = new Map<ts.FunctionDeclaration, FunctionDecl>();
+  private readonly functionNodes = new Map<
+    ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression, FunctionDecl
+  >();
   private readonly callEdges = new Map<string, Set<string>>();
   private readonly symbolVars = new Map<ts.Symbol, VarDecl>();
   private currentFunction: FunctionDecl | undefined;
@@ -178,6 +183,9 @@ class Lowerer {
   private readonly staticMethodFns = new Map<ts.Symbol, FunctionDecl>();
   /** get/set accessors lower to virtual methods named __get_x / __set_x. */
   private readonly accessorSymbols = new Map<string, { classId: string; method: string }>();
+  /** Closures are synthetic classes with a `__call` method (virtualInvoke). */
+  private readonly closureObjectVars = new Set<VarId>();
+  private readonly closureCallTargets: DispatchTarget[] = [];
   private readonly mapHandles = new Map<ts.Symbol, {
     keys: ListDecl; values: ListDecl; keyType: IrType; valueType: IrType;
   }>();
@@ -283,7 +291,10 @@ class Lowerer {
       }
     }
     this.currentSource = this.source;
-    for (const [node, fn] of this.functionNodes) this.lowerFunction(node, fn);
+    for (const [node, fn] of this.functionNodes) {
+      if (ts.isFunctionDeclaration(node)) this.lowerFunction(node, fn);
+      else this.lowerClosureBody(node, fn);
+    }
     for (const [node, fn] of this.methodNodes) this.lowerMethod(node, fn);
     // A warped procedure never yields; warp + recursion changes the VM's
     // scheduling/stack behavior in ways this compiler cannot guarantee.
@@ -337,9 +348,33 @@ class Lowerer {
       if (initial !== undefined) field.initial = initial;
       fields.push(field);
     }
+    const extendsClause = node.heritageClauses?.find(
+      (clause) => clause.token === ts.SyntaxKind.ExtendsKeyword,
+    );
+    let base: ClassDecl | undefined;
+    if (extendsClause && extendsClause.types[0]) {
+      const baseExpr = extendsClause.types[0].expression;
+      const baseSymbol = ts.isIdentifier(baseExpr) ? this.symbolOf(baseExpr) : undefined;
+      base = (baseSymbol ? this.classBySymbol.get(baseSymbol) : undefined)
+        ?? (ts.isIdentifier(baseExpr) ? this.classByName.get(baseExpr.text) : undefined);
+      if (!base) {
+        this.bag.error(CODES.UNSUPPORTED,
+          `base class for ${name} must be a previously declared TypeScratch class`, this.span(extendsClause));
+      } else {
+        // Flatten base fields first so heap slot indices match inherited
+        // methods compiled against the base layout.
+        for (const field of base.fields) {
+          if (!fields.some((item) => item.name === field.name)) fields.unshift(field);
+        }
+      }
+    }
+    // `implements` is checked by TypeScript itself and emits no runtime code.
     const moduleTag = this.sources.length > 1 && this.currentSource
       ? `${basename(this.currentSource.fileName, ".ts")}__` : "";
-    const cls: ClassDecl = { id: `${moduleTag}${name}`, name, fields, methodIds: [], span: this.span(node) };
+    const cls: ClassDecl = {
+      id: `${moduleTag}${name}`, name, fields, methodIds: [],
+      ...(base ? { extends: base.id } : {}), span: this.span(node),
+    };
     this.classes.push(cls);
     this.classByName.set(name, cls);
     this.classById.set(cls.id, cls);
@@ -378,6 +413,19 @@ class Lowerer {
       if (!isStatic) cls.methodIds.push(fn.id);
       this.methodNodes.set(member, fn);
     }
+    if (base) {
+      // Inherit dispatch entries: a subclass instance must be able to run a
+      // base method it did not override. dispatchTargets() already prefers
+      // the exact classId, so an override naturally shadows the base entry.
+      const overridden = new Set(
+        cls.methodIds.map((id) => this.functions.find((fn) => fn.id === id)?.name),
+      );
+      for (const id of base.methodIds) {
+        const fn = this.functions.find((item) => item.id === id);
+        if (fn && !overridden.has(fn.name)) cls.methodIds.push(id);
+      }
+      if (base.ctorId && !cls.ctorId) cls.ctorId = base.ctorId;
+    }
   }
 
   private declareMethod(node: ts.MethodDeclaration, cls: ClassDecl): FunctionDecl {
@@ -412,32 +460,22 @@ class Lowerer {
   }
 
   private declareFunctionLike(
-    node: ts.MethodDeclaration | ts.ConstructorDeclaration | ts.AccessorDeclaration,
+    node: ts.MethodDeclaration | ts.ConstructorDeclaration | ts.AccessorDeclaration
+      | ts.ArrowFunction | ts.FunctionExpression,
     cls: ClassDecl, name: string, id: string, returnType: IrType,
     withThis = true,
   ): FunctionDecl {
     const span = this.span(node);
     const callId = this.newVar(`${name}_callId`, "number", "temp", span, 0);
-    const returnValue = this.newVar(`${name}_ret`, returnType, "temp", span, 0);
+    const returnValue = this.newVar(`${name}_ret`,
+      returnType === "boolean" ? "number" : returnType, "temp", span, 0);
     const returning = this.newVar(`${name}_returning`, "number", "temp", span, 0);
     const thisDecl = this.newVar("this", "number", "temp", span, 0);
     thisDecl.parameter = true;
     const params: VarDecl[] = withThis ? [thisDecl] : [];
     for (const parameter of node.parameters) {
-      if (!ts.isIdentifier(parameter.name)) {
-        this.unsupported(parameter, "destructured method parameters are not supported");
-        continue;
-      }
-      const type = this.typeOf(parameter.name);
-      if (type !== "number" && type !== "string" && type !== "boolean") {
-        this.unsupported(parameter, `method parameter ${parameter.name.text} must be number, string or boolean`);
-        continue;
-      }
-      const decl = this.newVar(parameter.name.text, type, "temp", this.span(parameter), 0);
-      decl.parameter = true;
-      const symbol = this.symbolOf(parameter.name);
-      if (symbol) this.symbolVars.set(symbol, decl);
-      params.push(decl);
+      const decl = this.declareParameter(parameter, "method");
+      if (decl) params.push(decl);
     }
     const fn: FunctionDecl = {
       id, name, params, returnType, body: [],
@@ -531,6 +569,39 @@ class Lowerer {
     return this.voidConst(node);
   }
 
+  private declareParameter(parameter: ts.ParameterDeclaration, label: string): VarDecl | undefined {
+    if (!ts.isIdentifier(parameter.name)) {
+      this.unsupported(parameter, `destructured ${label} parameters are not supported`);
+      return undefined;
+    }
+    const tsType = this.checker.getTypeAtLocation(parameter.name);
+    const typeName = (tsType.getSymbol() ?? tsType.aliasSymbol)?.getName();
+    let type = this.typeOf(parameter.name);
+    let isCallback = false;
+    let arrayInner: IrType | undefined;
+    if (typeName === "ArrayHandle") {
+      const inner = this.checker.getTypeArguments(tsType as ts.TypeReference)[0];
+      arrayInner = inner ? this.irTypeOf(inner) : "number";
+      type = "number";
+    } else if (this.checker.getSignaturesOfType(tsType, ts.SignatureKind.Call).length > 0) {
+      // A callback parameter is a closure ObjectRef at runtime.
+      type = "number";
+      isCallback = true;
+    } else if (type !== "number" && type !== "string" && type !== "boolean") {
+      this.unsupported(parameter, `${label} parameter ${parameter.name.text} must be number, string, boolean or ArrayHandle`);
+      return undefined;
+    }
+    const decl = this.newVar(parameter.name.text, type, "temp", this.span(parameter), 0);
+    decl.parameter = true;
+    const symbol = this.symbolOf(parameter.name);
+    if (symbol) {
+      this.symbolVars.set(symbol, decl);
+      if (arrayInner) this.arrayVars.set(symbol, { type: arrayInner });
+    }
+    if (isCallback) this.closureObjectVars.add(decl.id);
+    return decl;
+  }
+
   private declareFunction(node: ts.FunctionDeclaration): void {
     const warp = this.parseWarpDecorator(node, "function");
     const name = node.name?.text ?? `anonymous${++this.functionCounter}`;
@@ -538,24 +609,13 @@ class Lowerer {
     const returnType = node.type ? this.irTypeOf(this.checker.getTypeFromTypeNode(node.type)) : "number";
     const span = this.span(node);
     const callId = this.newVar(`${name}_callId`, "number", "temp", span, 0);
-    const returnValue = this.newVar(`${name}_ret`, returnType, "temp", span, 0);
+    const returnValue = this.newVar(`${name}_ret`,
+      returnType === "boolean" ? "number" : returnType, "temp", span, 0);
     const returning = this.newVar(`${name}_returning`, "number", "temp", span, 0);
     const params: VarDecl[] = [];
     for (const parameter of node.parameters) {
-      if (!ts.isIdentifier(parameter.name)) {
-        this.unsupported(parameter, "destructured function parameters are not supported");
-        continue;
-      }
-      const type = this.typeOf(parameter.name);
-      if (type !== "number" && type !== "string" && type !== "boolean") {
-        this.unsupported(parameter, `function parameter ${parameter.name.text} must be number, string or boolean in v0.1`);
-        continue;
-      }
-      const decl = this.newVar(parameter.name.text, type, "temp", this.span(parameter), 0);
-      decl.parameter = true;
-      const symbol = this.symbolOf(parameter.name);
-      if (symbol) this.symbolVars.set(symbol, decl);
-      params.push(decl);
+      const decl = this.declareParameter(parameter, "function");
+      if (decl) params.push(decl);
     }
     const fn: FunctionDecl = {
       id, name, params, returnType, body: [],
@@ -577,6 +637,133 @@ class Lowerer {
     });
     this.currentFunction = undefined;
     this.scriptIndex = -1;
+  }
+
+  private lowerClosureBody(
+    node: ts.ArrowFunction | ts.FunctionExpression, fn: FunctionDecl,
+  ): void {
+    this.currentFunction = fn;
+    this.currentThisVar = this.vars.find((decl) => decl.id === fn.thisVar);
+    this.scriptIndex = -1;
+    const captures = this.closureCaptureInfo.get(fn.id) ?? [];
+    const saved = captures.map((capture) => this.symbolVars.get(capture.symbol));
+    const span = fn.span ?? this.span(node);
+    fn.body = this.withBlock(() => {
+      for (const capture of captures) {
+        const temp = this.newVar(`cap_${capture.field}`, capture.decl.type, "temp", span,
+          capture.decl.type === "string" ? "" : 0);
+        this.emit({
+          k: "assign", var: temp.id,
+          value: {
+            k: "fieldRead",
+            object: { k: "read", var: fn.thisVar!, type: "number", span },
+            field: capture.field, type: capture.decl.type, span,
+          },
+          span,
+        });
+        this.symbolVars.set(capture.symbol, temp);
+      }
+      if (ts.isBlock(node.body)) this.lowerStatement(node.body);
+      else this.emit({ k: "return", value: this.lowerExpr(node.body), span: this.span(node.body) });
+    });
+    captures.forEach((capture, index) => {
+      if (saved[index]) this.symbolVars.set(capture.symbol, saved[index]!);
+      else this.symbolVars.delete(capture.symbol);
+    });
+    this.currentFunction = undefined;
+    this.currentThisVar = undefined;
+    this.scriptIndex = -1;
+  }
+
+  /** Captures are by-value snapshots stored in a synthetic class's fields. */
+  private readonly closureCaptureInfo = new Map<
+    FunctionId, { symbol: ts.Symbol; decl: VarDecl; field: string }[]
+  >();
+
+  private collectClosureCaptures(node: ts.ArrowFunction | ts.FunctionExpression): {
+    symbol: ts.Symbol; decl: VarDecl;
+  }[] {
+    const localSymbols = new Set<ts.Symbol>();
+    const collectDecl = (n: ts.Node): void => {
+      if ((ts.isParameter(n) || ts.isVariableDeclaration(n)) && ts.isIdentifier(n.name)) {
+        const symbol = this.symbolOf(n.name);
+        if (symbol) localSymbols.add(symbol);
+      }
+      ts.forEachChild(n, collectDecl);
+    };
+    collectDecl(node);
+    const result: { symbol: ts.Symbol; decl: VarDecl }[] = [];
+    const seen = new Set<ts.Symbol>();
+    const collectUse = (n: ts.Node): void => {
+      if (ts.isIdentifier(n)) {
+        const symbol = this.symbolOf(n);
+        if (symbol && !localSymbols.has(symbol) && !seen.has(symbol)) {
+          const decl = this.symbolVars.get(symbol);
+          if (decl) {
+            seen.add(symbol);
+            const declarationNode = symbol.declarations?.[0];
+            if (declarationNode && ts.isVariableDeclaration(declarationNode)
+              && !(declarationNode.parent.flags & ts.NodeFlags.Const)) {
+              this.bag.error(CODES.UNSUPPORTED,
+                `closure capture of mutable variable ${symbol.name} is not supported; captures are by-value snapshots`,
+                this.span(n));
+            }
+            result.push({ symbol, decl });
+          }
+        }
+      }
+      ts.forEachChild(n, collectUse);
+    };
+    if (node.body) collectUse(node.body);
+    return result;
+  }
+
+  /**
+   * Lower an arrow/function expression to a synthetic class instance whose
+   * `__call` method is dispatched through the existing virtualInvoke chain.
+   * No new IR nodes, interpreter or backend changes are needed.
+   */
+  private emitClosureCreation(
+    node: ts.ArrowFunction | ts.FunctionExpression, name: string, span: SourceSpan,
+  ): VarDecl {
+    const captures = this.collectClosureCaptures(node);
+    const classId = `__closure_${name}_${++this.functionCounter}`;
+    const fields: FieldDecl[] = captures.map((_, index) => ({
+      name: `__cap${index}`, type: captures[index]!.decl.type,
+    }));
+    const cls: ClassDecl = {
+      id: classId, name: classId, fields, methodIds: [], span,
+    };
+    this.classes.push(cls);
+    this.classById.set(classId, cls);
+
+    const returnType = node.type
+      ? this.irTypeOf(this.checker.getTypeFromTypeNode(node.type))
+      : ts.isArrowFunction(node) && ts.isExpression(node.body)
+        ? this.typeOf(node.body) : "number";
+    const fn = this.declareFunctionLike(node, cls, "__call", `fn_${classId}__call`, returnType);
+    cls.methodIds.push(fn.id);
+    this.closureCallTargets.push({ classId, function: fn.id });
+    this.closureCaptureInfo.set(fn.id,
+      captures.map((capture, index) => ({ ...capture, field: `__cap${index}` })));
+    this.functionNodes.set(node, fn);
+
+    const object = this.newVar(`${name}Obj`, "number", "temp", span, 0);
+    this.emit({
+      k: "declare", var: object.id,
+      init: { k: "objectNew", classId, args: [], type: "number", span },
+      span,
+    });
+    captures.forEach((capture, index) => {
+      this.emit({
+        k: "fieldWrite",
+        object: { k: "read", var: object.id, type: "number", span },
+        field: `__cap${index}`,
+        value: { k: "read", var: capture.decl.id, type: capture.decl.type, span },
+        span,
+      });
+    });
+    return object;
   }
 
   /**
@@ -1022,6 +1209,11 @@ class Lowerer {
     const symbol = this.symbolOf(declaration.name);
     const initializer = declaration.initializer;
     const isConst = (flags & ts.NodeFlags.Const) !== 0;
+    const declaredType = this.checker.getTypeAtLocation(declaration.name);
+    if (symbol && (declaredType.getSymbol() ?? declaredType.aliasSymbol)?.getName() === "ArrayHandle") {
+      const inner = this.checker.getTypeArguments(declaredType as ts.TypeReference)[0];
+      this.arrayVars.set(symbol, { type: inner ? this.irTypeOf(inner) : "number" });
+    }
 
     if (initializer && ts.isCallExpression(initializer)) {
       const runtimeName = this.runtimeNameOf(initializer);
@@ -1072,15 +1264,15 @@ class Lowerer {
           return;
         }
         const sizeArg = initializer.arguments[0];
-        if (!sizeArg || !ts.isNumericLiteral(sizeArg)) {
-          this.unsupported(initializer, "array() size must be a numeric literal");
+        if (!sizeArg) {
+          this.unsupported(initializer, "array() needs a size expression");
           return;
         }
         const handleType = this.checker.getTypeAtLocation(initializer) as ts.TypeReference;
         const inner = this.checker.getTypeArguments(handleType)[0];
         const type = inner ? this.irTypeOf(inner) : "number";
         const decl = this.newVar(declaration.name.text, "number", "temp", this.span(declaration), 0);
-        decl.arraySize = Number(sizeArg.text);
+        if (ts.isNumericLiteral(sizeArg)) decl.arraySize = Number(sizeArg.text);
         if (symbol) {
           this.arrayVars.set(symbol, { type });
           this.symbolVars.set(symbol, decl);
@@ -1090,9 +1282,7 @@ class Lowerer {
           var: decl.id,
           init: {
             k: "arrayNew",
-            size: {
-              k: "const", value: Number(sizeArg.text), type: "number", span: this.span(sizeArg),
-            },
+            size: this.lowerExpr(sizeArg),
             type: "number",
             span: this.span(initializer),
           },
@@ -1100,6 +1290,15 @@ class Lowerer {
         });
         return;
       }
+    }
+
+    if (initializer && (ts.isArrowFunction(initializer) || ts.isFunctionExpression(initializer))) {
+      const object = this.emitClosureCreation(
+        initializer, declaration.name.text, this.span(declaration),
+      );
+      if (symbol) this.symbolVars.set(symbol, object);
+      this.closureObjectVars.add(object.id);
+      return;
     }
 
     const literal = initializer ? this.literalValue(initializer) : undefined;
@@ -1169,36 +1368,18 @@ class Lowerer {
 
   private lowerLogical(node: ts.BinaryExpression, isAnd: boolean): Expr {
     if (this.typeOf(node.left) !== "boolean" || this.typeOf(node.right) !== "boolean") {
-      this.unsupported(node, "short-circuit operators are restricted to boolean operands in v0.1");
+      this.unsupported(node, "logical operators are restricted to boolean operands in v0.1");
       return { k: "const", value: false, type: "boolean", span: this.span(node) };
     }
+    // Use Scratch's operator_and / operator_or reporters directly. Emitting a
+    // statement prelude here would snapshot the result before a `while`
+    // condition and spin forever; the operator re-evaluates every iteration.
+    // Note: unlike JS, both operands are evaluated (no short-circuit).
     const span = this.span(node);
-    const temp = this.newVar(`logic${this.counter + 1}`, "number", "temp", span, isAnd ? 0 : 1);
-    this.emit({
-      k: "declare", var: temp.id,
-      init: { k: "const", value: isAnd ? 0 : 1, type: "number" },
-      span,
-    });
-    const left = this.lowerExpr(node.left);
-    const condition: Expr = isAnd
-      ? left
-      : { k: "unary", op: "not", value: left, type: "boolean", span };
-    const body = this.withBlock(() => {
-      const right = this.lowerExpr(node.right);
-      this.emit({
-        k: "assign",
-        var: temp.id,
-        value: { k: "convert", to: "number", value: right, type: "number", span },
-        span,
-      });
-    });
-    this.emit({ k: "if", cond: condition, then: body, span });
     return {
-      k: "convert",
-      to: "boolean",
-      value: { k: "read", var: temp.id, type: "number", span },
-      type: "boolean",
-      span,
+      k: "binary", op: isAnd ? "and" : "or",
+      l: this.lowerExpr(node.left), r: this.lowerExpr(node.right),
+      type: "boolean", span,
     };
   }
 
@@ -1558,6 +1739,44 @@ class Lowerer {
       };
     }
     if (ts.isCallExpression(node)) {
+      if (node.expression.kind === ts.SyntaxKind.SuperKeyword) {
+        const classId = this.currentFunction?.classId;
+        const baseId = classId ? this.classById.get(classId)?.extends : undefined;
+        const baseCtor = baseId ? this.classById.get(baseId)?.ctorId : undefined;
+        if (baseId && !baseCtor) return this.voidConst(node); // implicit base ctor
+        if (!baseCtor || !this.currentThisVar) {
+          this.unsupported(node, "super() has no base constructor");
+          return this.voidConst(node);
+        }
+        return {
+          k: "methodCall",
+          object: { k: "read", var: this.currentThisVar.id, type: "number", span: this.span(node) },
+          method: "__ctor", args: node.arguments.map((argument) => this.lowerExpr(argument)),
+          targets: [{ classId: classId!, function: baseCtor }],
+          type: "void", span: this.span(node),
+        };
+      }
+      if (ts.isPropertyAccessExpression(node.expression)
+        && node.expression.expression.kind === ts.SyntaxKind.SuperKeyword) {
+        const method = node.expression.name.text;
+        const classId = this.currentFunction?.classId;
+        const baseId = classId ? this.classById.get(classId)?.extends : undefined;
+        const base = baseId ? this.classById.get(baseId) : undefined;
+        const baseFn = base?.methodIds
+          .map((id) => this.functions.find((fn) => fn.id === id))
+          .find((fn) => fn?.name === method);
+        if (!base || !baseFn || !this.currentThisVar) {
+          this.unsupported(node, `super.${method}() has no base method`);
+          return this.voidConst(node);
+        }
+        return {
+          k: "methodCall",
+          object: { k: "read", var: this.currentThisVar.id, type: "number", span: this.span(node) },
+          method, args: node.arguments.map((argument) => this.lowerExpr(argument)),
+          targets: [{ classId: classId!, function: baseFn.id }],
+          type: baseFn.returnType, span: this.span(node),
+        };
+      }
       const arrayCall = this.lowerArrayCall(node);
       if (arrayCall) return arrayCall;
       const mapCall = this.lowerMapCall(node);
@@ -1597,6 +1816,17 @@ class Lowerer {
         }
       }
       const symbol = this.symbolOf(node.expression);
+      const calleeDecl = symbol ? this.symbolVars.get(symbol) : undefined;
+      if (calleeDecl && this.closureObjectVars.has(calleeDecl.id)) {
+        return {
+          k: "methodCall",
+          object: { k: "read", var: calleeDecl.id, type: "number", span: this.span(node) },
+          method: "__call",
+          args: node.arguments.map((argument) => this.lowerExpr(argument)),
+          targets: this.closureCallTargets,
+          type: "number", span: this.span(node),
+        };
+      }
       const fn = symbol ? this.functionSymbols.get(symbol) : undefined;
       if (fn) {
         if (this.currentFunction) this.callEdges.get(this.currentFunction.id)?.add(fn.id);
@@ -1894,7 +2124,9 @@ class Lowerer {
       return;
     }
     if (ts.isIfStatement(node)) {
-      const cond = this.lowerExpr(node.expression);
+      const rawCond = this.lowerExpr(node.expression);
+      const cond: Expr = rawCond.type === "boolean" ? rawCond
+        : { k: "convert", to: "boolean", value: rawCond, type: "boolean", span: this.span(node.expression) };
       const elseStatement = node.elseStatement;
       const thenBody = this.withBlock(() => this.lowerStatement(node.thenStatement));
       const elseBody = elseStatement
@@ -1906,7 +2138,9 @@ class Lowerer {
       return;
     }
     if (ts.isWhileStatement(node)) {
-      const cond = this.lowerExpr(node.expression);
+      const rawCond = this.lowerExpr(node.expression);
+      const cond: Expr = rawCond.type === "boolean" ? rawCond
+        : { k: "convert", to: "boolean", value: rawCond, type: "boolean", span: this.span(node.expression) };
       this.loopDepth += 1;
       const body = this.withBlock(() => this.lowerStatement(node.statement));
       this.loopDepth -= 1;

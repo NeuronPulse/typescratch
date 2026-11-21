@@ -26,18 +26,18 @@ test("compile-time constants are inlined and do not become Scratch variables", (
   assert.equal(body.args[0].value, "compile-time value");
 });
 
-test("short circuit operators are lowered to control flow", () => {
+test("logical operators lower to operator_and/or (both operands evaluated)", () => {
   const result = compile({ entry: example("logical"), projectRoot: ROOT, target: "scratch" });
   assert.equal(result.ok, true);
   const body = result.modules[0]?.scripts[0]?.body ?? [];
   assert.ok(body.some((stmt) => stmt.k === "if"));
-  assert.ok(body.some((stmt) => stmt.k === "declare"));
   const opcodes = new Set(
     [...(result.graph?.targets[1]?.blocks.values() ?? [])].map((block) => block.opcode),
   );
-  assert.equal(opcodes.has("operator_and"), false);
-  assert.equal(opcodes.has("operator_or"), false);
-  assert.ok(opcodes.has("control_if_else"));
+  // A statement prelude would snapshot the value before a `while` condition
+  // and spin forever; Scratch's operator re-evaluates each iteration. The
+  // trade-off is that JS short-circuiting is intentionally not preserved.
+  assert.ok(opcodes.has("operator_and") || opcodes.has("operator_or"));
 });
 
 test("TypeScript diagnostics are surfaced as TSCR1001", () => {
