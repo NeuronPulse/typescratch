@@ -57,6 +57,8 @@ Dictionaries: `const m = Scratch.map<number, number>()`, then `m.set(k,v)` / `m.
 
 OOP: classes may declare a `constructor(...)` whose arguments are applied after allocation; fields accept `number`, `string` and `boolean`. `static` fields are Stage globals (shared across instances and persistent across green flags — same lifecycle as other globals), and `static` methods are plain procedures with no `this`. `get`/`set` accessors lower to virtual methods (an extra dispatch per access). `private`/`protected` are compile-time checks only; TypeScript itself rejects external access first, with `TSCR2007` as a compiler-side backstop.
 
+Cross-module imports: `import { f, C, x } from "./lib"` merges all reachable sources into one flat IR module. Aliases and re-exports resolve through the TypeScript checker. Classes and top-level names are mangled per module; import cycles are rejected with `TSCR2008`. Single-file builds keep byte-identical output.
+
 Scratch blocks use object calls:
 
 ```ts
@@ -109,7 +111,7 @@ pnpm trace:showcase   # per-frame VM state changes for 3 green flags
 pnpm snapshots:update # refresh five golden artifacts per case
 ```
 
-212 Vitest tests plus 23 headless VM conformance runs compare SAY/variable/list traces against an independent IR interpreter. Five golden artifacts are pinned for ten cases; CI runs the gate on Node 24 and 26. `pnpm verify:e2e` is a separate browser-and-network gate that loads `dist/hybrid.sb3` in the real TurboWarp editor and asserts the embedded extension actually executes.
+218 Vitest tests plus 23 headless VM conformance runs compare SAY/variable/list traces against an independent IR interpreter. Five golden artifacts are pinned for ten cases; CI runs the gate on Node 24 and 26. `pnpm verify:e2e` is a separate browser-and-network gate that loads `dist/hybrid.sb3` in the real TurboWarp editor and asserts the embedded extension actually executes.
 
 ## License
 

@@ -1,4 +1,4 @@
-import { relative, resolve } from "node:path";
+import { basename, relative, resolve } from "node:path";
 import ts from "typescript";
 import { CODES, type DiagnosticBag, type SourceSpan } from "@typescratch/diagnostics";
 import type {
@@ -106,12 +106,56 @@ export function createTypedProgram(config: FrontendConfig): TypedProgram | undef
     config.bag.error(CODES.TS_TYPE, `entry file not found: ${config.entry}`);
     return undefined;
   }
+
+  // Imports are merged into a single flat module; a cycle would need
+  // forward declarations the IR has no concept of. Reject it early.
+  const edges = new Map<string, string[]>();
+  for (const file of program.getSourceFiles()) {
+    if (file.isDeclarationFile || file.fileName.includes("node_modules")) continue;
+    for (const statement of file.statements) {
+      if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
+      const resolved = ts.resolveModuleName(
+        statement.moduleSpecifier.text, file.fileName, options, ts.sys,
+      ).resolvedModule?.resolvedFileName;
+      if (!resolved) continue;
+      const from = resolve(file.fileName);
+      edges.set(from, [...(edges.get(from) ?? []), resolve(resolved)]);
+    }
+  }
+  const state = new Map<string, 0 | 1 | 2>();
+  const stack: string[] = [];
+  let cycle: string[] | undefined;
+  const visit = (file: string): void => {
+    state.set(file, 1);
+    stack.push(file);
+    for (const next of edges.get(file) ?? []) {
+      if (state.get(next) === 1 && !cycle) {
+        cycle = [...stack.slice(stack.indexOf(next)), next];
+      } else if (!state.get(next)) {
+        visit(next);
+      }
+      if (cycle) return;
+    }
+    stack.pop();
+    state.set(file, 2);
+  };
+  visit(entry);
+  if (cycle) {
+    config.bag.error(CODES.IMPORT_CYCLE,
+      `import cycle: ${cycle.map((file) => relative(config.projectRoot, file)).join(" -> ")}`,
+      { file: relative(config.projectRoot, source.fileName), start: 0, end: 0, line: 1, column: 1 });
+    return undefined;
+  }
+
   return { program, checker: program.getTypeChecker(), source };
 }
 
 class Lowerer {
   private readonly checker: ts.TypeChecker;
+  private readonly typed: TypedProgram;
   private readonly source: ts.SourceFile;
+  private readonly sources: ts.SourceFile[] = [];
+  private currentSource: ts.SourceFile | undefined;
   private readonly root: string;
   private readonly runtimeDts: string;
   private readonly bag: DiagnosticBag;
@@ -139,6 +183,8 @@ class Lowerer {
   }>();
   private readonly classes: ClassDecl[] = [];
   private readonly classByName = new Map<string, ClassDecl>();
+  private readonly classBySymbol = new Map<ts.Symbol, ClassDecl>();
+  private readonly classById = new Map<string, ClassDecl>();
   private readonly methodNodes = new Map<ts.MethodDeclaration | ts.ConstructorDeclaration | ts.AccessorDeclaration, FunctionDecl>();
   private readonly arrayVars = new Map<ts.Symbol, { type: IrType }>();
   private currentThisVar: VarDecl | undefined;
@@ -156,53 +202,87 @@ class Lowerer {
   private warnedLooseEquality = false;
 
   constructor(typed: TypedProgram, config: FrontendConfig) {
+    this.typed = typed;
     this.checker = typed.checker;
     this.source = typed.source;
     this.root = config.projectRoot;
     this.runtimeDts = resolve(config.runtimeDts);
     this.roleName = config.role?.name ?? "Sprite1";
     this.bag = config.bag;
+    const others = this.typed.program.getSourceFiles()
+      .filter((file) => !file.isDeclarationFile
+        && !file.fileName.includes("node_modules")
+        && resolve(file.fileName) !== resolve(this.source.fileName))
+      .sort((a, b) => a.fileName.localeCompare(b.fileName));
+    // Entry first keeps single-file golden artifacts byte-identical; imports
+    // follow a frozen sorted order for reproducible multi-file builds.
+    this.sources = [this.source, ...others];
+  }
+
+  /** Resolve `import { x as y }` aliases to the declaration's symbol. */
+  private symbolOf(node: ts.Node): ts.Symbol | undefined {
+    const symbol = this.checker.getSymbolAtLocation(node);
+    if (!symbol) return undefined;
+    const resolved = symbol.flags & ts.SymbolFlags.Alias
+      ? this.checker.getAliasedSymbol(symbol) : symbol;
+    // `export const x` has a local symbol and a distinct export symbol;
+    // import aliases resolve to the latter. Normalize both sides to it.
+    return (resolved as ts.Symbol & { exportSymbol?: ts.Symbol }).exportSymbol ?? resolved;
   }
 
   lower(): Module {
-    for (const statement of this.source.statements) {
-      if (ts.isFunctionDeclaration(statement)) this.declareFunction(statement);
-      if (ts.isClassDeclaration(statement)) {
-        this.parseWarpDecorator(statement, "other");
-        this.declareClass(statement);
-      }
-      if (ts.isVariableStatement(statement)) {
-        // TS6 decorators cannot be applied to variables — use JSDoc tags
-        // (`/** @global */`, `/** @local */`) as the compile-time annotation.
-        const tags = this.jsDocOf(statement).flatMap((doc) => doc.tags ?? [])
-          .map((tag) => tag.tagName.getText());
-        for (const tag of tags) {
-          if (tag === "global" || tag === "local") {
-            this.varStorage.set(statement, tag);
-          } else if (Lowerer.DECORATORS.has(tag) || tag === "tscr") {
-            this.bag.error(CODES.DECORATOR, `@${tag} is not valid on a variable declaration`, this.span(statement));
-          }
+    for (const source of this.sources) {
+      this.currentSource = source;
+      for (const statement of source.statements) {
+        if (ts.isFunctionDeclaration(statement)) this.declareFunction(statement);
+        if (ts.isClassDeclaration(statement)) {
+          this.parseWarpDecorator(statement, "other");
+          this.declareClass(statement);
         }
-        if (this.varStorage.has(statement) && tags.includes("global") && tags.includes("local")) {
-          this.bag.error(CODES.DECORATOR, "@global and @local cannot be combined", this.span(statement));
+        if (ts.isVariableStatement(statement)) {
+          // TS6 decorators cannot be applied to variables — use JSDoc tags
+          // (`/** @global */`, `/** @local */`) as the compile-time annotation.
+          const tags = this.jsDocOf(statement).flatMap((doc) => doc.tags ?? [])
+            .map((tag) => tag.tagName.getText());
+          for (const tag of tags) {
+            if (tag === "global" || tag === "local") {
+              this.varStorage.set(statement, tag);
+            } else if (Lowerer.DECORATORS.has(tag) || tag === "tscr") {
+              this.bag.error(CODES.DECORATOR, `@${tag} is not valid on a variable declaration`, this.span(statement));
+            }
+          }
+          if (this.varStorage.has(statement) && tags.includes("global") && tags.includes("local")) {
+            this.bag.error(CODES.DECORATOR, "@global and @local cannot be combined", this.span(statement));
+          }
         }
       }
     }
-    for (const statement of this.source.statements) {
-      if (ts.isFunctionDeclaration(statement) || ts.isClassDeclaration(statement)) continue;
-      if (ts.isImportDeclaration(statement) || ts.isEmptyStatement(statement)) continue;
-      if (ts.isVariableStatement(statement)) {
+    // Register every module's top-level bindings before lowering any script
+    // body — a hat in the entry file may reference an imported declaration.
+    for (const source of this.sources) {
+      this.currentSource = source;
+      for (const statement of source.statements) {
+        if (!ts.isVariableStatement(statement)) continue;
         for (const declaration of statement.declarationList.declarations) {
           this.lowerVariableDeclaration(
             declaration, statement.declarationList.flags, true,
             this.varStorage.get(statement) ?? "local",
           );
         }
-        continue;
       }
-      if (ts.isExpressionStatement(statement) && this.lowerHatStatement(statement)) continue;
-      this.unsupported(statement, "top-level statements may only declare resources, classes or register event hats");
     }
+    for (const source of this.sources) {
+      this.currentSource = source;
+      for (const statement of source.statements) {
+        if (ts.isFunctionDeclaration(statement) || ts.isClassDeclaration(statement)
+          || ts.isVariableStatement(statement)) continue;
+        if (ts.isImportDeclaration(statement) || ts.isExportDeclaration(statement)
+          || ts.isEmptyStatement(statement)) continue;
+        if (ts.isExpressionStatement(statement) && this.lowerHatStatement(statement)) continue;
+        this.unsupported(statement, "top-level statements may only declare resources, classes or register event hats");
+      }
+    }
+    this.currentSource = this.source;
     for (const [node, fn] of this.functionNodes) this.lowerFunction(node, fn);
     for (const [node, fn] of this.methodNodes) this.lowerMethod(node, fn);
     // A warped procedure never yields; warp + recursion changes the VM's
@@ -249,7 +329,7 @@ class Lowerer {
           continue;
         }
         const decl = this.newVar(`${name}.${member.name.text}`, type, "global", this.span(member), initial);
-        const symbol = this.checker.getSymbolAtLocation(member.name);
+        const symbol = this.symbolOf(member.name);
         if (symbol) this.staticFieldVars.set(symbol, decl);
         continue;
       }
@@ -257,9 +337,16 @@ class Lowerer {
       if (initial !== undefined) field.initial = initial;
       fields.push(field);
     }
-    const cls: ClassDecl = { id: name, name, fields, methodIds: [], span: this.span(node) };
+    const moduleTag = this.sources.length > 1 && this.currentSource
+      ? `${basename(this.currentSource.fileName, ".ts")}__` : "";
+    const cls: ClassDecl = { id: `${moduleTag}${name}`, name, fields, methodIds: [], span: this.span(node) };
     this.classes.push(cls);
     this.classByName.set(name, cls);
+    this.classById.set(cls.id, cls);
+    if (node.name) {
+      const symbol = this.symbolOf(node.name);
+      if (symbol) this.classBySymbol.set(symbol, cls);
+    }
     for (const member of node.members) {
       if (!ts.isConstructorDeclaration(member)) continue;
       if (cls.ctorId) {
@@ -319,7 +406,7 @@ class Lowerer {
     const fn = this.declareFunctionLike(node, cls, name,
       `fn_${cls.name}_static_${name}_${++this.functionCounter}`,
       node.type ? this.irTypeOf(this.checker.getTypeFromTypeNode(node.type)) : "number", false);
-    const symbol = this.checker.getSymbolAtLocation(node.name);
+    const symbol = this.symbolOf(node.name);
     if (symbol) this.staticMethodFns.set(symbol, fn);
     return fn;
   }
@@ -348,7 +435,7 @@ class Lowerer {
       }
       const decl = this.newVar(parameter.name.text, type, "temp", this.span(parameter), 0);
       decl.parameter = true;
-      const symbol = this.checker.getSymbolAtLocation(parameter.name);
+      const symbol = this.symbolOf(parameter.name);
       if (symbol) this.symbolVars.set(symbol, decl);
       params.push(decl);
     }
@@ -390,12 +477,16 @@ class Lowerer {
   private objectClassOf(node: ts.Expression): string | undefined {
     if (node.kind === ts.SyntaxKind.ThisKeyword) return this.currentFunction?.classId;
     const type = this.checker.getTypeAtLocation(node);
-    const name = (type.getSymbol() ?? type.aliasSymbol)?.getName();
-    return name && this.classByName.has(name) ? name : undefined;
+    const typeSymbol = type.getSymbol() ?? type.aliasSymbol;
+    const found = typeSymbol ? this.classBySymbol.get(typeSymbol) : undefined;
+    if (found) return found.id;
+    const name = typeSymbol?.getName();
+    const byName = name ? this.classByName.get(name) : undefined;
+    return byName?.id;
   }
 
   private fieldType(field: string, classHint?: string): IrType {
-    const known = classHint ? this.classByName.get(classHint) : undefined;
+    const known = classHint ? this.classById.get(classHint) : undefined;
     for (const cls of known ? [known] : this.classes) {
       const found = cls.fields.find((item) => item.name === field);
       if (found) return found.type;
@@ -409,7 +500,7 @@ class Lowerer {
 
   private lowerArrayCall(node: ts.CallExpression): Expr | undefined {
     if (!ts.isPropertyAccessExpression(node.expression)) return undefined;
-    const symbol = this.checker.getSymbolAtLocation(node.expression.expression);
+    const symbol = this.symbolOf(node.expression.expression);
     const array = symbol ? this.arrayVars.get(symbol) : undefined;
     if (!array) return undefined;
     const method = node.expression.name.text;
@@ -462,7 +553,7 @@ class Lowerer {
       }
       const decl = this.newVar(parameter.name.text, type, "temp", this.span(parameter), 0);
       decl.parameter = true;
-      const symbol = this.checker.getSymbolAtLocation(parameter.name);
+      const symbol = this.symbolOf(parameter.name);
       if (symbol) this.symbolVars.set(symbol, decl);
       params.push(decl);
     }
@@ -474,7 +565,7 @@ class Lowerer {
     this.functions.push(fn);
     this.functionNodes.set(node, fn);
     this.callEdges.set(id, new Set());
-    const symbol = node.name ? this.checker.getSymbolAtLocation(node.name) : undefined;
+    const symbol = node.name ? this.symbolOf(node.name) : undefined;
     if (symbol) this.functionSymbols.set(symbol, fn);
   }
 
@@ -702,9 +793,14 @@ class Lowerer {
     const seq = ++this.counter;
     const prefix = storage === "temp" ? `t_${role}_s${index}` : storage === "local" ? `l_${role}` : `g_${role}`;
     const id = `${prefix}_${seq}`;
+    // Scratch VM indexes variables by NAME, so imported modules sharing a
+    // source-level name must get distinct Scratch names. The sequence is
+    // already unique; only add it in multi-file builds to keep goldens stable.
+    const tag = this.sources.length > 1 ? `_${seq}` : "";
     const decl: VarDecl = {
       id,
-      name: storage === "temp" ? `${role}_s${index}_${name}` : storage === "local" ? `${role}.${name}` : name,
+      name: storage === "temp" ? `${role}_s${index}_${name}${tag}`
+        : storage === "local" ? `${role}.${name}${tag}` : `${name}${tag}`,
       type,
       storage,
       span,
@@ -716,9 +812,10 @@ class Lowerer {
   }
 
   private newList(name: string, type: IrType, span: SourceSpan): ListDecl {
+    const seq = ++this.listCounter;
     const decl: ListDecl = {
-      id: `l${this.roleName}_${++this.listCounter}`,
-      name,
+      id: `l${this.roleName}_${seq}`,
+      name: this.sources.length > 1 ? `${name}_${seq}` : name,
       type,
       span,
     };
@@ -738,7 +835,7 @@ class Lowerer {
   }
 
   private runtimeNameOf(call: ts.CallExpression): string | undefined {
-    const symbol = this.checker.getSymbolAtLocation(call.expression);
+    const symbol = this.symbolOf(call.expression);
     if (!symbol) return undefined;
     const declarations = symbol.getDeclarations() ?? [];
     const fromRuntime = declarations.some(
@@ -769,7 +866,7 @@ class Lowerer {
     if (!ts.isPropertyAccessExpression(access) || !ts.isPropertyAccessExpression(access.expression)) return undefined;
     const owner = access.expression;
     if (!ts.isIdentifier(owner.expression) || owner.expression.text !== "Scratch") return undefined;
-    const symbol = this.checker.getSymbolAtLocation(access);
+    const symbol = this.symbolOf(access);
     const declaration = symbol?.getDeclarations()?.[0];
     if (!declaration || !ts.isMethodSignature(declaration)) return undefined;
     if (resolve(declaration.getSourceFile().fileName) !== this.runtimeDts) return undefined;
@@ -835,7 +932,7 @@ class Lowerer {
     const expression = call.expression;
     if (!ts.isPropertyAccessExpression(expression)) return undefined;
     if (!ts.isIdentifier(expression.expression) || expression.expression.text !== "Math") return undefined;
-    const symbol = this.checker.getSymbolAtLocation(expression);
+    const symbol = this.symbolOf(expression);
     const declarations = symbol?.getDeclarations() ?? [];
     const fromLib = declarations.some((declaration) =>
       /[\\/]lib\.[^\\/]*\.d\.ts$/.test(declaration.getSourceFile().fileName),
@@ -851,7 +948,7 @@ class Lowerer {
     const isNative = method in nativeMethods;
     if (!isNative && method !== "toUpperCase" && method !== "toLowerCase") return undefined;
     if (this.typeOf(expression.expression) !== "string") return undefined;
-    const symbol = this.checker.getSymbolAtLocation(expression);
+    const symbol = this.symbolOf(expression);
     const declarations = symbol?.getDeclarations() ?? [];
     const fromLib = declarations.some((declaration) =>
       /[\\/]lib\.[^\\/]*\.d\.ts$/.test(declaration.getSourceFile().fileName),
@@ -863,19 +960,19 @@ class Lowerer {
   private handleOf(call: ts.CallExpression): VarDecl | undefined {
     const expression = call.expression;
     if (!ts.isPropertyAccessExpression(expression)) return undefined;
-    const symbol = this.checker.getSymbolAtLocation(expression.expression);
+    const symbol = this.symbolOf(expression.expression);
     return symbol ? this.handleVars.get(symbol) : undefined;
   }
 
   private listOf(call: ts.CallExpression): ListDecl | undefined {
     const expression = call.expression;
     if (!ts.isPropertyAccessExpression(expression)) return undefined;
-    const symbol = this.checker.getSymbolAtLocation(expression.expression);
+    const symbol = this.symbolOf(expression.expression);
     return symbol ? this.handleLists.get(symbol) : undefined;
   }
 
   private varFor(identifier: ts.Identifier): VarDecl | undefined {
-    const symbol = this.checker.getSymbolAtLocation(identifier);
+    const symbol = this.symbolOf(identifier);
     const decl = symbol ? this.symbolVars.get(symbol) : undefined;
     if (!decl) this.unsupported(identifier, `unresolved variable ${identifier.text}`);
     return decl;
@@ -922,7 +1019,7 @@ class Lowerer {
       this.unsupported(declaration, "destructuring declarations are not supported");
       return;
     }
-    const symbol = this.checker.getSymbolAtLocation(declaration.name);
+    const symbol = this.symbolOf(declaration.name);
     const initializer = declaration.initializer;
     const isConst = (flags & ts.NodeFlags.Const) !== 0;
 
@@ -1159,7 +1256,7 @@ class Lowerer {
   } | undefined {
     const expression = call.expression;
     if (!ts.isPropertyAccessExpression(expression)) return undefined;
-    const symbol = this.checker.getSymbolAtLocation(expression.expression);
+    const symbol = this.symbolOf(expression.expression);
     const handle = symbol ? this.mapHandles.get(symbol) : undefined;
     return handle ? { ...handle, method: expression.name.text } : undefined;
   }
@@ -1300,7 +1397,9 @@ class Lowerer {
     }
     if (ts.isNewExpression(node)) {
       if (ts.isIdentifier(node.expression)) {
-        const cls = this.classByName.get(node.expression.text);
+        const classSymbol = this.symbolOf(node.expression);
+        const cls = (classSymbol ? this.classBySymbol.get(classSymbol) : undefined)
+          ?? this.classByName.get(node.expression.text);
         if (cls) {
           const args = node.arguments?.map((arg) => this.lowerExpr(arg)) ?? [];
           if (args.length > 0 && !cls.ctorId) {
@@ -1314,7 +1413,7 @@ class Lowerer {
       return this.voidConst(node);
     }
     if (ts.isPropertyAccessExpression(node)) {
-      const propertySymbol = this.checker.getSymbolAtLocation(node.name);
+      const propertySymbol = this.symbolOf(node.name);
       const staticField = propertySymbol ? this.staticFieldVars.get(propertySymbol) : undefined;
       if (staticField) {
         return { k: "read", var: staticField.id, type: staticField.type, span: this.span(node) };
@@ -1342,7 +1441,7 @@ class Lowerer {
       }
       if (ts.isIdentifier(node.expression) && node.expression.text === "Math"
         && (node.name.text === "PI" || node.name.text === "E")) {
-        const symbol = this.checker.getSymbolAtLocation(node);
+        const symbol = this.symbolOf(node);
         const fromLib = symbol?.getDeclarations()?.some((d) => /[\\/]lib\.[^\\/]*\.d\.ts$/.test(d.getSourceFile().fileName));
         if (fromLib) {
           return {
@@ -1355,7 +1454,7 @@ class Lowerer {
       return this.voidConst(node);
     }
     if (ts.isIdentifier(node)) {
-      const symbol = this.checker.getSymbolAtLocation(node);
+      const symbol = this.symbolOf(node);
       if (symbol && this.compileTime.has(symbol)) {
         const value = this.compileTime.get(symbol)!;
         const type: IrType = typeof value === "boolean" ? "boolean" : typeof value === "number" ? "number" : "string";
@@ -1464,7 +1563,7 @@ class Lowerer {
       const mapCall = this.lowerMapCall(node);
       if (mapCall) return mapCall;
       if (ts.isPropertyAccessExpression(node.expression)) {
-        const methodSymbol = this.checker.getSymbolAtLocation(node.expression.name);
+        const methodSymbol = this.symbolOf(node.expression.name);
         const staticFn = methodSymbol ? this.staticMethodFns.get(methodSymbol) : undefined;
         if (staticFn) {
           if (this.currentFunction) this.callEdges.get(this.currentFunction.id)?.add(staticFn.id);
@@ -1497,7 +1596,7 @@ class Lowerer {
           };
         }
       }
-      const symbol = this.checker.getSymbolAtLocation(node.expression);
+      const symbol = this.symbolOf(node.expression);
       const fn = symbol ? this.functionSymbols.get(symbol) : undefined;
       if (fn) {
         if (this.currentFunction) this.callEdges.get(this.currentFunction.id)?.add(fn.id);
@@ -1575,7 +1674,7 @@ class Lowerer {
             this.unsupported(node, "free() expects a variable name");
             return this.voidConst(node);
           }
-          const symbol = this.checker.getSymbolAtLocation(argument);
+          const symbol = this.symbolOf(argument);
           const decl = symbol ? this.symbolVars.get(symbol) : undefined;
           this.emit({
             k: "heapFree",
@@ -1677,7 +1776,7 @@ class Lowerer {
       && expression.operatorToken.kind === ts.SyntaxKind.EqualsToken
       && ts.isPropertyAccessExpression(expression.left)) {
       const access = expression.left;
-      const propertySymbol = this.checker.getSymbolAtLocation(access.name);
+      const propertySymbol = this.symbolOf(access.name);
       const staticField = propertySymbol ? this.staticFieldVars.get(propertySymbol) : undefined;
       if (staticField) {
         this.emit({
@@ -1764,7 +1863,7 @@ class Lowerer {
         return;
       }
       const errorDecl = this.newVar("error", "string", "temp", span, "");
-      const symbol = this.checker.getSymbolAtLocation(catchName);
+      const symbol = this.symbolOf(catchName);
       if (symbol) this.symbolVars.set(symbol, errorDecl);
       const body = this.withBlock(() => this.lowerStatement(node.tryBlock));
       const handler = this.withBlock(() => this.lowerStatement(node.catchClause!.block));
